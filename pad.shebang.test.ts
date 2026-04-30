@@ -87,12 +87,14 @@ async function createPadHarness({
   source?: string
   upgradeResult?: boolean
 } = {}) {
+  let currentSource = source
   const writes: { path: string; text: string }[] = []
   const logs: string[] = []
   const errors: string[] = []
   const openedUrls: string[] = []
   const stopCalls: (boolean | undefined)[] = []
   const upgradeCalls: WebSocketData[] = []
+  const watches: { path: string; onChange: () => void; closed: boolean }[] = []
   const idQueue = ["app-token", ...ids]
   const dateQueue = [...dates]
   let serveOptions: ServeOptions | undefined
@@ -111,10 +113,11 @@ async function createPadHarness({
   const dependencies: PadDependencies = {
     files: {
       async readText() {
-        return source
+        return currentSource
       },
       async writeText(path, text) {
         writes.push({ path, text })
+        currentSource = text
       },
     },
     browser: {
@@ -148,6 +151,17 @@ async function createPadHarness({
         return fakeServer
       },
     },
+    watcher: {
+      watch(path, onChange) {
+        const watch = { path, onChange, closed: false }
+        watches.push(watch)
+        return {
+          close() {
+            watch.closed = true
+          },
+        }
+      },
+    },
   }
 
   const app = await PadApplication.create(unitPadPath, dependencies)
@@ -172,6 +186,15 @@ async function createPadHarness({
     openedUrls,
     stopCalls,
     upgradeCalls,
+    watches,
+    setSource(nextSource: string) {
+      currentSource = nextSource
+    },
+    triggerWatch(fileName: string) {
+      const watch = watches.find((watch) => watch.path.endsWith(fileName))
+      if (!watch) throw new Error(`No watch registered for ${fileName}.`)
+      watch.onChange()
+    },
   }
 }
 
@@ -291,7 +314,7 @@ describe("replaceBody", () => {
     const replaced = replaceBody(source, replacementBody)
 
     expect(bodySplitIndex(source)).toBeGreaterThan(0)
-    expect(replaced).toContain('<link rel="stylesheet" href="./pad.css">')
+    expect(replaced).toContain('href="./pad.css"')
     expect(replaced).toContain(
       '<script type="module" src="./pad.browser.js"></script>',
     )
@@ -354,7 +377,7 @@ describe("PAD entry documents", () => {
     expect(source.startsWith("#!/usr/bin/env -S bun ./pad.shebang.tsx\n")).toBe(
       true,
     )
-    expect(source).toContain('<link rel="stylesheet" href="./pad.css">')
+    expect(source).toContain('href="./pad.css"')
     expect(source).toContain(
       '<script type="module" src="./pad.browser.js"></script>',
     )
@@ -383,6 +406,82 @@ describe("ClientState", () => {
     client.send({ type: "ignored" })
 
     expect(sent).toEqual(['{"type":"ready"}', "raw"])
+  })
+})
+
+describe("browser runtime", () => {
+  test("reloads the page when the server broadcasts a reload message", async () => {
+    const source = await Bun.file("pad.browser.js").text()
+    const sockets: { listeners: Record<string, (event: { data: string }) => void> }[] =
+      []
+    const status = {
+      dataset: {} as Record<string, string>,
+      textContent: "",
+      set message(value: string) {
+        this.textContent = value
+      },
+    }
+    let reloads = 0
+
+    class FakeHTMLElement {}
+    class FakeWebSocket {
+      static OPEN = 1
+      readyState = FakeWebSocket.OPEN
+      listeners: Record<string, (event: { data: string }) => void> = {}
+
+      constructor() {
+        sockets.push(this)
+      }
+
+      addEventListener(type: string, listener: (event: { data: string }) => void) {
+        this.listeners[type] = listener
+      }
+
+      send() {}
+    }
+
+    const runBrowserRuntime = new Function(
+      "customElements",
+      "HTMLElement",
+      "document",
+      "WebSocket",
+      "location",
+      "window",
+      source,
+    )
+    runBrowserRuntime(
+      { get: () => undefined, define: () => {} },
+      FakeHTMLElement,
+      {
+        readyState: "complete",
+        querySelector: () => status,
+        createElement: () => status,
+        body: {
+          append() {},
+          addEventListener() {},
+        },
+      },
+      FakeWebSocket,
+      {
+        protocol: "http:",
+        host: "127.0.0.1:4321",
+        search: "?t=apptoken",
+        reload() {
+          reloads += 1
+        },
+      },
+      {
+        clearTimeout,
+        setTimeout,
+        addEventListener() {},
+      },
+    )
+
+    sockets[0]?.listeners.message?.({
+      data: JSON.stringify({ type: "reload", paths: ["pad.css"] }),
+    })
+
+    expect(reloads).toBe(1)
   })
 })
 
@@ -531,6 +630,22 @@ describe("PadApplication unit runtime", () => {
     )
   })
 
+  test("serves the latest PAD source from disk on browser refresh", async () => {
+    const harness = await createPadHarness()
+    const externallyEditedSource = unitPadSource.replace("Before", "From IDE")
+
+    harness.setSource(externallyEditedSource)
+
+    const response = await harness.fetch(
+      makeRequest("/?t=apptoken"),
+      harness.fakeServer,
+    )
+
+    expect(response?.status).toBe(200)
+    expect(await response?.text()).toBe(stripShebang(externallyEditedSource))
+    expect(harness.app.state.source).toBe(externallyEditedSource)
+  })
+
   test("returns 400 when the WebSocket upgrade fails", async () => {
     const harness = await createPadHarness({
       ids: ["client-1"],
@@ -558,6 +673,71 @@ describe("PadApplication unit runtime", () => {
       "unit.pad.htm: http://127.0.0.1:4321/?t=apptoken",
     )
     expect(harness.stopCalls).toEqual([])
+  })
+
+  test("watches PAD, browser JS, and CSS files for hot reload", async () => {
+    const harness = await createPadHarness()
+
+    expect(harness.watches.map((watch) => watch.path).sort()).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("unit.pad.htm"),
+        expect.stringContaining("pad.browser.js"),
+        expect.stringContaining("pad.css"),
+      ]),
+    )
+  })
+
+  test("broadcasts reload when the watched PAD source changes on disk", async () => {
+    const harness = await createPadHarness()
+    const client = new ClientState("client-1", new Date("2026-04-30T12:00:00Z"))
+    const { socket, sent } = makeSocket(client)
+    const externallyEditedSource = unitPadSource.replace("Before", "Hot HTML")
+
+    harness.websocket.open(socket)
+    harness.setSource(externallyEditedSource)
+    harness.triggerWatch("unit.pad.htm")
+    await Bun.sleep(75)
+
+    expect(JSON.parse(sent.at(-1) ?? "{}")).toEqual({
+      type: "reload",
+      paths: ["unit.pad.htm"],
+    })
+    expect(harness.app.state.source).toBe(externallyEditedSource)
+  })
+
+  test("does not broadcast reload for its own PAD writes", async () => {
+    const harness = await createPadHarness({
+      dates: [new Date("2026-04-30T12:45:00.000Z")],
+    })
+    const client = new ClientState("client-1", new Date("2026-04-30T12:00:00Z"))
+    const { socket, sent } = makeSocket(client)
+
+    harness.websocket.open(socket)
+    await harness.websocket.message(
+      socket,
+      JSON.stringify({ type: "body", html: replacementBody }),
+    )
+    harness.triggerWatch("unit.pad.htm")
+    await Bun.sleep(75)
+
+    expect(sent.map((text) => JSON.parse(text).type)).toEqual(["ready", "saved"])
+  })
+
+  test("broadcasts reload when watched browser assets change", async () => {
+    const harness = await createPadHarness()
+    const client = new ClientState("client-1", new Date("2026-04-30T12:00:00Z"))
+    const { socket, sent } = makeSocket(client)
+
+    harness.websocket.open(socket)
+    harness.triggerWatch("pad.css")
+    await Bun.sleep(75)
+    harness.triggerWatch("pad.browser.js")
+    await Bun.sleep(75)
+
+    expect(sent.slice(1).map((text) => JSON.parse(text))).toEqual([
+      { type: "reload", paths: ["pad.css"] },
+      { type: "reload", paths: ["pad.browser.js"] },
+    ])
   })
 })
 

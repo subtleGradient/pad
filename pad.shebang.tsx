@@ -1,4 +1,5 @@
 #!/usr/bin/env bun
+import { watch as watchFileSystem } from "node:fs"
 import nodePath from "node:path"
 import * as nodeUrl from "node:url"
 
@@ -36,6 +37,14 @@ export interface ServerFactory {
   serve(options: PadServeOptions): PadServer
 }
 
+export interface FileWatchHandle {
+  close(): void
+}
+
+export interface FileWatcher {
+  watch(path: string, onChange: () => void): FileWatchHandle
+}
+
 export interface PadDependencies {
   files: TextFileSystem
   browser: BrowserLauncher
@@ -43,6 +52,7 @@ export interface PadDependencies {
   ids: IdGenerator
   clock: Clock
   server: ServerFactory
+  watcher: FileWatcher
 }
 
 class BunTextFileSystem implements TextFileSystem {
@@ -109,6 +119,13 @@ class BunServerFactory implements ServerFactory {
   }
 }
 
+class NodeFileWatcher implements FileWatcher {
+  watch(path: string, onChange: () => void) {
+    const watcher = watchFileSystem(path, { persistent: false }, onChange)
+    return { close: () => watcher.close() }
+  }
+}
+
 export class ClientState {
   private socket: PadSocket | undefined
 
@@ -142,6 +159,9 @@ export class AppState {
   stopping = false
   idleTimer: ReturnType<typeof setTimeout> | undefined
   firstClientTimer: ReturnType<typeof setTimeout> | undefined
+  reloadTimer: ReturnType<typeof setTimeout> | undefined
+  readonly reloadPaths = new Set<string>()
+  readonly watchHandles: FileWatchHandle[] = []
   saveCount = 0
   source: string
 
@@ -177,12 +197,14 @@ export function createDefaultPadDependencies(): PadDependencies {
     ids: new CryptoIdGenerator(),
     clock: new SystemClock(),
     server: new BunServerFactory(),
+    watcher: new NodeFileWatcher(),
   }
 }
 
 const HOST = "127.0.0.1"
 const FIRST_CLIENT_TIMEOUT_MS = 60_000
 const IDLE_SHUTDOWN_MS = 250
+const HOT_RELOAD_DELAY_MS = 50
 
 function die(message: string): never {
   console.error(message)
@@ -261,6 +283,8 @@ export class PadApplication {
     process.on("SIGINT", () => this.stop("Stopping PAD server."))
     process.on("SIGTERM", () => this.stop("Stopping PAD server."))
 
+    this.watchReloadFiles()
+
     this.dependencies.logger.info(`${this.state.fileName}: ${localUrl}`)
     await this.dependencies.browser.open(localUrl)
   }
@@ -299,6 +323,8 @@ export class PadApplication {
     }
 
     if (!this.authorized(url)) return new Response("Forbidden", { status: 403 })
+
+    await this.loadSourceFromDisk()
 
     return new Response(stripShebang(this.state.source), {
       headers: {
@@ -361,6 +387,8 @@ export class PadApplication {
     this.state.stopping = true
     if (this.state.idleTimer) clearTimeout(this.state.idleTimer)
     if (this.state.firstClientTimer) clearTimeout(this.state.firstClientTimer)
+    if (this.state.reloadTimer) clearTimeout(this.state.reloadTimer)
+    for (const handle of this.state.watchHandles.splice(0)) handle.close()
     this.dependencies.logger.info(reason)
     this.state.server?.stop(true)
   }
@@ -382,6 +410,7 @@ export class PadApplication {
   }
 
   private async saveBody(bodyHtml: string) {
+    await this.loadSourceFromDisk()
     this.state.source = replaceBody(this.state.source, bodyHtml)
     await this.dependencies.files.writeText(this.state.padPath, this.state.source)
     this.state.saveCount += 1
@@ -393,6 +422,62 @@ export class PadApplication {
       type: "saved",
       savedAt,
       saveCount: this.state.saveCount,
+    })
+  }
+
+  private async loadSourceFromDisk() {
+    this.state.source = await this.dependencies.files.readText(this.state.padPath)
+  }
+
+  private watchReloadFiles() {
+    const paths = [
+      this.state.padPath,
+      nodePath.resolve(packageRoot(), "pad.browser.js"),
+      nodePath.resolve(packageRoot(), "pad.css"),
+    ]
+
+    for (const path of paths) {
+      try {
+        const handle = this.dependencies.watcher.watch(path, () => {
+          this.queueReload(path)
+        })
+        this.state.watchHandles.push(handle)
+      } catch (error) {
+        this.dependencies.logger.error(
+          `Could not watch ${path}: ${error instanceof Error ? error.message : String(error)}`,
+        )
+      }
+    }
+  }
+
+  private queueReload(path: string) {
+    if (this.state.stopping) return
+    this.state.reloadPaths.add(path)
+    if (this.state.reloadTimer) clearTimeout(this.state.reloadTimer)
+    this.state.reloadTimer = setTimeout(() => {
+      this.state.reloadTimer = undefined
+      void this.reloadChangedFiles()
+    }, HOT_RELOAD_DELAY_MS)
+  }
+
+  private async reloadChangedFiles() {
+    const paths = [...this.state.reloadPaths]
+    this.state.reloadPaths.clear()
+    if (this.state.stopping || paths.length === 0) return
+
+    let shouldReload = paths.some((path) => path !== this.state.padPath)
+
+    if (paths.includes(this.state.padPath)) {
+      const previousSource = this.state.source
+      await this.loadSourceFromDisk()
+      shouldReload ||= this.state.source !== previousSource
+    }
+
+    if (!shouldReload) return
+
+    this.state.broadcast({
+      type: "reload",
+      paths: paths.map((path) => nodePath.basename(path)),
     })
   }
 }

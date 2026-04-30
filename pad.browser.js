@@ -2,7 +2,7 @@
 
 const SAVE_DELAY_MS = 180
 
-/** @typedef {{ type?: string, message?: string, savedAt?: string }} PadServerMessage */
+/** @typedef {{ type?: string, message?: string, savedAt?: string, paths?: string[] }} PadServerMessage */
 
 /**
  * @param {string} name
@@ -117,6 +117,11 @@ function connect() {
 
     if (message.type === "saved" && message.savedAt) {
       setStatus(`Saved ${new Date(message.savedAt).toLocaleTimeString()}`)
+    }
+
+    if (message.type === "reload") {
+      setStatus("Source changed. Reloading...")
+      location.reload()
     }
 
     if (message.type === "error") setStatus(`PAD error: ${message.message}`)

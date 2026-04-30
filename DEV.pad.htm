@@ -1,15 +1,22 @@
 #!/usr/bin/env -S bun ./pad.shebang.tsx
 <!-- PAD: local development entrypoint. Run only if you trust this file as local Bun code. -->
 <!doctype html>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light dark" />
 <title>DEV.pad.htm</title>
-<link rel="stylesheet" href="./pad.css">
+<link rel="stylesheet" href="./pad.css" />
 <script type="module" src="./pad.browser.js"></script>
 
 <pad-document>
   <pad-text kind="title">DEV.pad.htm</pad-text>
-  <pad-text>This file uses the local shebang runner and local browser assets so changes to pad.shebang.tsx, pad.browser.js, and pad.css are visible immediately.</pad-text>
-  <pad-text>Run bun dev or ./DEV.pad.htm, edit these pad-text elements in the browser, and the local server writes the edited body back into this file.</pad-text>
+  <pad-text
+    >This file uses the local shebang runner and local browser assets so changes
+    to pad.shebang.tsx, pad.browser.js, and pad.css are visible
+    immediately.</pad-text
+  >
+  <pad-text
+    >Run bun dev or ./DEV.pad.htm, edit these pad-text elements in the browser,
+    and the local server writes the edited body back into this file.</pad-text
+  >
 </pad-document>
