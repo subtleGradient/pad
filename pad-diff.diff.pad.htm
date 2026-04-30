@@ -11,15 +11,15 @@
 <pad-diff slug="pad-diff" thing="Diff PAD control loop">
   <pad-text kind="title">pad-diff.diff.pad.htm</pad-text>
 
-  <pad-story>
+  <pad-story id="story_47cdef628aab44c59ad6f5415119171d">
     <pad-text kind="heading">Preserve simple PAD</pad-text>
 
     <story-spec>
-      <spec-razor weight="critical">
+      <spec-razor weight="critical" id="razor_f964431403db4e839f296c6d1cbed4ad">
         <pad-text>A `.pad.htm` file remains executable HTML that opens in the browser and autosaves edits back to itself.</pad-text>
       </spec-razor>
 
-      <spec-thread>
+      <spec-thread id="thread_a4104483d38f485d85e5f5b57065034c">
         <thread-left name="too-thin">
           <pad-text>PAD is only plain prose with no durable semantic structure for agents or control loops.</pad-text>
         </thread-left>
@@ -33,7 +33,7 @@
     </story-spec>
 
     <story-real>
-      <real-pointer rev="d0318b9">
+      <real-pointer rev="d0318b9" id="pointer_79346765a30d4010b5b34720ceb1b506">
         <real-file path="SPEC.pad.htm" role="public demo"></real-file>
         <real-file path="DEV.pad.htm" role="local demo"></real-file>
         <real-file path="pad.shebang.tsx" role="trusted save server"></real-file>
@@ -42,13 +42,13 @@
         <real-file path="pad.shebang.test.ts" role="behavior proof"></real-file>
       </real-pointer>
 
-      <real-observation>
+      <real-observation id="obs_15f6db112d904a9f8dfa0bf5ca9fe9fc">
         <pad-text>The current repo already satisfies the modest PAD spec: executable file, local server, editable `pad-text`, autosave, hot reload, and tests.</pad-text>
       </real-observation>
     </story-real>
 
     <story-gaps>
-      <gap-item kind="growth" state="open">
+      <gap-item kind="growth" state="open" id="gap_7906fa410b4549fa965519fb6b0b2c59">
         <gap-vector>
           <gap-axis name="thread-position" value="-2" target-min="-1" target-max="1"></gap-axis>
           <gap-axis name="distance" value="1" target="0"></gap-axis>
@@ -59,22 +59,22 @@
     </story-gaps>
 
     <story-next>
-      <work-item state="approved">
+      <work-item state="approved" id="work_1fa7b702057648a4a03bcbb6571085c5">
         <pad-text>Register inert diff-pad elements and let the browser assign missing opaque IDs so humans never invent handles.</pad-text>
-        <proof-check kind="command" command="bun test"></proof-check>
+        <proof-check kind="command" command="bun test" id="check_e345eecef36742048e7cff90ecfe4623"></proof-check>
       </work-item>
     </story-next>
   </pad-story>
 
-  <pad-story>
+  <pad-story id="story_87154e1974c04296a52392cdfb6648e4">
     <pad-text kind="heading">Story-local control loop</pad-text>
 
     <story-spec>
-      <spec-razor weight="high">
+      <spec-razor weight="high" id="razor_a828b9b95bf24ad6839da5cf507fc109">
         <pad-text>The primary organization is by story, not by global SPEC, REAL, GAPS, and NEXT sections.</pad-text>
       </spec-razor>
 
-      <spec-thread>
+      <spec-thread id="thread_40c966a85e964aaba87807f216307348">
         <thread-left name="scattered">
           <pad-text>Wishes, observations, files, gaps, and work for one story are scattered across unrelated global sections.</pad-text>
         </thread-left>
@@ -86,7 +86,7 @@
         </thread-band>
       </spec-thread>
 
-      <spec-golf model="thing-golf" target-max="4">
+      <spec-golf model="thing-golf" target-max="4" id="golf_f43511a3e9094049af173688e55860bd">
         <golf-axis name="safety" target-max="1"></golf-axis>
         <golf-axis name="burden" target-max="2"></golf-axis>
         <golf-axis name="chaos" target-max="1"></golf-axis>
@@ -96,17 +96,17 @@
     </story-spec>
 
     <story-real>
-      <real-observation>
+      <real-observation id="obs_22e3415639294ff3afd6bd086f50ff4d">
         <pad-text>The old PAD runtime had only `pad-document`, `pad-text`, and `pad-status`. That was healthy for the first spec but too thin for story-local change control.</pad-text>
       </real-observation>
 
-      <real-judgement>
+      <real-judgement id="judge_daf4e0e438f94fccbda93fdd2eb98237">
         <pad-text>The new grammar should stay inert and structural before any regeneration, cron, or agent dispatch machinery is built.</pad-text>
       </real-judgement>
     </story-real>
 
     <story-gaps>
-      <gap-item kind="growth" state="open">
+      <gap-item kind="growth" state="open" id="gap_d8cb53326fa54d2ab30a286d2e396b2f">
         <gap-vector>
           <gap-axis name="thread-position" value="-3" target-min="-1" target-max="1"></gap-axis>
           <gap-axis name="distance" value="2" target="0"></gap-axis>
@@ -115,7 +115,7 @@
         <pad-text>The design needs to move away from scattered global sections toward story-local lifecycle facets.</pad-text>
       </gap-item>
 
-      <gap-item kind="growth" state="open">
+      <gap-item kind="growth" state="open" id="gap_2f8b6706098e424b984d9858f822454c">
         <gap-vector>
           <gap-axis name="safety" value="0" target-max="1"></gap-axis>
           <gap-axis name="burden" value="3" target-max="2"></gap-axis>
@@ -129,29 +129,29 @@
     </story-gaps>
 
     <story-next>
-      <work-item state="approved">
+      <work-item state="approved" id="work_ba78c87873a74b8ba1a2a49504e4bb97">
         <pad-text>Add this self-applying `.diff.pad.htm` as a tactile example before building automation.</pad-text>
       </work-item>
 
-      <work-item state="approved">
+      <work-item state="approved" id="work_b0099f33430e43ac9c3d51ef4f6afb7b">
         <pad-text>Style story facets so SPEC, REAL, GAPS, and NEXT are visually scannable inside each story.</pad-text>
       </work-item>
 
-      <work-judgement>
+      <work-judgement id="judge_545658e8e53a45819f8126ec1cd5c6d6">
         <pad-text>Do not build cron regeneration until this static grammar feels good as a hand-written control surface.</pad-text>
       </work-judgement>
     </story-next>
   </pad-story>
 
-  <pad-story>
+  <pad-story id="story_f825048301ba42d384aab50f5fa8b5a9">
     <pad-text kind="heading">Legible measured specs</pad-text>
 
     <story-spec>
-      <spec-razor weight="high">
+      <spec-razor weight="high" id="razor_f158d4347d4f4d5f8388ba5eac97e55c">
         <pad-text>Boolean specs, golf specs, and needle-thread specs can coexist inside one story.</pad-text>
       </spec-razor>
 
-      <spec-thread>
+      <spec-thread id="thread_28b27a68b81044ddbc1f4c717ac5d25e">
         <thread-left name="vibes-only">
           <pad-text>Specs are only prose, so the loop cannot show numeric progress or directional overshoot.</pad-text>
         </thread-left>
@@ -165,13 +165,13 @@
     </story-spec>
 
     <story-real>
-      <real-observation>
+      <real-observation id="obs_ec71410f2dd047cb83c909a4a1cfe814">
         <pad-text>The project has no generated scoring yet, but the proposed HTML can already carry named vector measurements.</pad-text>
       </real-observation>
     </story-real>
 
     <story-gaps>
-      <gap-item kind="growth" state="open">
+      <gap-item kind="growth" state="open" id="gap_55e80b45d5e7434dbde13c84a1624bad">
         <gap-vector>
           <gap-axis name="thread-position" value="-2" target-min="-1" target-max="1"></gap-axis>
           <gap-axis name="distance" value="1" target="0"></gap-axis>
@@ -182,17 +182,17 @@
     </story-gaps>
 
     <story-next>
-      <work-item state="proposed">
+      <work-item state="proposed" id="work_e2697c8b20be4adf85fee453deccd6b1">
         <pad-text>Later, teach tooling to regenerate `gap-vector` from `spec-razor`, `spec-thread`, `spec-golf`, and observed reality.</pad-text>
       </work-item>
     </story-next>
   </pad-story>
 
-  <pad-story>
+  <pad-story id="story_2ea0c1a4f21143a1984f3b1d096ba43b">
     <pad-text kind="heading">Healthy perpetual motion</pad-text>
 
     <story-spec>
-      <spec-thread>
+      <spec-thread id="thread_9484820a960c46c2891e6695cf62e8a6">
         <thread-left name="stale">
           <pad-text>Specs and gaps go stale; no pressure is regenerated.</pad-text>
         </thread-left>
@@ -204,19 +204,19 @@
         </thread-band>
       </spec-thread>
 
-      <spec-judgement>
+      <spec-judgement id="judge_a816fbccd43e416da18194ed2b12b8c1">
         <pad-text>Some growth gaps should intentionally remain open or be replaced by higher-order gaps so the project keeps producing desired work patterns.</pad-text>
       </spec-judgement>
     </story-spec>
 
     <story-real>
-      <real-observation>
+      <real-observation id="obs_fc9eee0eb72644cb9196d2ad3b852aa9">
         <pad-text>There is currently no cron loop, no generated gap snapshot, and no approval workflow.</pad-text>
       </real-observation>
     </story-real>
 
     <story-gaps>
-      <gap-item kind="growth" state="open">
+      <gap-item kind="growth" state="open" id="gap_48453ab57dec47669fa8e93309259234">
         <gap-vector>
           <gap-axis name="thread-position" value="-3" target-min="-1" target-max="1"></gap-axis>
           <gap-axis name="distance" value="2" target="0"></gap-axis>
@@ -227,21 +227,21 @@
     </story-gaps>
 
     <story-next>
-      <work-item state="proposed">
+      <work-item state="proposed" id="work_0b6d6ee074dd45e69c2ac62d27c72f1d">
         <pad-text>Define what future regeneration may overwrite: generated observations, gaps, and proposed work, but not human-authored SPEC or approved work.</pad-text>
       </work-item>
     </story-next>
   </pad-story>
 
-  <pad-story>
+  <pad-story id="story_5b712326515648a0962e27f47fb7d1d5">
     <pad-text kind="heading">OpenCode SDK orchestration</pad-text>
 
     <story-spec>
-      <spec-razor weight="critical">
+      <spec-razor weight="critical" id="razor_85b225663b32431bb8b9f9aaa50e0814">
         <pad-text>All future AI agent and LLM orchestration for diff-pad regeneration uses `@opencode-ai/sdk` instead of direct provider APIs or ad hoc shell prompts.</pad-text>
       </spec-razor>
 
-      <spec-thread>
+      <spec-thread id="thread_9eee5505fd8445bfa633461e65ca5d53">
         <thread-left name="raw-llm-glue">
           <pad-text>Regeneration scripts call model providers directly, parse loose prose, and bypass the editor/session context that OpenCode already owns.</pad-text>
         </thread-left>
@@ -253,7 +253,7 @@
         </thread-band>
       </spec-thread>
 
-      <spec-golf model="thing-golf" target-max="4">
+      <spec-golf model="thing-golf" target-max="4" id="golf_c3f61bafd7ac4783923cea08b0b22043">
         <golf-axis name="safety" target-max="1"></golf-axis>
         <golf-axis name="burden" target-max="2"></golf-axis>
         <golf-axis name="chaos" target-max="1"></golf-axis>
@@ -263,18 +263,18 @@
     </story-spec>
 
     <story-real>
-      <real-observation>
+      <real-observation id="obs_80c641ea5da94045b2a16d4451941039">
         <pad-text>The OpenCode SDK docs expose the primitives needed for this loop: `createOpencode`, `createOpencodeClient`, `app.agents`, `session.create`, `session.prompt`, structured JSON schema output, `event.subscribe`, `find.*`, `file.read`, and `file.status`.</pad-text>
         <proof-link rel="source" href="https://opencode.ai/docs/sdk.md"></proof-link>
       </real-observation>
 
-      <real-judgement>
+      <real-judgement id="judge_c5907d2775854a038413e913a022db57">
         <pad-text>This repo should not add `@opencode-ai/sdk` as a dependency until there is an executable regeneration or dispatch script that imports it.</pad-text>
       </real-judgement>
     </story-real>
 
     <story-gaps>
-      <gap-item kind="growth" state="open">
+      <gap-item kind="growth" state="open" id="gap_681a24330b3943ba911b629588c2b5e0">
         <gap-vector>
           <gap-axis name="thread-position" value="-2" target-min="-1" target-max="1"></gap-axis>
           <gap-axis name="distance" value="1" target="0"></gap-axis>
@@ -283,7 +283,7 @@
         <pad-text>The static grammar now names generated gaps and proposed work, but it does not yet define the SDK-backed regeneration contract.</pad-text>
       </gap-item>
 
-      <gap-item kind="growth" state="open">
+      <gap-item kind="growth" state="open" id="gap_9569495d4b744d4789a8b757f18ea2d5">
         <gap-vector>
           <gap-axis name="safety" value="0" target-max="1"></gap-axis>
           <gap-axis name="burden" value="1" target-max="2"></gap-axis>
@@ -297,15 +297,15 @@
     </story-gaps>
 
     <story-next>
-      <work-item state="proposed">
+      <work-item state="proposed" id="work_57335006f2bf445ca06a247f0c02ee16">
         <pad-text>Define structured-output schemas for regenerated `story-real`, `story-gaps`, and proposed `work-item` snapshots.</pad-text>
       </work-item>
 
-      <work-item state="proposed">
+      <work-item state="proposed" id="work_126b963b72504eaebd58e3be7a13b2e0">
         <pad-text>Prototype a Bun script that uses `createOpencode` or `createOpencodeClient`, sends one story to `session.prompt`, and receives a typed gap/work JSON payload.</pad-text>
       </work-item>
 
-      <work-item state="proposed">
+      <work-item state="proposed" id="work_4aca7f5dec594098a4115bca3cc0adc0">
         <pad-text>Use `app.agents` and `event.subscribe` only after approved work dispatch exists; keep cron regeneration observational until then.</pad-text>
       </work-item>
     </story-next>
