@@ -1,8 +1,14 @@
 {
   "name": "pad",
-  "module": "index.ts",
   "type": "module",
   "private": true,
+  "bin": {
+    "pad": "./pad.shebang.tsx"
+  },
+  "scripts": {
+    "check": "tsc --noEmit",
+    "dev": "bun ./pad.shebang.tsx ./DEV.pad.htm"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
