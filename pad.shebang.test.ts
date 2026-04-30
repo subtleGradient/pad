@@ -563,6 +563,7 @@ describe("OC chat serializer", () => {
 
   test("exports a chat document from an OpenCode session", async () => {
     const writes: { path: string; text: string }[] = []
+    const executablePaths: string[] = []
     const logs: string[] = []
     const dependencies: PadDependencies = {
       files: {
@@ -571,6 +572,9 @@ describe("OC chat serializer", () => {
         },
         async writeText(path, text) {
           writes.push({ path, text })
+        },
+        async makeExecutable(path) {
+          executablePaths.push(path)
         },
       },
       browser: { open() {} },
@@ -612,6 +616,7 @@ describe("OC chat serializer", () => {
     expect(writes).toHaveLength(1)
     expect(writes[0]?.path).toBe(unitChatPath)
     expect(writes[0]?.text).toContain("<oc-chat")
+    expect(executablePaths).toEqual([unitChatPath])
     expect(logs).toEqual(["unit.chat.html: exported ses_unit"])
   })
 })

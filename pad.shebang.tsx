@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { watch as watchFileSystem } from "node:fs"
+import { chmod } from "node:fs/promises"
 import nodePath from "node:path"
 import * as nodeUrl from "node:url"
 import {
@@ -21,6 +22,7 @@ type PadServeOptions = Bun.Serve.Options<WebSocketData, never>
 export interface TextFileSystem {
   readText(path: string): Promise<string>
   writeText(path: string, text: string): Promise<void>
+  makeExecutable?(path: string): Promise<void>
 }
 
 export interface BrowserLauncher {
@@ -77,6 +79,10 @@ class BunTextFileSystem implements TextFileSystem {
 
   async writeText(path: string, text: string) {
     await Bun.write(path, text)
+  }
+
+  async makeExecutable(path: string) {
+    await chmod(path, 0o755)
   }
 }
 
@@ -664,6 +670,7 @@ export async function exportOpenCodeChatSession(
   })
 
   await dependencies.files.writeText(outputPath, source)
+  await dependencies.files.makeExecutable?.(outputPath)
   dependencies.logger.info(`${nodePath.basename(outputPath)}: exported ${sessionID}`)
 }
 
