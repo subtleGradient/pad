@@ -22,6 +22,32 @@ body {
 
 pad-document,
 pad-text,
+pad-diff,
+pad-story,
+story-spec,
+story-real,
+story-gaps,
+story-next,
+spec-wish,
+spec-judgement,
+spec-razor,
+spec-thread,
+spec-golf,
+thread-left,
+thread-right,
+thread-band,
+golf-axis,
+real-pointer,
+real-file,
+real-observation,
+real-judgement,
+gap-item,
+gap-vector,
+gap-axis,
+work-item,
+work-judgement,
+proof-check,
+proof-link,
 pad-status {
   display: block;
 }
@@ -43,6 +69,249 @@ pad-text[kind="title"] {
   font-weight: 800;
   line-height: 0.86;
   letter-spacing: -0.07em;
+}
+
+pad-text[kind="heading"] {
+  max-width: 32rem;
+  font:
+    800 clamp(1.6rem, 5vw, 3.5rem) / 0.95 ui-sans-serif,
+    system-ui,
+    sans-serif;
+  letter-spacing: -0.055em;
+}
+
+body:has(pad-diff) {
+  width: min(82rem, calc(100vw - 1.5rem));
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+  font-size: clamp(0.98rem, 1.5vw, 1.12rem);
+}
+
+body:has(pad-diff) pad-text[kind="title"] {
+  max-width: 13ch;
+}
+
+pad-diff {
+  display: grid;
+  gap: clamp(1.25rem, 3vw, 2rem);
+}
+
+pad-story {
+  display: grid;
+  gap: 0.85rem;
+  border: 1px solid rgba(21, 21, 21, 0.16);
+  border-radius: 1.1rem;
+  padding: clamp(1rem, 2.5vw, 1.35rem);
+  background: rgba(255, 252, 245, 0.55);
+  box-shadow: 0 1.2rem 3rem rgba(21, 21, 21, 0.07);
+}
+
+story-spec,
+story-real,
+story-gaps,
+story-next {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  min-width: 0;
+  border: 1px solid rgba(21, 21, 21, 0.12);
+  border-radius: 0.85rem;
+  padding: 2.25rem 0.85rem 0.85rem;
+  background: rgba(245, 241, 232, 0.82);
+}
+
+story-spec::before,
+story-real::before,
+story-gaps::before,
+story-next::before {
+  position: absolute;
+  top: 0.7rem;
+  left: 0.85rem;
+  border-radius: 999px;
+  padding: 0.14rem 0.46rem;
+  color: rgba(21, 21, 21, 0.66);
+  background: rgba(21, 21, 21, 0.07);
+  font:
+    700 0.68rem/1 ui-sans-serif,
+    system-ui,
+    sans-serif;
+  letter-spacing: 0.12em;
+}
+
+story-spec::before {
+  content: "SPEC";
+}
+
+story-real::before {
+  content: "REAL";
+}
+
+story-gaps::before {
+  content: "GAPS";
+}
+
+story-next::before {
+  content: "NEXT";
+}
+
+spec-wish,
+spec-judgement,
+spec-razor,
+spec-thread,
+spec-golf,
+real-pointer,
+real-observation,
+real-judgement,
+gap-item,
+work-item,
+work-judgement {
+  display: grid;
+  gap: 0.55rem;
+  border-left: 0.28rem solid rgba(21, 21, 21, 0.24);
+  border-radius: 0.45rem;
+  padding: 0.7rem 0.75rem;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+spec-razor,
+spec-thread,
+spec-golf {
+  border-left-color: #755fd3;
+}
+
+real-pointer,
+real-observation,
+real-judgement {
+  border-left-color: #34856f;
+}
+
+gap-item {
+  border-left-color: #c45f34;
+}
+
+work-item,
+work-judgement {
+  border-left-color: #2f6db3;
+}
+
+thread-left,
+thread-right,
+thread-band {
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.7rem;
+  background: rgba(21, 21, 21, 0.055);
+}
+
+thread-left::before,
+thread-right::before,
+thread-band::before,
+gap-item::before,
+work-item::before,
+proof-check::before {
+  color: rgba(21, 21, 21, 0.58);
+  font:
+    700 0.68rem/1.1 ui-sans-serif,
+    system-ui,
+    sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+thread-left::before {
+  content: "Too far left: " attr(name);
+}
+
+thread-right::before {
+  content: "Too far right: " attr(name);
+}
+
+thread-band::before {
+  content: "Thread band " attr(min) ".." attr(max);
+}
+
+gap-item::before {
+  content: "Gap " attr(kind) " / " attr(state);
+}
+
+work-item::before {
+  content: "Work " attr(state);
+}
+
+real-file,
+golf-axis,
+gap-axis,
+proof-check,
+proof-link {
+  border-radius: 0.45rem;
+  padding: 0.42rem 0.55rem;
+  background: rgba(21, 21, 21, 0.06);
+  color: rgba(21, 21, 21, 0.78);
+  font:
+    0.78rem/1.35 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+}
+
+real-file::before {
+  content: attr(path);
+  font-weight: 800;
+}
+
+real-file::after {
+  content: " — " attr(role);
+  color: rgba(21, 21, 21, 0.56);
+}
+
+golf-axis::before {
+  content: attr(name) " target=" attr(target) attr(target-max);
+}
+
+gap-vector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+gap-axis {
+  display: inline-block;
+}
+
+gap-axis::before {
+  content: attr(name) "=" attr(value);
+}
+
+gap-axis[target]::after {
+  content: " target=" attr(target);
+  color: rgba(21, 21, 21, 0.52);
+}
+
+gap-axis[target-min]::after {
+  content: " target=" attr(target-min) ".." attr(target-max);
+  color: rgba(21, 21, 21, 0.52);
+}
+
+proof-check::before {
+  content: attr(kind) ": " attr(command);
+}
+
+proof-link::before {
+  content: attr(rel) ": " attr(href);
+  font-weight: 800;
+}
+
+@media (min-width: 58rem) {
+  pad-story {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  pad-story > pad-text[kind="heading"] {
+    grid-column: 1 / -1;
+  }
 }
 
 pad-text[contenteditable="true"] {
@@ -89,5 +358,65 @@ pad-status {
     border-color: rgba(243, 234, 215, 0.18);
     background: rgba(17, 17, 15, 0.86);
     color: rgba(243, 234, 215, 0.72);
+  }
+
+  pad-story {
+    border-color: rgba(243, 234, 215, 0.15);
+    background: rgba(29, 28, 24, 0.72);
+    box-shadow: 0 1.2rem 3rem rgba(0, 0, 0, 0.25);
+  }
+
+  story-spec,
+  story-real,
+  story-gaps,
+  story-next {
+    border-color: rgba(243, 234, 215, 0.13);
+    background: rgba(17, 17, 15, 0.72);
+  }
+
+  story-spec::before,
+  story-real::before,
+  story-gaps::before,
+  story-next::before,
+  thread-left::before,
+  thread-right::before,
+  thread-band::before,
+  gap-item::before,
+  work-item::before,
+  proof-check::before {
+    color: rgba(243, 234, 215, 0.62);
+    background: rgba(243, 234, 215, 0.07);
+  }
+
+  spec-wish,
+  spec-judgement,
+  spec-razor,
+  spec-thread,
+  spec-golf,
+  real-pointer,
+  real-observation,
+  real-judgement,
+  gap-item,
+  work-item,
+  work-judgement {
+    background: rgba(243, 234, 215, 0.055);
+  }
+
+  thread-left,
+  thread-right,
+  thread-band,
+  real-file,
+  golf-axis,
+  gap-axis,
+  proof-check,
+  proof-link {
+    background: rgba(243, 234, 215, 0.08);
+    color: rgba(243, 234, 215, 0.78);
+  }
+
+  real-file::after,
+  gap-axis[target]::after,
+  gap-axis[target-min]::after {
+    color: rgba(243, 234, 215, 0.54);
   }
 }

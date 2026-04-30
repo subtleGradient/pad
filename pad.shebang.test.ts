@@ -76,6 +76,33 @@ function makeSocket(client: ClientState) {
   return { socket, sent }
 }
 
+class FakeElement {
+  readonly dataset: Record<string, string> = {}
+  textContent = ""
+  private readonly attributes = new Map<string, string>()
+
+  constructor(
+    readonly localName: string,
+    attributes: Record<string, string> = {},
+  ) {
+    for (const [name, value] of Object.entries(attributes)) {
+      this.attributes.set(name, value)
+    }
+  }
+
+  hasAttribute(name: string) {
+    return this.attributes.has(name)
+  }
+
+  getAttribute(name: string) {
+    return this.attributes.get(name) ?? null
+  }
+
+  setAttribute(name: string, value: string) {
+    this.attributes.set(name, value)
+  }
+}
+
 async function createPadHarness({
   ids = [],
   dates = [],
@@ -383,6 +410,25 @@ describe("PAD entry documents", () => {
     )
     expect(source).not.toContain("cdn.jsdelivr.net")
   })
+
+  test("self-applying diff pad uses the local grammar without schema metadata", async () => {
+    const source = await Bun.file("pad-diff.diff.pad.htm").text()
+
+    expect(source.startsWith("#!/usr/bin/env -S bun ./pad.shebang.tsx\n")).toBe(
+      true,
+    )
+    expect(source).toContain('href="./pad.css"')
+    expect(source).toContain(
+      '<script type="module" src="./pad.browser.js"></script>',
+    )
+    expect(source).toContain("<pad-diff")
+    expect(source).toContain("<spec-thread")
+    expect(source).toContain("<gap-vector")
+    expect(source).toContain("@opencode-ai/sdk")
+    expect(source).toContain("https://opencode.ai/docs/sdk.md")
+    expect(source).toContain("structured JSON schema output")
+    expect(source).not.toContain("schema=")
+  })
 })
 
 describe("contentType", () => {
@@ -410,6 +456,152 @@ describe("ClientState", () => {
 })
 
 describe("browser runtime", () => {
+  test("registers diff pad elements and assigns missing opaque ids", async () => {
+    const source = await Bun.file("pad.browser.js").text()
+    const defined: string[] = []
+    const elements = [
+      new FakeElement("pad-story"),
+      new FakeElement("gap-item"),
+      new FakeElement("work-item", { id: "work_existing" }),
+    ]
+    const status = new FakeElement("pad-status")
+
+    class FakeHTMLElement {}
+    class FakeWebSocket {
+      static OPEN = 1
+      readyState = FakeWebSocket.OPEN
+      addEventListener() {}
+      send() {}
+    }
+
+    const runBrowserRuntime = new Function(
+      "customElements",
+      "HTMLElement",
+      "document",
+      "WebSocket",
+      "location",
+      "window",
+      source,
+    )
+    runBrowserRuntime(
+      {
+        get: () => undefined,
+        define: (name: string) => {
+          defined.push(name)
+        },
+      },
+      FakeHTMLElement,
+      {
+        readyState: "complete",
+        querySelector: () => status,
+        querySelectorAll: () => elements,
+        createElement: () => status,
+        body: {
+          append() {},
+          addEventListener() {},
+        },
+      },
+      FakeWebSocket,
+      {
+        protocol: "http:",
+        host: "127.0.0.1:4321",
+        search: "?t=apptoken",
+      },
+      {
+        clearTimeout,
+        setTimeout,
+        addEventListener() {},
+      },
+    )
+
+    expect(defined).toContain("pad-diff")
+    expect(defined).toContain("spec-thread")
+    expect(defined).toContain("gap-axis")
+    expect(elements[0]?.getAttribute("id")).toMatch(/^story_[a-z0-9]+$/)
+    expect(elements[1]?.getAttribute("id")).toMatch(/^gap_[a-z0-9]+$/)
+    expect(elements[2]?.getAttribute("id")).toBe("work_existing")
+  })
+
+  test("autosaves generated ids after the trusted server connects", async () => {
+    const source = await Bun.file("pad.browser.js").text()
+    const story = new FakeElement("pad-story")
+    const status = new FakeElement("pad-status")
+
+    class FakeHTMLElement {}
+    const sockets: { listeners: Record<string, () => void>; sent: string[] }[] =
+      []
+    class FakeWebSocket {
+      static OPEN = 1
+      readyState = FakeWebSocket.OPEN
+      readonly listeners: Record<string, () => void> = {}
+      readonly sent: string[] = []
+
+      constructor() {
+        sockets.push(this)
+      }
+
+      addEventListener(type: string, listener: () => void) {
+        this.listeners[type] = listener
+      }
+
+      send(text: string) {
+        this.sent.push(text)
+      }
+    }
+
+    const body = {
+      append() {},
+      addEventListener() {},
+      cloneNode() {
+        return {
+          get innerHTML() {
+            return `<pad-story id="${story.getAttribute("id")}"></pad-story>`
+          },
+          querySelectorAll: () => [],
+        }
+      },
+    }
+    const runBrowserRuntime = new Function(
+      "customElements",
+      "HTMLElement",
+      "document",
+      "WebSocket",
+      "location",
+      "window",
+      source,
+    )
+
+    runBrowserRuntime(
+      { get: () => undefined, define: () => {} },
+      FakeHTMLElement,
+      {
+        readyState: "complete",
+        querySelector: () => status,
+        querySelectorAll: () => [story],
+        createElement: () => status,
+        body,
+      },
+      FakeWebSocket,
+      {
+        protocol: "http:",
+        host: "127.0.0.1:4321",
+        search: "?t=apptoken",
+      },
+      {
+        clearTimeout,
+        setTimeout,
+        addEventListener() {},
+      },
+    )
+
+    sockets[0]?.listeners.open?.()
+
+    expect(JSON.parse(sockets[0]?.sent[0] ?? "{}")).toEqual({
+      type: "body",
+      html: `<pad-story id="${story.getAttribute("id")}"></pad-story>`,
+    })
+  })
+
   test("reloads the page when the server broadcasts a reload message", async () => {
     const source = await Bun.file("pad.browser.js").text()
     const sockets: {
