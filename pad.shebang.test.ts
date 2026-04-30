@@ -3,10 +3,14 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import {
+  ClientState,
+  PadApplication,
   bodySplitIndex,
   contentType,
   replaceBody,
   stripShebang,
+  type PadDependencies,
+  type WebSocketData,
 } from "./pad.shebang.tsx"
 
 const BRANCH = "v0-dev"
@@ -18,6 +22,158 @@ const publicJs = `${cdn}/pad.browser.js`
 const replacementBody = `<pad-document>
   <pad-text>Changed body</pad-text>
 </pad-document>`
+const unitPadPath = "/tmp/unit.pad.htm"
+const unitPadSource = `#!/usr/bin/env -S bun ./pad.shebang.tsx
+<!doctype html>
+<meta charset="utf-8">
+<script type="module" src="./pad.browser.js"></script>
+
+<pad-document>
+  <pad-text>Before</pad-text>
+</pad-document>
+`
+
+type ServeOptions = Parameters<PadDependencies["server"]["serve"]>[0]
+type FetchHandler = (
+  request: Request,
+  server: Bun.Server<WebSocketData>,
+) => Response | Promise<Response | undefined> | undefined
+type WebSocketHandlers = {
+  open(ws: Bun.ServerWebSocket<WebSocketData>): void
+  message(
+    ws: Bun.ServerWebSocket<WebSocketData>,
+    raw: string | Buffer,
+  ): void | Promise<void>
+  close(ws: Bun.ServerWebSocket<WebSocketData>): void
+}
+
+function getFetch(options: ServeOptions): FetchHandler {
+  const fetch = (options as { fetch?: unknown }).fetch
+  if (typeof fetch !== "function") throw new Error("Expected fetch handler.")
+  return fetch as FetchHandler
+}
+
+function getWebSocketHandlers(options: ServeOptions): WebSocketHandlers {
+  const websocket = (options as { websocket?: unknown }).websocket
+  if (!websocket) throw new Error("Expected WebSocket handlers.")
+  return websocket as WebSocketHandlers
+}
+
+function makeRequest(path: string) {
+  return new Request(`http://127.0.0.1:1234${path}`)
+}
+
+function makeSocket(client: ClientState) {
+  const sent: string[] = []
+  const socket = {
+    data: { client },
+    send(data: string | BufferSource) {
+      sent.push(String(data))
+      return 1
+    },
+  } as unknown as Bun.ServerWebSocket<WebSocketData>
+
+  return { socket, sent }
+}
+
+async function createPadHarness({
+  ids = [],
+  dates = [],
+  source = unitPadSource,
+  upgradeResult = true,
+}: {
+  ids?: string[]
+  dates?: Date[]
+  source?: string
+  upgradeResult?: boolean
+} = {}) {
+  const writes: { path: string; text: string }[] = []
+  const logs: string[] = []
+  const errors: string[] = []
+  const openedUrls: string[] = []
+  const stopCalls: (boolean | undefined)[] = []
+  const upgradeCalls: WebSocketData[] = []
+  const idQueue = ["app-token", ...ids]
+  const dateQueue = [...dates]
+  let serveOptions: ServeOptions | undefined
+
+  const fakeServer = {
+    port: 4321,
+    stop(force?: boolean) {
+      stopCalls.push(force)
+    },
+    upgrade(_request: Request, options: { data: WebSocketData }) {
+      upgradeCalls.push(options.data)
+      return upgradeResult
+    },
+  } as unknown as Bun.Server<WebSocketData>
+
+  const dependencies: PadDependencies = {
+    files: {
+      async readText() {
+        return source
+      },
+      async writeText(path, text) {
+        writes.push({ path, text })
+      },
+    },
+    browser: {
+      open(url) {
+        openedUrls.push(url)
+      },
+    },
+    logger: {
+      info(message) {
+        logs.push(message)
+      },
+      error(message) {
+        errors.push(message)
+      },
+    },
+    ids: {
+      nextId() {
+        const id = idQueue.shift()
+        if (!id) throw new Error("No fake ID available.")
+        return id
+      },
+    },
+    clock: {
+      now() {
+        return dateQueue.shift() ?? new Date("2026-04-30T12:00:00.000Z")
+      },
+    },
+    server: {
+      serve(options) {
+        serveOptions = options
+        return fakeServer
+      },
+    },
+  }
+
+  const app = await PadApplication.create(unitPadPath, dependencies)
+  await app.start()
+
+  if (app.state.firstClientTimer) {
+    clearTimeout(app.state.firstClientTimer)
+    app.state.firstClientTimer = undefined
+  }
+
+  if (!serveOptions) throw new Error("Server was not started.")
+
+  return {
+    app,
+    dependencies,
+    fakeServer,
+    fetch: getFetch(serveOptions),
+    websocket: getWebSocketHandlers(serveOptions),
+    writes,
+    logs,
+    errors,
+    openedUrls,
+    stopCalls,
+    upgradeCalls,
+  }
+}
 
 async function waitForServerUrl(
   proc: Bun.Subprocess<"ignore", "pipe", "pipe">,
@@ -212,6 +368,196 @@ describe("contentType", () => {
     expect(contentType("pad.browser.js")).toBe("text/javascript; charset=utf-8")
     expect(contentType("SPEC.pad.htm")).toBe("text/html; charset=utf-8")
     expect(contentType("note.txt")).toBe("text/plain; charset=utf-8")
+  })
+})
+
+describe("ClientState", () => {
+  test("sends through its attached socket and becomes inert after detach", () => {
+    const client = new ClientState("client-1", new Date("2026-04-30T12:00:00Z"))
+    const { socket, sent } = makeSocket(client)
+
+    client.attach(socket)
+    client.send({ type: "ready" })
+    client.sendText("raw")
+    client.detach()
+    client.send({ type: "ignored" })
+
+    expect(sent).toEqual(['{"type":"ready"}', "raw"])
+  })
+})
+
+describe("PadApplication unit runtime", () => {
+  test("stores a fresh ClientState in WebSocketData during upgrade", async () => {
+    const connectedAt = new Date("2026-04-30T12:34:00.000Z")
+    const harness = await createPadHarness({
+      ids: ["client-1"],
+      dates: [connectedAt],
+    })
+
+    const response = await harness.fetch(
+      makeRequest("/ws?t=apptoken"),
+      harness.fakeServer,
+    )
+
+    expect(response).toBeUndefined()
+    expect(harness.upgradeCalls).toHaveLength(1)
+    const client = harness.upgradeCalls[0]?.client
+    expect(client).toBeInstanceOf(ClientState)
+    expect(client?.id).toBe("client-1")
+    expect(client?.createdAt).toEqual(connectedAt)
+    expect(harness.app.state.clients.size).toBe(0)
+  })
+
+  test("opens and closes clients through AppState without retaining sockets", async () => {
+    const harness = await createPadHarness()
+    const client = new ClientState("client-1", new Date("2026-04-30T12:00:00Z"))
+    const { socket, sent } = makeSocket(client)
+
+    harness.websocket.open(socket)
+
+    expect(harness.app.state.hasHadClient).toBe(true)
+    expect(harness.app.state.clients.has(client)).toBe(true)
+    expect(JSON.parse(sent[0] ?? "{}")).toEqual({
+      type: "ready",
+      fileName: "unit.pad.htm",
+    })
+
+    harness.websocket.close(socket)
+    if (harness.app.state.idleTimer) clearTimeout(harness.app.state.idleTimer)
+    client.send({ type: "after-close" })
+
+    expect(harness.app.state.clients.has(client)).toBe(false)
+    expect(sent).toHaveLength(1)
+  })
+
+  test("saves body messages through injected files and broadcasts once", async () => {
+    const harness = await createPadHarness({
+      dates: [new Date("2026-04-30T12:45:00.000Z")],
+    })
+    const sender = new ClientState("sender", new Date("2026-04-30T12:00:00Z"))
+    const observer = new ClientState(
+      "observer",
+      new Date("2026-04-30T12:01:00Z"),
+    )
+    const senderSocket = makeSocket(sender)
+    const observerSocket = makeSocket(observer)
+    const changedBody = `<pad-document>
+  <pad-text>Saved from unit test</pad-text>
+</pad-document>`
+
+    harness.websocket.open(senderSocket.socket)
+    harness.websocket.open(observerSocket.socket)
+    await harness.websocket.message(
+      senderSocket.socket,
+      JSON.stringify({ type: "body", html: changedBody }),
+    )
+
+    expect(harness.writes).toEqual([
+      {
+        path: unitPadPath,
+        text: replaceBody(unitPadSource, changedBody),
+      },
+    ])
+    expect(harness.app.state.saveCount).toBe(1)
+    expect(harness.logs).toContain("[save 1] unit.pad.htm")
+    expect(JSON.parse(senderSocket.sent.at(-1) ?? "{}")).toEqual({
+      type: "saved",
+      savedAt: "2026-04-30T12:45:00.000Z",
+      saveCount: 1,
+    })
+    expect(JSON.parse(observerSocket.sent.at(-1) ?? "{}")).toEqual({
+      type: "saved",
+      savedAt: "2026-04-30T12:45:00.000Z",
+      saveCount: 1,
+    })
+  })
+
+  test("reports bad WebSocket messages only to the sender without writing", async () => {
+    const harness = await createPadHarness()
+    const sender = new ClientState("sender", new Date("2026-04-30T12:00:00Z"))
+    const observer = new ClientState(
+      "observer",
+      new Date("2026-04-30T12:01:00Z"),
+    )
+    const senderSocket = makeSocket(sender)
+    const observerSocket = makeSocket(observer)
+
+    harness.websocket.open(senderSocket.socket)
+    harness.websocket.open(observerSocket.socket)
+    await harness.websocket.message(senderSocket.socket, "not json")
+    await harness.websocket.message(
+      senderSocket.socket,
+      JSON.stringify({ type: "unknown" }),
+    )
+
+    expect(harness.writes).toEqual([])
+    expect(senderSocket.sent.slice(1).map((text) => JSON.parse(text))).toEqual([
+      { type: "error", message: "Malformed JSON" },
+      { type: "error", message: "Unknown message type: unknown" },
+    ])
+    expect(observerSocket.sent).toHaveLength(1)
+  })
+
+  test("enforces route authorization while allowing public assets", async () => {
+    const harness = await createPadHarness()
+
+    const forbiddenPad = await harness.fetch(makeRequest("/"), harness.fakeServer)
+    const allowedPad = await harness.fetch(
+      makeRequest("/?t=apptoken"),
+      harness.fakeServer,
+    )
+    const forbiddenWs = await harness.fetch(makeRequest("/ws"), harness.fakeServer)
+    const favicon = await harness.fetch(
+      makeRequest("/favicon.ico"),
+      harness.fakeServer,
+    )
+    const css = await harness.fetch(makeRequest("/pad.css"), harness.fakeServer)
+    const js = await harness.fetch(
+      makeRequest("/pad.browser.js"),
+      harness.fakeServer,
+    )
+
+    expect(forbiddenPad?.status).toBe(403)
+    expect(forbiddenWs?.status).toBe(403)
+    expect(harness.upgradeCalls).toEqual([])
+    expect(allowedPad?.status).toBe(200)
+    expect(await allowedPad?.text()).toBe(stripShebang(unitPadSource))
+    expect(favicon?.status).toBe(204)
+    expect(css?.status).toBe(200)
+    expect(css?.headers.get("content-type")).toBe("text/css; charset=utf-8")
+    expect(js?.status).toBe(200)
+    expect(js?.headers.get("content-type")).toBe(
+      "text/javascript; charset=utf-8",
+    )
+  })
+
+  test("returns 400 when the WebSocket upgrade fails", async () => {
+    const harness = await createPadHarness({
+      ids: ["client-1"],
+      upgradeResult: false,
+    })
+
+    const response = await harness.fetch(
+      makeRequest("/ws?t=apptoken"),
+      harness.fakeServer,
+    )
+
+    expect(response?.status).toBe(400)
+    expect(await response?.text()).toBe("WebSocket upgrade failed")
+    expect(harness.upgradeCalls).toHaveLength(1)
+    expect(harness.app.state.clients.size).toBe(0)
+  })
+
+  test("starts through injected dependencies and publishes the local URL", async () => {
+    const harness = await createPadHarness()
+
+    expect(harness.openedUrls).toEqual([
+      "http://127.0.0.1:4321/?t=apptoken",
+    ])
+    expect(harness.logs[0]).toBe(
+      "unit.pad.htm: http://127.0.0.1:4321/?t=apptoken",
+    )
+    expect(harness.stopCalls).toEqual([])
   })
 })
 
