@@ -18,5 +18,8 @@
   },
   "prettier": {
     "semi": false
+  },
+  "dependencies": {
+    "@opencode-ai/sdk": "^1.14.30"
   }
 }

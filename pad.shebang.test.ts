@@ -7,11 +7,20 @@ import {
   PadApplication,
   bodySplitIndex,
   contentType,
+  documentKindForPath,
+  exportOpenCodeChatSession,
   replaceBody,
   stripShebang,
   type PadDependencies,
   type WebSocketData,
 } from "./pad.shebang.tsx"
+import {
+  appendOpenCodeBundlesToChatSource,
+  extractChatSessionId,
+  renderChatDocument,
+  type OpenCodeMessageBundle,
+  type OpenCodeSessionLike,
+} from "./oc-chat.ts"
 
 const BRANCH = "pad-oc"
 
@@ -23,6 +32,7 @@ const replacementBody = `<pad-document>
   <pad-text>Changed body</pad-text>
 </pad-document>`
 const unitPadPath = "/tmp/unit.pad.htm"
+const unitChatPath = "/tmp/unit.chat.html"
 const unitPadSource = `#!/usr/bin/env -S bun ./pad.shebang.tsx
 <!doctype html>
 <meta charset="utf-8">
@@ -32,6 +42,99 @@ const unitPadSource = `#!/usr/bin/env -S bun ./pad.shebang.tsx
   <pad-text>Before</pad-text>
 </pad-document>
 `
+const unitChatSession: OpenCodeSessionLike = {
+  id: "ses_unit",
+  title: "Unit Chat",
+  projectID: "proj_unit",
+  directory: "/tmp/project",
+  version: "1.0.0",
+  time: {
+    created: Date.parse("2026-04-30T12:00:00.000Z"),
+    updated: Date.parse("2026-04-30T12:01:00.000Z"),
+  },
+}
+const existingChatMessage: OpenCodeMessageBundle = {
+  info: {
+    id: "msg_existing",
+    sessionID: "ses_unit",
+    role: "user",
+    time: { created: Date.parse("2026-04-30T12:00:00.000Z") },
+    system: "You are OpenCode.",
+    agent: "build",
+    model: { providerID: "openai", modelID: "gpt-5.5" },
+  },
+  parts: [
+    {
+      id: "part_existing_text",
+      sessionID: "ses_unit",
+      messageID: "msg_existing",
+      type: "text",
+      text: "Existing prompt",
+    },
+  ],
+}
+const newChatUserMessage: OpenCodeMessageBundle = {
+  info: {
+    id: "msg_new_user",
+    sessionID: "ses_unit",
+    role: "user",
+    time: { created: Date.parse("2026-04-30T12:02:00.000Z") },
+  },
+  parts: [
+    {
+      id: "part_new_user_text",
+      sessionID: "ses_unit",
+      messageID: "msg_new_user",
+      type: "text",
+      text: "Continue please",
+    },
+  ],
+}
+const newChatAssistantMessage: OpenCodeMessageBundle = {
+  info: {
+    id: "msg_new_assistant",
+    sessionID: "ses_unit",
+    role: "assistant",
+    time: {
+      created: Date.parse("2026-04-30T12:02:01.000Z"),
+      completed: Date.parse("2026-04-30T12:02:03.000Z"),
+    },
+    providerID: "openai",
+    modelID: "gpt-5.5",
+    mode: "build",
+    cost: 0.01,
+  },
+  parts: [
+    {
+      id: "part_tool",
+      sessionID: "ses_unit",
+      messageID: "msg_new_assistant",
+      type: "tool",
+      callID: "call_1",
+      tool: "bash",
+      state: {
+        status: "completed",
+        input: { command: "bun test" },
+        output: "pass",
+        title: "Runs tests",
+        metadata: {},
+        time: { start: 1, end: 2 },
+      },
+    },
+    {
+      id: "part_new_assistant_text",
+      sessionID: "ses_unit",
+      messageID: "msg_new_assistant",
+      type: "text",
+      text: "Done.",
+    },
+  ],
+}
+const unitChatSource = renderChatDocument({
+  session: unitChatSession,
+  messages: [existingChatMessage],
+  exportedAt: new Date("2026-04-30T12:01:00.000Z"),
+})
 
 type ServeOptions = Parameters<PadDependencies["server"]["serve"]>[0]
 type FetchHandler = (
@@ -80,12 +183,16 @@ async function createPadHarness({
   ids = [],
   dates = [],
   source = unitPadSource,
+  padPath = unitPadPath,
   upgradeResult = true,
+  openCode,
 }: {
   ids?: string[]
   dates?: Date[]
   source?: string
+  padPath?: string
   upgradeResult?: boolean
+  openCode?: PadDependencies["openCode"]
 } = {}) {
   let currentSource = source
   const writes: { path: string; text: string }[] = []
@@ -162,9 +269,22 @@ async function createPadHarness({
         }
       },
     },
+    openCode:
+      openCode ??
+      ({
+        async session() {
+          throw new Error("Unexpected OpenCode session call.")
+        },
+        async messages() {
+          throw new Error("Unexpected OpenCode messages call.")
+        },
+        async prompt() {
+          throw new Error("Unexpected OpenCode prompt call.")
+        },
+      } satisfies PadDependencies["openCode"]),
   }
 
-  const app = await PadApplication.create(unitPadPath, dependencies)
+  const app = await PadApplication.create(padPath, dependencies)
   await app.start()
 
   if (app.state.firstClientTimer) {
@@ -391,6 +511,103 @@ describe("contentType", () => {
     expect(contentType("pad.browser.js")).toBe("text/javascript; charset=utf-8")
     expect(contentType("SPEC.pad.htm")).toBe("text/html; charset=utf-8")
     expect(contentType("note.txt")).toBe("text/plain; charset=utf-8")
+  })
+})
+
+describe("documentKindForPath", () => {
+  test("recognizes PAD and OpenCode chat documents", () => {
+    expect(documentKindForPath("demo.pad.htm")).toBe("pad")
+    expect(documentKindForPath("demo.chat.html")).toBe("chat")
+    expect(documentKindForPath("demo.html")).toBeUndefined()
+  })
+})
+
+describe("OC chat serializer", () => {
+  test("renders semantic custom elements with raw SDK JSON", () => {
+    const source = renderChatDocument({
+      session: unitChatSession,
+      messages: [existingChatMessage, newChatAssistantMessage],
+      exportedAt: new Date("2026-04-30T12:03:00.000Z"),
+    })
+
+    expect(source).toContain('<meta name="oc-chat-format"')
+    expect(source).toContain("<oc-chat")
+    expect(source).toContain("<oc-system-prompt")
+    expect(source).toContain("<oc-user-message")
+    expect(source).toContain("<oc-assistant-message")
+    expect(source).toContain("<oc-tool-call")
+    expect(source).toContain('type="application/json" data-oc-message')
+    expect(source).toContain('type="application/json" data-oc-part')
+    expect(extractChatSessionId(source)).toBe("ses_unit")
+  })
+
+  test("appends only messages that are not already archived", () => {
+    const appended = appendOpenCodeBundlesToChatSource(unitChatSource, [
+      existingChatMessage,
+      newChatUserMessage,
+      newChatAssistantMessage,
+    ])
+
+    expect(appended.match(/data-message-id="msg_existing"/g)).toHaveLength(2)
+    expect(appended).toContain('data-message-id="msg_new_user"')
+    expect(appended).toContain('data-message-id="msg_new_assistant"')
+    expect(appended.indexOf('data-message-id="msg_new_user"')).toBeLessThan(
+      appended.indexOf("</oc-transcript>"),
+    )
+  })
+
+  test("exports a chat document from an OpenCode session", async () => {
+    const writes: { path: string; text: string }[] = []
+    const logs: string[] = []
+    const dependencies: PadDependencies = {
+      files: {
+        async readText() {
+          throw new Error("Unexpected read.")
+        },
+        async writeText(path, text) {
+          writes.push({ path, text })
+        },
+      },
+      browser: { open() {} },
+      logger: {
+        info(message) {
+          logs.push(message)
+        },
+        error() {},
+      },
+      ids: { nextId: () => "app-token" },
+      clock: { now: () => new Date("2026-04-30T12:04:00.000Z") },
+      server: {
+        serve() {
+          throw new Error("Unexpected serve.")
+        },
+      },
+      watcher: {
+        watch() {
+          throw new Error("Unexpected watch.")
+        },
+      },
+      openCode: {
+        async session(id) {
+          expect(id).toBe("ses_unit")
+          return unitChatSession
+        },
+        async messages(id) {
+          expect(id).toBe("ses_unit")
+          return [existingChatMessage]
+        },
+        async prompt() {
+          throw new Error("Unexpected prompt.")
+        },
+      },
+    }
+
+    await exportOpenCodeChatSession("ses_unit", unitChatPath, dependencies)
+
+    expect(writes).toHaveLength(1)
+    expect(writes[0]?.path).toBe(unitChatPath)
+    expect(writes[0]?.text).toContain("<oc-chat")
+    expect(logs).toEqual(["unit.chat.html: exported ses_unit"])
   })
 })
 
@@ -638,6 +855,85 @@ describe("PadApplication unit runtime", () => {
     expect(js?.headers.get("content-type")).toBe(
       "text/javascript; charset=utf-8",
     )
+  })
+
+  test("serves OC chat documents and runtime assets", async () => {
+    const harness = await createPadHarness({
+      source: unitChatSource,
+      padPath: unitChatPath,
+    })
+
+    const allowedChat = await harness.fetch(
+      makeRequest("/?t=apptoken"),
+      harness.fakeServer,
+    )
+    const css = await harness.fetch(
+      makeRequest("/oc-chat.css"),
+      harness.fakeServer,
+    )
+    const js = await harness.fetch(
+      makeRequest("/oc-chat.browser.js"),
+      harness.fakeServer,
+    )
+
+    expect(allowedChat?.status).toBe(200)
+    expect(await allowedChat?.text()).toBe(stripShebang(unitChatSource))
+    expect(css?.status).toBe(200)
+    expect(css?.headers.get("content-type")).toBe("text/css; charset=utf-8")
+    expect(js?.status).toBe(200)
+    expect(js?.headers.get("content-type")).toBe(
+      "text/javascript; charset=utf-8",
+    )
+  })
+
+  test("continues OC chat sessions and appends new SDK messages", async () => {
+    const promptCalls: { id: string; text: string }[] = []
+    const harness = await createPadHarness({
+      source: unitChatSource,
+      padPath: unitChatPath,
+      dates: [new Date("2026-04-30T12:05:00.000Z")],
+      openCode: {
+        async session() {
+          throw new Error("Unexpected session call.")
+        },
+        async messages() {
+          throw new Error("Unexpected messages call.")
+        },
+        async prompt(id, text) {
+          promptCalls.push({ id, text })
+          return [existingChatMessage, newChatUserMessage, newChatAssistantMessage]
+        },
+      },
+    })
+    const client = new ClientState("client-1", new Date("2026-04-30T12:00:00Z"))
+    const { socket, sent } = makeSocket(client)
+
+    harness.websocket.open(socket)
+    await harness.websocket.message(
+      socket,
+      JSON.stringify({ type: "oc.prompt", text: " Continue please " }),
+    )
+
+    expect(promptCalls).toEqual([{ id: "ses_unit", text: "Continue please" }])
+    expect(harness.writes).toHaveLength(1)
+    expect(harness.writes[0]?.path).toBe(unitChatPath)
+    expect(harness.writes[0]?.text).toContain('data-message-id="msg_new_user"')
+    expect(harness.writes[0]?.text).toContain(
+      'data-message-id="msg_new_assistant"',
+    )
+    expect(harness.logs).toContain("[chat save 1] unit.chat.html")
+    expect(sent.map((text) => JSON.parse(text).type)).toEqual([
+      "ready",
+      "oc.status",
+      "oc.saved",
+      "reload",
+    ])
+    expect(JSON.parse(sent[0] ?? "{}")).toEqual({
+      type: "ready",
+      fileName: "unit.chat.html",
+      kind: "chat",
+      sessionID: "ses_unit",
+    })
   })
 
   test("serves the latest PAD source from disk on browser refresh", async () => {

@@ -2,6 +2,13 @@
 import { watch as watchFileSystem } from "node:fs"
 import nodePath from "node:path"
 import * as nodeUrl from "node:url"
+import {
+  appendOpenCodeBundlesToChatSource,
+  extractChatSessionId,
+  renderChatDocument,
+  type OpenCodeMessageBundle,
+  type OpenCodeSessionLike,
+} from "./oc-chat.ts"
 
 export interface WebSocketData {
   client: ClientState
@@ -45,6 +52,13 @@ export interface FileWatcher {
   watch(path: string, onChange: () => void): FileWatchHandle
 }
 
+export interface OpenCodeBridge {
+  session(id: string): Promise<OpenCodeSessionLike>
+  messages(id: string): Promise<OpenCodeMessageBundle[]>
+  prompt(id: string, text: string): Promise<OpenCodeMessageBundle[]>
+  close?(): void | Promise<void>
+}
+
 export interface PadDependencies {
   files: TextFileSystem
   browser: BrowserLauncher
@@ -53,6 +67,7 @@ export interface PadDependencies {
   clock: Clock
   server: ServerFactory
   watcher: FileWatcher
+  openCode: OpenCodeBridge
 }
 
 class BunTextFileSystem implements TextFileSystem {
@@ -126,6 +141,76 @@ class NodeFileWatcher implements FileWatcher {
   }
 }
 
+function sdkData<T>(result: { data?: T } | T) {
+  if (result && typeof result === "object" && "data" in result) {
+    return (result as { data: T }).data
+  }
+  return result as T
+}
+
+class SdkOpenCodeBridge implements OpenCodeBridge {
+  private instance:
+    | {
+        client: unknown
+        server?: { close?(): void; stop?(force?: boolean): void }
+      }
+    | undefined
+
+  private async client() {
+    if (!this.instance) {
+      const sdk = (await import("@opencode-ai/sdk")) as {
+        createOpencode(): Promise<{
+          client: unknown
+          server?: { close?(): void; stop?(force?: boolean): void }
+        }>
+      }
+      this.instance = await sdk.createOpencode()
+    }
+    return this.instance.client as {
+      session: {
+        get(input: { path: { id: string } }): Promise<unknown>
+        messages(input: { path: { id: string } }): Promise<unknown>
+        prompt(input: {
+          path: { id: string }
+          body: { parts: { type: "text"; text: string }[] }
+        }): Promise<unknown>
+      }
+    }
+  }
+
+  async session(id: string) {
+    const client = await this.client()
+    return sdkData<OpenCodeSessionLike>(
+      (await client.session.get({ path: { id } })) as
+        | { data?: OpenCodeSessionLike }
+        | OpenCodeSessionLike,
+    )
+  }
+
+  async messages(id: string) {
+    const client = await this.client()
+    return sdkData<OpenCodeMessageBundle[]>(
+      (await client.session.messages({ path: { id } })) as
+        | { data?: OpenCodeMessageBundle[] }
+        | OpenCodeMessageBundle[],
+    )
+  }
+
+  async prompt(id: string, text: string) {
+    const client = await this.client()
+    await client.session.prompt({
+      path: { id },
+      body: { parts: [{ type: "text", text }] },
+    })
+    return await this.messages(id)
+  }
+
+  close() {
+    this.instance?.server?.close?.()
+    this.instance?.server?.stop?.(true)
+  }
+}
+
 export class ClientState {
   private socket: PadSocket | undefined
 
@@ -151,8 +236,17 @@ export class ClientState {
   }
 }
 
+export type PadDocumentKind = "pad" | "chat"
+
+export function documentKindForPath(path: string): PadDocumentKind | undefined {
+  if (path.endsWith(".pad.htm")) return "pad"
+  if (path.endsWith(".chat.html")) return "chat"
+  return undefined
+}
+
 export class AppState {
   readonly fileName: string
+  readonly kind: PadDocumentKind
   readonly clients = new Set<ClientState>()
   server: PadServer | undefined
   hasHadClient = false
@@ -171,6 +265,7 @@ export class AppState {
     readonly token: string,
   ) {
     this.fileName = nodePath.basename(padPath)
+    this.kind = documentKindForPath(padPath) ?? "pad"
     this.source = source
   }
 
@@ -198,6 +293,7 @@ export function createDefaultPadDependencies(): PadDependencies {
     clock: new SystemClock(),
     server: new BunServerFactory(),
     watcher: new NodeFileWatcher(),
+    openCode: new SdkOpenCodeBridge(),
   }
 }
 
@@ -312,7 +408,12 @@ export class PadApplication {
       return new Response(null, { status: 204 })
     }
 
-    if (url.pathname === "/pad.browser.js" || url.pathname === "/pad.css") {
+    if (
+      url.pathname === "/pad.browser.js" ||
+      url.pathname === "/pad.css" ||
+      url.pathname === "/oc-chat.browser.js" ||
+      url.pathname === "/oc-chat.css"
+    ) {
       const assetPath = nodePath.resolve(packageRoot(), url.pathname.slice(1))
       return new Response(Bun.file(assetPath), {
         headers: {
@@ -340,16 +441,37 @@ export class PadApplication {
     this.state.addClient(client)
     if (this.state.firstClientTimer) clearTimeout(this.state.firstClientTimer)
     if (this.state.idleTimer) clearTimeout(this.state.idleTimer)
+    if (this.state.kind === "chat") {
+      client.send({
+        type: "ready",
+        fileName: this.state.fileName,
+        kind: this.state.kind,
+        sessionID: extractChatSessionId(this.state.source),
+      })
+      return
+    }
     client.send({ type: "ready", fileName: this.state.fileName })
   }
 
   private async message(ws: PadSocket, raw: string | Buffer) {
     const { client } = ws.data
-    let message: { type?: string; html?: unknown }
+    let message: { type?: string; html?: unknown; text?: unknown }
     try {
       message = JSON.parse(String(raw))
     } catch {
       client.send({ type: "error", message: "Malformed JSON" })
+      return
+    }
+
+    if (message.type === "oc.prompt") {
+      try {
+        await this.continueChatSession(client, message.text)
+      } catch (error) {
+        client.send({
+          type: "oc.error",
+          message: error instanceof Error ? error.message : String(error),
+        })
+      }
       return
     }
 
@@ -425,15 +547,61 @@ export class PadApplication {
     })
   }
 
+  private async continueChatSession(client: ClientState, text: unknown) {
+    if (this.state.kind !== "chat") {
+      throw new Error("OpenCode continuation is only available for .chat.html files.")
+    }
+
+    const prompt = typeof text === "string" ? text.trim() : ""
+    if (!prompt) throw new Error("Prompt text is required.")
+
+    await this.loadSourceFromDisk()
+    const sessionID = extractChatSessionId(this.state.source)
+    if (!sessionID) throw new Error("OC chat file is missing data-session-id.")
+
+    client.send({ type: "oc.status", message: "Sending prompt to OpenCode..." })
+    const bundles = await this.dependencies.openCode.prompt(sessionID, prompt)
+    await this.saveChatBundles(bundles)
+  }
+
+  private async saveChatBundles(bundles: OpenCodeMessageBundle[]) {
+    await this.loadSourceFromDisk()
+    const nextSource = appendOpenCodeBundlesToChatSource(this.state.source, bundles)
+    if (nextSource === this.state.source) {
+      this.state.broadcast({
+        type: "oc.status",
+        message: "OpenCode returned no new messages.",
+      })
+      return
+    }
+
+    this.state.source = nextSource
+    await this.dependencies.files.writeText(this.state.padPath, this.state.source)
+    this.state.saveCount += 1
+    const savedAt = this.dependencies.clock.now().toISOString()
+    this.dependencies.logger.info(
+      `[chat save ${this.state.saveCount}] ${this.state.fileName}`,
+    )
+    this.state.broadcast({
+      type: "oc.saved",
+      savedAt,
+      saveCount: this.state.saveCount,
+    })
+    this.state.broadcast({ type: "reload", paths: [this.state.fileName] })
+  }
+
   private async loadSourceFromDisk() {
     this.state.source = await this.dependencies.files.readText(this.state.padPath)
   }
 
   private watchReloadFiles() {
+    const assetNames =
+      this.state.kind === "chat"
+        ? ["oc-chat.browser.js", "oc-chat.css"]
+        : ["pad.browser.js", "pad.css"]
     const paths = [
       this.state.padPath,
-      nodePath.resolve(packageRoot(), "pad.browser.js"),
-      nodePath.resolve(packageRoot(), "pad.css"),
+      ...assetNames.map((name) => nodePath.resolve(packageRoot(), name)),
     ]
 
     for (const path of paths) {
@@ -482,15 +650,45 @@ export class PadApplication {
   }
 }
 
+export async function exportOpenCodeChatSession(
+  sessionID: string,
+  outputPath: string,
+  dependencies = createDefaultPadDependencies(),
+) {
+  const session = await dependencies.openCode.session(sessionID)
+  const messages = await dependencies.openCode.messages(sessionID)
+  const source = renderChatDocument({
+    session,
+    messages,
+    exportedAt: dependencies.clock.now(),
+  })
+
+  await dependencies.files.writeText(outputPath, source)
+  dependencies.logger.info(`${nodePath.basename(outputPath)}: exported ${sessionID}`)
+}
+
 export async function run(
   args = process.argv.slice(2),
   dependencies = createDefaultPadDependencies(),
 ) {
+  if (args[0] === "--export-chat") {
+    const sessionID = args[1]
+    if (!sessionID) die("Usage: pad --export-chat <session-id> [file.chat.html]")
+    const outputPath = nodePath.resolve(args[2] ?? `${sessionID}.chat.html`)
+    if (!outputPath.endsWith(".chat.html")) {
+      die("OpenCode chat files must end with .chat.html")
+    }
+    await exportOpenCodeChatSession(sessionID, outputPath, dependencies)
+    return
+  }
+
   const padArg = args.find((arg) => !arg.startsWith("-"))
   if (!padArg) die("Usage: pad ./file.pad.htm")
 
   const padPath = nodePath.resolve(padArg)
-  if (!padPath.endsWith(".pad.htm")) die("PAD files must end with .pad.htm")
+  if (!documentKindForPath(padPath)) {
+    die("PAD files must end with .pad.htm or .chat.html")
+  }
 
   const app = await PadApplication.create(padPath, dependencies)
   await app.start()
