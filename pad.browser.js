@@ -13,6 +13,7 @@ function defineElement(name, constructor) {
 }
 
 class PadDocument extends HTMLElement {}
+defineElement("pad-document", PadDocument)
 
 class PadText extends HTMLElement {
   connectedCallback() {
@@ -24,6 +25,7 @@ class PadText extends HTMLElement {
     }
   }
 }
+defineElement("pad-text", PadText)
 
 class PadStatus extends HTMLElement {
   /** @param {string} value */
@@ -31,9 +33,6 @@ class PadStatus extends HTMLElement {
     this.textContent = value
   }
 }
-
-defineElement("pad-document", PadDocument)
-defineElement("pad-text", PadText)
 defineElement("pad-status", PadStatus)
 
 /** @returns {PadStatus} */
@@ -62,7 +61,8 @@ function cleanBodyHtml() {
     if (node.getAttribute("contenteditable") === "true") {
       node.removeAttribute("contenteditable")
     }
-    if (node.getAttribute("spellcheck") === "true") node.removeAttribute("spellcheck")
+    if (node.getAttribute("spellcheck") === "true")
+      node.removeAttribute("spellcheck")
     if (node.getAttribute("role") === "textbox") node.removeAttribute("role")
     if (node.getAttribute("aria-multiline") === "true") {
       node.removeAttribute("aria-multiline")
@@ -80,7 +80,9 @@ function connect() {
   setStatus("Connecting to PAD server...")
 
   const protocol = location.protocol === "https:" ? "wss:" : "ws:"
-  const socket = new WebSocket(`${protocol}//${location.host}/ws${location.search}`)
+  const socket = new WebSocket(
+    `${protocol}//${location.host}/ws${location.search}`,
+  )
   /** @type {number | undefined} */
   let saveTimer = undefined
   let dirty = false
