@@ -2,7 +2,183 @@
 import nodePath from "node:path"
 import * as nodeUrl from "node:url"
 
-type PadSocket = Bun.ServerWebSocket<unknown>
+export interface WebSocketData {
+  client: ClientState
+}
+
+type PadSocket = Bun.ServerWebSocket<WebSocketData>
+type PadServer = Bun.Server<WebSocketData>
+type PadServeOptions = Bun.Serve.Options<WebSocketData, never>
+
+export interface TextFileSystem {
+  readText(path: string): Promise<string>
+  writeText(path: string, text: string): Promise<void>
+}
+
+export interface BrowserLauncher {
+  open(url: string): Promise<void> | void
+}
+
+export interface Logger {
+  info(message: string): void
+  error(message: string): void
+}
+
+export interface IdGenerator {
+  nextId(): string
+}
+
+export interface Clock {
+  now(): Date
+}
+
+export interface ServerFactory {
+  serve(options: PadServeOptions): PadServer
+}
+
+export interface PadDependencies {
+  files: TextFileSystem
+  browser: BrowserLauncher
+  logger: Logger
+  ids: IdGenerator
+  clock: Clock
+  server: ServerFactory
+}
+
+class BunTextFileSystem implements TextFileSystem {
+  async readText(path: string) {
+    return await Bun.file(path).text()
+  }
+
+  async writeText(path: string, text: string) {
+    await Bun.write(path, text)
+  }
+}
+
+class SystemBrowserLauncher implements BrowserLauncher {
+  constructor(
+    private readonly env: Record<string, string | undefined> = process.env,
+    private readonly platform = process.platform,
+  ) {}
+
+  open(url: string) {
+    if (this.env.PAD_NO_OPEN === "1") return
+
+    if (this.platform === "darwin") {
+      Bun.spawn(["open", url], { stdout: "ignore", stderr: "ignore" })
+      return
+    }
+
+    if (this.platform === "win32") {
+      Bun.spawn(["cmd", "/c", "start", "", url], {
+        stdout: "ignore",
+        stderr: "ignore",
+      })
+      return
+    }
+
+    Bun.spawn(["xdg-open", url], { stdout: "ignore", stderr: "ignore" })
+  }
+}
+
+class ConsoleLogger implements Logger {
+  info(message: string) {
+    console.log(message)
+  }
+
+  error(message: string) {
+    console.error(message)
+  }
+}
+
+class CryptoIdGenerator implements IdGenerator {
+  nextId() {
+    return crypto.randomUUID()
+  }
+}
+
+class SystemClock implements Clock {
+  now() {
+    return new Date()
+  }
+}
+
+class BunServerFactory implements ServerFactory {
+  serve(options: PadServeOptions) {
+    return Bun.serve<WebSocketData>(options)
+  }
+}
+
+export class ClientState {
+  private socket: PadSocket | undefined
+
+  constructor(
+    readonly id: string,
+    readonly createdAt: Date,
+  ) {}
+
+  attach(socket: PadSocket) {
+    this.socket = socket
+  }
+
+  detach() {
+    this.socket = undefined
+  }
+
+  send(message: unknown) {
+    this.sendText(JSON.stringify(message))
+  }
+
+  sendText(text: string) {
+    this.socket?.send(text)
+  }
+}
+
+export class AppState {
+  readonly fileName: string
+  readonly clients = new Set<ClientState>()
+  server: PadServer | undefined
+  hasHadClient = false
+  stopping = false
+  idleTimer: ReturnType<typeof setTimeout> | undefined
+  firstClientTimer: ReturnType<typeof setTimeout> | undefined
+  saveCount = 0
+  source: string
+
+  constructor(
+    readonly padPath: string,
+    source: string,
+    readonly token: string,
+  ) {
+    this.fileName = nodePath.basename(padPath)
+    this.source = source
+  }
+
+  addClient(client: ClientState) {
+    this.hasHadClient = true
+    this.clients.add(client)
+  }
+
+  removeClient(client: ClientState) {
+    this.clients.delete(client)
+  }
+
+  broadcast(message: unknown) {
+    const text = JSON.stringify(message)
+    for (const client of this.clients) client.sendText(text)
+  }
+}
+
+export function createDefaultPadDependencies(): PadDependencies {
+  return {
+    files: new BunTextFileSystem(),
+    browser: new SystemBrowserLauncher(),
+    logger: new ConsoleLogger(),
+    ids: new CryptoIdGenerator(),
+    clock: new SystemClock(),
+    server: new BunServerFactory(),
+  }
+}
 
 const HOST = "127.0.0.1"
 const FIRST_CLIENT_TIMEOUT_MS = 60_000
@@ -49,165 +225,190 @@ export function replaceBody(source: string, bodyHtml: string) {
   return `${source.slice(0, splitAt).trimEnd()}\n\n${bodyHtml.trim()}\n`
 }
 
-async function openInBrowser(url: string) {
-  if (process.env.PAD_NO_OPEN === "1") return
+export class PadApplication {
+  private constructor(
+    readonly state: AppState,
+    private readonly dependencies: PadDependencies,
+  ) {}
 
-  if (process.platform === "darwin") {
-    Bun.spawn(["open", url], { stdout: "ignore", stderr: "ignore" })
-    return
+  static async create(padPath: string, dependencies: PadDependencies) {
+    const source = await dependencies.files.readText(padPath)
+    const token = dependencies.ids.nextId().replaceAll("-", "")
+    return new PadApplication(new AppState(padPath, source, token), dependencies)
   }
 
-  if (process.platform === "win32") {
-    Bun.spawn(["cmd", "/c", "start", "", url], {
-      stdout: "ignore",
-      stderr: "ignore",
+  async start() {
+    this.state.server = this.dependencies.server.serve({
+      hostname: HOST,
+      port: 0,
+      fetch: (request, server) => this.handleFetch(request, server),
+      websocket: {
+        data: {} as WebSocketData,
+        open: (ws) => this.open(ws),
+        message: (ws, raw) => this.message(ws, raw),
+        close: (ws) => this.close(ws),
+      },
     })
-    return
+
+    const localUrl = this.localUrl()
+
+    this.state.firstClientTimer = setTimeout(() => {
+      if (!this.state.hasHadClient) {
+        this.stop("No browser connected; PAD server stopped.")
+      }
+    }, FIRST_CLIENT_TIMEOUT_MS)
+
+    process.on("SIGINT", () => this.stop("Stopping PAD server."))
+    process.on("SIGTERM", () => this.stop("Stopping PAD server."))
+
+    this.dependencies.logger.info(`${this.state.fileName}: ${localUrl}`)
+    await this.dependencies.browser.open(localUrl)
   }
 
-  Bun.spawn(["xdg-open", url], { stdout: "ignore", stderr: "ignore" })
+  private localUrl() {
+    if (!this.state.server) throw new Error("PAD server has not started.")
+    return `http://${HOST}:${this.state.server.port}/?t=${this.state.token}`
+  }
+
+  private async handleFetch(request: Request, server: PadServer) {
+    const url = new URL(request.url)
+
+    if (url.pathname === "/ws") {
+      if (!this.authorized(url)) return new Response("Forbidden", { status: 403 })
+
+      const client = new ClientState(
+        this.dependencies.ids.nextId(),
+        this.dependencies.clock.now(),
+      )
+      if (server.upgrade(request, { data: { client } })) return
+      return new Response("WebSocket upgrade failed", { status: 400 })
+    }
+
+    if (url.pathname === "/favicon.ico") {
+      return new Response(null, { status: 204 })
+    }
+
+    if (url.pathname === "/pad.browser.js" || url.pathname === "/pad.css") {
+      const assetPath = nodePath.resolve(packageRoot(), url.pathname.slice(1))
+      return new Response(Bun.file(assetPath), {
+        headers: {
+          "cache-control": "no-store",
+          "content-type": contentType(assetPath),
+        },
+      })
+    }
+
+    if (!this.authorized(url)) return new Response("Forbidden", { status: 403 })
+
+    return new Response(stripShebang(this.state.source), {
+      headers: {
+        "cache-control": "no-store",
+        "content-type": "text/html; charset=utf-8",
+      },
+    })
+  }
+
+  private open(ws: PadSocket) {
+    const { client } = ws.data
+    client.attach(ws)
+    this.state.addClient(client)
+    if (this.state.firstClientTimer) clearTimeout(this.state.firstClientTimer)
+    if (this.state.idleTimer) clearTimeout(this.state.idleTimer)
+    client.send({ type: "ready", fileName: this.state.fileName })
+  }
+
+  private async message(ws: PadSocket, raw: string | Buffer) {
+    const { client } = ws.data
+    let message: { type?: string; html?: unknown }
+    try {
+      message = JSON.parse(String(raw))
+    } catch {
+      client.send({ type: "error", message: "Malformed JSON" })
+      return
+    }
+
+    if (message.type !== "body") {
+      client.send({
+        type: "error",
+        message: `Unknown message type: ${message.type}`,
+      })
+      return
+    }
+
+    try {
+      await this.saveBody(String(message.html ?? ""))
+    } catch (error) {
+      client.send({
+        type: "error",
+        message: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }
+
+  private close(ws: PadSocket) {
+    const { client } = ws.data
+    this.state.removeClient(client)
+    client.detach()
+    this.stopWhenIdle()
+  }
+
+  private authorized(url: URL) {
+    return url.searchParams.get("t") === this.state.token
+  }
+
+  private stop(reason: string) {
+    if (this.state.stopping) return
+    this.state.stopping = true
+    if (this.state.idleTimer) clearTimeout(this.state.idleTimer)
+    if (this.state.firstClientTimer) clearTimeout(this.state.firstClientTimer)
+    this.dependencies.logger.info(reason)
+    this.state.server?.stop(true)
+  }
+
+  private stopWhenIdle() {
+    if (
+      !this.state.hasHadClient ||
+      this.state.clients.size > 0 ||
+      this.state.stopping
+    ) {
+      return
+    }
+    if (this.state.idleTimer) clearTimeout(this.state.idleTimer)
+    this.state.idleTimer = setTimeout(() => {
+      if (this.state.clients.size === 0) {
+        this.stop("Browser closed; PAD server stopped.")
+      }
+    }, IDLE_SHUTDOWN_MS)
+  }
+
+  private async saveBody(bodyHtml: string) {
+    this.state.source = replaceBody(this.state.source, bodyHtml)
+    await this.dependencies.files.writeText(this.state.padPath, this.state.source)
+    this.state.saveCount += 1
+    const savedAt = this.dependencies.clock.now().toISOString()
+    this.dependencies.logger.info(
+      `[save ${this.state.saveCount}] ${this.state.fileName}`,
+    )
+    this.state.broadcast({
+      type: "saved",
+      savedAt,
+      saveCount: this.state.saveCount,
+    })
+  }
 }
 
-export async function run(args = process.argv.slice(2)) {
+export async function run(
+  args = process.argv.slice(2),
+  dependencies = createDefaultPadDependencies(),
+) {
   const padArg = args.find((arg) => !arg.startsWith("-"))
   if (!padArg) die("Usage: pad ./file.pad.htm")
 
   const padPath = nodePath.resolve(padArg)
   if (!padPath.endsWith(".pad.htm")) die("PAD files must end with .pad.htm")
 
-  let source = await Bun.file(padPath).text()
-  const fileName = nodePath.basename(padPath)
-  const clients = new Set<PadSocket>()
-  const token = crypto.randomUUID().replaceAll("-", "")
-  let server: ReturnType<typeof Bun.serve>
-  let hasHadClient = false
-  let stopping = false
-  let idleTimer: ReturnType<typeof setTimeout> | undefined
-  let firstClientTimer: ReturnType<typeof setTimeout> | undefined
-  let saveCount = 0
-
-  const send = (ws: PadSocket, message: unknown) =>
-    ws.send(JSON.stringify(message))
-
-  const broadcast = (message: unknown) => {
-    const text = JSON.stringify(message)
-    for (const client of clients) client.send(text)
-  }
-
-  const stop = (reason: string) => {
-    if (stopping) return
-    stopping = true
-    if (idleTimer) clearTimeout(idleTimer)
-    if (firstClientTimer) clearTimeout(firstClientTimer)
-    console.log(reason)
-    server.stop(true)
-  }
-
-  const stopWhenIdle = () => {
-    if (!hasHadClient || clients.size > 0 || stopping) return
-    if (idleTimer) clearTimeout(idleTimer)
-    idleTimer = setTimeout(() => {
-      if (clients.size === 0) stop("Browser closed; PAD server stopped.")
-    }, IDLE_SHUTDOWN_MS)
-  }
-
-  const saveBody = async (bodyHtml: string) => {
-    source = replaceBody(source, bodyHtml)
-    await Bun.write(padPath, source)
-    saveCount += 1
-    const savedAt = new Date().toISOString()
-    console.log(`[save ${saveCount}] ${fileName}`)
-    broadcast({ type: "saved", savedAt, saveCount })
-  }
-
-  const authorized = (url: URL) => url.searchParams.get("t") === token
-
-  server = Bun.serve({
-    hostname: HOST,
-    port: 0,
-    async fetch(request, server) {
-      const url = new URL(request.url)
-
-      if (url.pathname === "/ws") {
-        if (!authorized(url)) return new Response("Forbidden", { status: 403 })
-        if (server.upgrade(request, { data: {} })) return
-        return new Response("WebSocket upgrade failed", { status: 400 })
-      }
-
-      if (url.pathname === "/favicon.ico")
-        return new Response(null, { status: 204 })
-
-      if (url.pathname === "/pad.browser.js" || url.pathname === "/pad.css") {
-        const assetPath = nodePath.resolve(packageRoot(), url.pathname.slice(1))
-        return new Response(Bun.file(assetPath), {
-          headers: {
-            "cache-control": "no-store",
-            "content-type": contentType(assetPath),
-          },
-        })
-      }
-
-      if (!authorized(url)) return new Response("Forbidden", { status: 403 })
-
-      return new Response(stripShebang(source), {
-        headers: {
-          "cache-control": "no-store",
-          "content-type": "text/html; charset=utf-8",
-        },
-      })
-    },
-    websocket: {
-      open(ws) {
-        hasHadClient = true
-        if (firstClientTimer) clearTimeout(firstClientTimer)
-        if (idleTimer) clearTimeout(idleTimer)
-        clients.add(ws)
-        send(ws, { type: "ready", fileName })
-      },
-      async message(ws, raw) {
-        let message: { type?: string; html?: unknown }
-        try {
-          message = JSON.parse(String(raw))
-        } catch {
-          send(ws, { type: "error", message: "Malformed JSON" })
-          return
-        }
-
-        if (message.type !== "body") {
-          send(ws, {
-            type: "error",
-            message: `Unknown message type: ${message.type}`,
-          })
-          return
-        }
-
-        try {
-          await saveBody(String(message.html ?? ""))
-        } catch (error) {
-          send(ws, {
-            type: "error",
-            message: error instanceof Error ? error.message : String(error),
-          })
-        }
-      },
-      close(ws) {
-        clients.delete(ws)
-        stopWhenIdle()
-      },
-    },
-  })
-
-  const localUrl = `http://${HOST}:${server.port}/?t=${token}`
-
-  firstClientTimer = setTimeout(() => {
-    if (!hasHadClient) stop("No browser connected; PAD server stopped.")
-  }, FIRST_CLIENT_TIMEOUT_MS)
-
-  process.on("SIGINT", () => stop("Stopping PAD server."))
-  process.on("SIGTERM", () => stop("Stopping PAD server."))
-
-  console.log(`${fileName}: ${localUrl}`)
-  await openInBrowser(localUrl)
+  const app = await PadApplication.create(padPath, dependencies)
+  await app.start()
 }
 
 if (import.meta.main) await run()
