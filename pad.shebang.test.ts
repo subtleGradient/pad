@@ -13,9 +13,9 @@ import {
   type WebSocketData,
 } from "./pad.shebang.tsx"
 
-const BRANCH = "v0-dev"
+const BRANCH = "pad-diff"
 
-const publicShebang = `#!/usr/bin/env -S bunx --bun -p https://github.com/subtleGradient/pad/archive/refs/heads/${BRANCH}.tar.gz pad`
+const publicShebang = `#!/usr/bin/env -S bunx -p https://github.com/subtleGradient/pad/archive/refs/heads/${BRANCH}.tar.gz pad`
 const cdn = `https://cdn.jsdelivr.net/gh/subtleGradient/pad@refs/heads/${BRANCH}`
 const publicCss = `${cdn}/pad.css`
 const publicJs = `${cdn}/pad.browser.js`
@@ -361,14 +361,14 @@ ${replacementBody}
 })
 
 describe("PAD entry documents", () => {
-  test("SPEC pins the GitHub runner and jsDelivr assets to v0-dev", async () => {
+  test(`SPEC pins the GitHub runner and jsDelivr assets to ${BRANCH}`, async () => {
     const source = await Bun.file("SPEC.pad.htm").text()
 
     expect(source.startsWith(`${publicShebang}\n`)).toBe(true)
     expect(source).toContain(publicCss)
     expect(source).toContain(publicJs)
     expect(source).not.toContain("@main")
-    expect(source).not.toContain("github:subtleGradient/pad#v0-dev")
+    expect(source).not.toContain(`github:subtleGradient`)
   })
 
   test("DEV uses only local runner and browser assets", async () => {
@@ -412,8 +412,9 @@ describe("ClientState", () => {
 describe("browser runtime", () => {
   test("reloads the page when the server broadcasts a reload message", async () => {
     const source = await Bun.file("pad.browser.js").text()
-    const sockets: { listeners: Record<string, (event: { data: string }) => void> }[] =
-      []
+    const sockets: {
+      listeners: Record<string, (event: { data: string }) => void>
+    }[] = []
     const status = {
       dataset: {} as Record<string, string>,
       textContent: "",
@@ -433,7 +434,10 @@ describe("browser runtime", () => {
         sockets.push(this)
       }
 
-      addEventListener(type: string, listener: (event: { data: string }) => void) {
+      addEventListener(
+        type: string,
+        listener: (event: { data: string }) => void,
+      ) {
         this.listeners[type] = listener
       }
 
@@ -600,12 +604,18 @@ describe("PadApplication unit runtime", () => {
   test("enforces route authorization while allowing public assets", async () => {
     const harness = await createPadHarness()
 
-    const forbiddenPad = await harness.fetch(makeRequest("/"), harness.fakeServer)
+    const forbiddenPad = await harness.fetch(
+      makeRequest("/"),
+      harness.fakeServer,
+    )
     const allowedPad = await harness.fetch(
       makeRequest("/?t=apptoken"),
       harness.fakeServer,
     )
-    const forbiddenWs = await harness.fetch(makeRequest("/ws"), harness.fakeServer)
+    const forbiddenWs = await harness.fetch(
+      makeRequest("/ws"),
+      harness.fakeServer,
+    )
     const favicon = await harness.fetch(
       makeRequest("/favicon.ico"),
       harness.fakeServer,
@@ -666,9 +676,7 @@ describe("PadApplication unit runtime", () => {
   test("starts through injected dependencies and publishes the local URL", async () => {
     const harness = await createPadHarness()
 
-    expect(harness.openedUrls).toEqual([
-      "http://127.0.0.1:4321/?t=apptoken",
-    ])
+    expect(harness.openedUrls).toEqual(["http://127.0.0.1:4321/?t=apptoken"])
     expect(harness.logs[0]).toBe(
       "unit.pad.htm: http://127.0.0.1:4321/?t=apptoken",
     )
@@ -720,7 +728,10 @@ describe("PadApplication unit runtime", () => {
     harness.triggerWatch("unit.pad.htm")
     await Bun.sleep(75)
 
-    expect(sent.map((text) => JSON.parse(text).type)).toEqual(["ready", "saved"])
+    expect(sent.map((text) => JSON.parse(text).type)).toEqual([
+      "ready",
+      "saved",
+    ])
   })
 
   test("broadcasts reload when watched browser assets change", async () => {
