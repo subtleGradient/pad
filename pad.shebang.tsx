@@ -17,7 +17,7 @@ function packageRoot() {
   return dirname(fileURLToPath(import.meta.url))
 }
 
-function contentType(pathname: string) {
+export function contentType(pathname: string) {
   if (pathname.endsWith(".css")) return "text/css; charset=utf-8"
   if (pathname.endsWith(".js")) return "text/javascript; charset=utf-8"
   if (pathname.endsWith(".htm") || pathname.endsWith(".html")) {
@@ -26,18 +26,18 @@ function contentType(pathname: string) {
   return "text/plain; charset=utf-8"
 }
 
-function stripShebang(source: string) {
+export function stripShebang(source: string) {
   return source.startsWith("#!") ? source.replace(/^#!.*\n/, "") : source
 }
 
-function bodySplitIndex(source: string) {
+export function bodySplitIndex(source: string) {
   const pattern = /<script\b(?=[^>]*\bsrc\s*=\s*(["'])[^"']*\bpad\.browser\.js(?:\?[^"']*)?\1)[^>]*>\s*<\/script>\s*/i
   const match = pattern.exec(source)
   if (!match) return -1
   return match.index + match[0].length
 }
 
-function replaceBody(source: string, bodyHtml: string) {
+export function replaceBody(source: string, bodyHtml: string) {
   const splitAt = bodySplitIndex(source)
   if (splitAt < 0) {
     throw new Error("PAD source must include a pad.browser.js script before the body content.")
@@ -65,8 +65,8 @@ async function openInBrowser(url: string) {
   Bun.spawn(["xdg-open", url], { stdout: "ignore", stderr: "ignore" })
 }
 
-async function run() {
-  const padArg = process.argv.slice(2).find((arg) => !arg.startsWith("-"))
+export async function run(args = process.argv.slice(2)) {
+  const padArg = args.find((arg) => !arg.startsWith("-"))
   if (!padArg) die("Usage: pad ./file.pad.htm")
 
   const padPath = resolve(padArg)
@@ -202,4 +202,4 @@ async function run() {
   await openInBrowser(localUrl)
 }
 
-await run()
+if (import.meta.main) await run()
