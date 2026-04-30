@@ -57,6 +57,9 @@ export interface RenderChatDocumentOptions {
 }
 
 export const OC_CHAT_FORMAT = "oc-session-pad/v1"
+export const OC_CHAT_BRANCH = "pad-oc"
+export const OC_CHAT_PUBLIC_RUNNER = `#!/usr/bin/env -S bunx --bun -p https://github.com/subtleGradient/pad/archive/refs/heads/${OC_CHAT_BRANCH}.tar.gz pad`
+export const OC_CHAT_PUBLIC_ASSET_BASE = `https://cdn.jsdelivr.net/gh/subtleGradient/pad@refs/heads/${OC_CHAT_BRANCH}`
 
 export const OC_CHAT_STATIC_CSS = String.raw`
 :root {
@@ -260,7 +263,7 @@ oc-composer button {
 }
 `.trim()
 
-const DEFAULT_RUNNER = "#!/usr/bin/env -S bun ./pad.shebang.tsx"
+const DEFAULT_RUNNER = OC_CHAT_PUBLIC_RUNNER
 
 function escapeText(value: unknown) {
   return String(value ?? "")
@@ -538,8 +541,8 @@ export function renderChatDocument({
   session,
   messages,
   runner = DEFAULT_RUNNER,
-  cssHref = "./oc-chat.css",
-  scriptSrc = "./oc-chat.browser.js",
+  cssHref = `${OC_CHAT_PUBLIC_ASSET_BASE}/oc-chat.css`,
+  scriptSrc = `${OC_CHAT_PUBLIC_ASSET_BASE}/oc-chat.browser.js`,
   exportedAt = new Date(),
 }: RenderChatDocumentOptions) {
   const title = `${readableTitle(session)}.chat.html`

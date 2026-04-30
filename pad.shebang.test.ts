@@ -15,6 +15,8 @@ import {
   type WebSocketData,
 } from "./pad.shebang.tsx"
 import {
+  OC_CHAT_PUBLIC_ASSET_BASE,
+  OC_CHAT_PUBLIC_RUNNER,
   appendOpenCodeBundlesToChatSource,
   extractChatSessionId,
   renderChatDocument,
@@ -531,6 +533,9 @@ describe("OC chat serializer", () => {
     })
 
     expect(source).toContain('<meta name="oc-chat-format"')
+    expect(source.startsWith(`${OC_CHAT_PUBLIC_RUNNER}\n`)).toBe(true)
+    expect(source).toContain(`${OC_CHAT_PUBLIC_ASSET_BASE}/oc-chat.css`)
+    expect(source).toContain(`${OC_CHAT_PUBLIC_ASSET_BASE}/oc-chat.browser.js`)
     expect(source).toContain("<oc-chat")
     expect(source).toContain("<oc-system-prompt")
     expect(source).toContain("<oc-user-message")
