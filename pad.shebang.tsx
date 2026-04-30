@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
-import { basename, dirname, resolve } from "node:path"
-import { fileURLToPath } from "node:url"
+import nodePath from "node:path"
+import * as nodeUrl from "node:url"
 
-type PadSocket = import("bun").ServerWebSocket<unknown>
+type PadSocket = Bun.ServerWebSocket<unknown>
 
 const HOST = "127.0.0.1"
 const FIRST_CLIENT_TIMEOUT_MS = 60_000
@@ -14,7 +14,7 @@ function die(message: string): never {
 }
 
 function packageRoot() {
-  return dirname(fileURLToPath(import.meta.url))
+  return nodePath.dirname(nodeUrl.fileURLToPath(import.meta.url))
 }
 
 export function contentType(pathname: string) {
@@ -31,7 +31,8 @@ export function stripShebang(source: string) {
 }
 
 export function bodySplitIndex(source: string) {
-  const pattern = /<script\b(?=[^>]*\bsrc\s*=\s*(["'])[^"']*\bpad\.browser\.js(?:\?[^"']*)?\1)[^>]*>\s*<\/script>\s*/i
+  const pattern =
+    /<script\b(?=[^>]*\bsrc\s*=\s*(["'])[^"']*\bpad\.browser\.js(?:\?[^"']*)?\1)[^>]*>\s*<\/script>\s*/i
   const match = pattern.exec(source)
   if (!match) return -1
   return match.index + match[0].length
@@ -40,7 +41,9 @@ export function bodySplitIndex(source: string) {
 export function replaceBody(source: string, bodyHtml: string) {
   const splitAt = bodySplitIndex(source)
   if (splitAt < 0) {
-    throw new Error("PAD source must include a pad.browser.js script before the body content.")
+    throw new Error(
+      "PAD source must include a pad.browser.js script before the body content.",
+    )
   }
 
   return `${source.slice(0, splitAt).trimEnd()}\n\n${bodyHtml.trim()}\n`
@@ -69,11 +72,11 @@ export async function run(args = process.argv.slice(2)) {
   const padArg = args.find((arg) => !arg.startsWith("-"))
   if (!padArg) die("Usage: pad ./file.pad.htm")
 
-  const padPath = resolve(padArg)
+  const padPath = nodePath.resolve(padArg)
   if (!padPath.endsWith(".pad.htm")) die("PAD files must end with .pad.htm")
 
   let source = await Bun.file(padPath).text()
-  const fileName = basename(padPath)
+  const fileName = nodePath.basename(padPath)
   const clients = new Set<PadSocket>()
   const token = crypto.randomUUID().replaceAll("-", "")
   let server: ReturnType<typeof Bun.serve>
@@ -83,7 +86,8 @@ export async function run(args = process.argv.slice(2)) {
   let firstClientTimer: ReturnType<typeof setTimeout> | undefined
   let saveCount = 0
 
-  const send = (ws: PadSocket, message: unknown) => ws.send(JSON.stringify(message))
+  const send = (ws: PadSocket, message: unknown) =>
+    ws.send(JSON.stringify(message))
 
   const broadcast = (message: unknown) => {
     const text = JSON.stringify(message)
@@ -130,10 +134,11 @@ export async function run(args = process.argv.slice(2)) {
         return new Response("WebSocket upgrade failed", { status: 400 })
       }
 
-      if (url.pathname === "/favicon.ico") return new Response(null, { status: 204 })
+      if (url.pathname === "/favicon.ico")
+        return new Response(null, { status: 204 })
 
       if (url.pathname === "/pad.browser.js" || url.pathname === "/pad.css") {
-        const assetPath = resolve(packageRoot(), url.pathname.slice(1))
+        const assetPath = nodePath.resolve(packageRoot(), url.pathname.slice(1))
         return new Response(Bun.file(assetPath), {
           headers: {
             "cache-control": "no-store",
@@ -169,7 +174,10 @@ export async function run(args = process.argv.slice(2)) {
         }
 
         if (message.type !== "body") {
-          send(ws, { type: "error", message: `Unknown message type: ${message.type}` })
+          send(ws, {
+            type: "error",
+            message: `Unknown message type: ${message.type}`,
+          })
           return
         }
 
