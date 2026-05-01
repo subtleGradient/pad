@@ -101,6 +101,10 @@ class FakeElement {
   setAttribute(name: string, value: string) {
     this.attributes.set(name, value)
   }
+
+  removeAttribute(name: string) {
+    this.attributes.delete(name)
+  }
 }
 
 async function createPadHarness({
@@ -408,6 +412,7 @@ describe("PAD entry documents", () => {
     expect(source).toContain('<pad-snapshot kind="gap"')
     expect(source).toContain('<pad-import kind="expect-pack"')
     expect(source).toContain('matcher="core.spec-local-runtime"')
+    expect(source).toContain('matcher="core.generic-prose-editable"')
     expect(source).toContain("UI/UX of the primitive elements")
     expect(source).toContain("uidotsh://ui/design-guidelines/buttons")
     expect(source).toContain("matcher=\"ui.scope-affordance\"")
@@ -525,11 +530,17 @@ describe("browser runtime", () => {
     expect(browserSource).toContain("RUNTIME_CRUD_SELECTOR")
     expect(browserSource).toContain("control.name = name")
     expect(browserSource).toContain("min-height: 2.75rem")
+    expect(browserSource).toContain("EDITABLE_TEXT_ELEMENTS")
+    expect(browserSource).toContain('"pad-expect"')
+    expect(browserSource).toContain("enableEditableTextHost(this)")
+    expect(browserSource).toContain("data-pad-runtime-contenteditable")
+    expect(browserSource).toContain("clone.querySelectorAll(EDITABLE_TEXT_SELECTOR)")
     expect(cssSource).toContain("[data-pad-crud-kind=\"toolbar\"]")
     expect(cssSource).toContain("button[data-pad-crud-primary]")
     expect(cssSource).toContain("font-variant-numeric: tabular-nums")
     expect(cssSource).toContain("body:has(> pad-scope)")
     expect(cssSource).toContain('pad-note[kind="title"]')
+    expect(cssSource).toContain('pad-expect[contenteditable="true"]')
   })
 
   test("registers diff pad elements and assigns missing opaque ids", async () => {
@@ -688,6 +699,110 @@ describe("browser runtime", () => {
       type: "body",
       html: `<pad-story id="${story.getAttribute("id")}"></pad-story>`,
     })
+  })
+
+  test("strips runtime generic editing attributes before autosave", async () => {
+    const source = await Bun.file("pad.browser.js").text()
+    const note = new FakeElement("pad-note", {
+      contenteditable: "true",
+      spellcheck: "true",
+      role: "textbox",
+      "aria-multiline": "true",
+      "data-pad-runtime-contenteditable": "",
+      "data-pad-runtime-spellcheck": "",
+      "data-pad-runtime-role": "",
+      "data-pad-runtime-aria-multiline": "",
+    })
+    const status = new FakeElement("pad-status")
+    const bodyListeners: Record<string, (event: { target: unknown }) => void> = {}
+    const sockets: { sent: string[] }[] = []
+
+    class FakeHTMLElement {}
+    class FakeWebSocket {
+      static OPEN = 1
+      readyState = FakeWebSocket.OPEN
+      readonly sent: string[] = []
+
+      constructor() {
+        sockets.push(this)
+      }
+
+      addEventListener() {}
+
+      send(text: string) {
+        this.sent.push(text)
+      }
+    }
+
+    const globals = globalThis as unknown as { Element?: unknown }
+    const previousElement = globals.Element
+    globals.Element = FakeHTMLElement
+
+    try {
+      const runBrowserRuntime = new Function(
+        "customElements",
+        "HTMLElement",
+        "document",
+        "WebSocket",
+        "location",
+        "window",
+        source,
+      )
+      runBrowserRuntime(
+        { get: () => undefined, define: () => {} },
+        FakeHTMLElement,
+        {
+          readyState: "complete",
+          querySelector: () => status,
+          querySelectorAll: () => [],
+          createElement: () => status,
+          body: {
+            append() {},
+            addEventListener(type: string, listener: (event: { target: unknown }) => void) {
+              bodyListeners[type] = listener
+            },
+            cloneNode() {
+              return {
+                querySelectorAll(selector: string) {
+                  if (selector === "[data-pad-runtime]") return []
+                  if (selector.includes("pad-note")) return [note]
+                  return []
+                },
+                get innerHTML() {
+                  return note.hasAttribute("contenteditable")
+                    ? '<pad-note contenteditable="true">Editable</pad-note>'
+                    : "<pad-note>Editable</pad-note>"
+                },
+              }
+            },
+          },
+        },
+        FakeWebSocket,
+        {
+          protocol: "http:",
+          host: "127.0.0.1:4321",
+          search: "?t=apptoken",
+        },
+        {
+          clearTimeout() {},
+          setTimeout(callback: () => void) {
+            callback()
+            return 1
+          },
+          addEventListener() {},
+        },
+      )
+
+      bodyListeners.input?.({ target: null })
+
+      expect(JSON.parse(sockets[0]?.sent[0] ?? "{}")).toEqual({
+        type: "body",
+        html: "<pad-note>Editable</pad-note>",
+      })
+    } finally {
+      if (previousElement === undefined) delete globals.Element
+      else globals.Element = previousElement
+    }
   })
 
   test("reloads the page when the server broadcasts a reload message", async () => {

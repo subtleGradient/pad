@@ -77,6 +77,21 @@ const GENERIC_PAD_ELEMENTS = new Set([
   "pad-import",
   "pad-metric",
 ])
+const EDITABLE_TEXT_ELEMENTS = new Set([
+  "pad-text",
+  "pad-note",
+  "pad-expect",
+  "pad-snapshot",
+  "pad-work",
+])
+const EDITABLE_TEXT_SELECTOR = [...EDITABLE_TEXT_ELEMENTS].join(",")
+/** @type {Array<[string, string, string]>} */
+const EDITING_ATTRIBUTE_MARKERS = [
+  ["contenteditable", "true", "data-pad-runtime-contenteditable"],
+  ["spellcheck", "true", "data-pad-runtime-spellcheck"],
+  ["role", "textbox", "data-pad-runtime-role"],
+  ["aria-multiline", "true", "data-pad-runtime-aria-multiline"],
+]
 const MUTABLE_DIFF_ITEM_SELECTOR = [
   "spec-wish",
   "spec-judgement",
@@ -141,6 +156,27 @@ function ensureGeneratedId(element) {
   if (!prefix || element.hasAttribute("id")) return false
   element.setAttribute("id", generatedId(prefix))
   return true
+}
+
+/**
+ * @param {HTMLElement} host
+ * @param {string} name
+ * @param {string} value
+ * @param {string} marker
+ */
+function setRuntimeEditingAttribute(host, name, value, marker) {
+  if (host.hasAttribute(name)) return
+  host.setAttribute(name, value)
+  host.setAttribute(marker, "")
+}
+
+/** @param {HTMLElement & { localName: string }} host */
+function enableEditableTextHost(host) {
+  if (!EDITABLE_TEXT_ELEMENTS.has(host.localName)) return
+
+  for (const [name, value, marker] of EDITING_ATTRIBUTE_MARKERS) {
+    setRuntimeEditingAttribute(host, name, value, marker)
+  }
 }
 
 /** @param {string} name */
@@ -272,6 +308,7 @@ function makeGenericPadElement(name, assignsId) {
   return class extends HTMLElement {
     connectedCallback() {
       if (assignsId) ensureGeneratedId(this)
+      enableEditableTextHost(this)
       if (!this.shadowRoot) this.attachShadow({ mode: "open" })
       this.renderShadowControls()
     }
@@ -781,12 +818,7 @@ for (const name of DIFF_PAD_ELEMENTS) defineElement(name, makeDiffPadElement(nam
 
 class PadText extends HTMLElement {
   connectedCallback() {
-    if (!this.hasAttribute("contenteditable")) this.contentEditable = "true"
-    if (!this.hasAttribute("spellcheck")) this.spellcheck = true
-    if (!this.hasAttribute("role")) this.setAttribute("role", "textbox")
-    if (!this.hasAttribute("aria-multiline")) {
-      this.setAttribute("aria-multiline", "true")
-    }
+    enableEditableTextHost(this)
   }
 }
 defineElement("pad-text", PadText)
@@ -821,15 +853,11 @@ function setStatus(text) {
 function cleanBodyHtml() {
   const clone = /** @type {HTMLElement} */ (document.body.cloneNode(true))
   clone.querySelectorAll("[data-pad-runtime]").forEach((node) => node.remove())
-  clone.querySelectorAll("pad-text").forEach((node) => {
-    if (node.getAttribute("contenteditable") === "true") {
-      node.removeAttribute("contenteditable")
-    }
-    if (node.getAttribute("spellcheck") === "true")
-      node.removeAttribute("spellcheck")
-    if (node.getAttribute("role") === "textbox") node.removeAttribute("role")
-    if (node.getAttribute("aria-multiline") === "true") {
-      node.removeAttribute("aria-multiline")
+  clone.querySelectorAll(EDITABLE_TEXT_SELECTOR).forEach((node) => {
+    for (const [name, value, marker] of EDITING_ATTRIBUTE_MARKERS) {
+      if (!node.hasAttribute(marker)) continue
+      node.removeAttribute(marker)
+      if (node.getAttribute(name) === value) node.removeAttribute(name)
     }
   })
   return clone.innerHTML.trim()

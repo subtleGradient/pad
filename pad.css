@@ -565,12 +565,20 @@ button[data-pad-crud-button]:disabled {
   }
 }
 
-pad-text[contenteditable="true"] {
+pad-text[contenteditable="true"],
+pad-note[contenteditable="true"],
+pad-expect[contenteditable="true"],
+pad-snapshot[contenteditable="true"],
+pad-work[contenteditable="true"] {
   border-radius: 0.35rem;
   outline: 0 solid transparent;
 }
 
-pad-text[contenteditable="true"]:focus {
+pad-text[contenteditable="true"]:focus,
+pad-note[contenteditable="true"]:focus,
+pad-expect[contenteditable="true"]:focus,
+pad-snapshot[contenteditable="true"]:focus,
+pad-work[contenteditable="true"]:focus {
   outline: 2px solid rgba(21, 21, 21, 0.28);
   outline-offset: 0.3rem;
 }
@@ -601,7 +609,11 @@ pad-status {
     color: #f3ead7;
   }
 
-  pad-text[contenteditable="true"]:focus {
+  pad-text[contenteditable="true"]:focus,
+  pad-note[contenteditable="true"]:focus,
+  pad-expect[contenteditable="true"]:focus,
+  pad-snapshot[contenteditable="true"]:focus,
+  pad-work[contenteditable="true"]:focus {
     outline-color: rgba(243, 234, 215, 0.3);
   }
 

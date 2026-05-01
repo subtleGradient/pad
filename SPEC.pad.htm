@@ -227,11 +227,39 @@
           distance: 1,
           remaining: [
             'shadow controls are minimal and visually crowded',
-            'host text editing is still mostly raw light DOM rather than a polished prose editor',
+            'host prose editing is functional but still a raw contenteditable surface rather than a polished prose editor',
             'focus mode is not implemented',
           ],
         }
       </pad-snapshot>
+    </pad-expect>
+
+    <pad-expect kind="wish" matcher="core.generic-prose-editable" weight="critical" refs="ref_spec_file ref_pad_browser ref_pad_css">
+      Text-bearing generic elements must make their persisted light-DOM prose editable in the browser and autosave those edits without serializing runtime editing attributes or shadow chrome.
+
+      <pad-snapshot kind="observation" rev="WORKTREE">
+        {
+          previousFailure: './SPEC.pad.htm showed scoped text but none of the generic host text could be edited directly in the web UI.',
+          cause: 'Only pad-text was upgraded to contenteditable, while the new generic grammar stores prose directly on pad-note, pad-expect, pad-snapshot, and pad-work hosts.',
+          constraint: 'Shadow DOM may expose controls, but persisted meaning must remain in light DOM.',
+        }
+      </pad-snapshot>
+
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="0">
+        {
+          distance: 0,
+          closed: true,
+          evidence: [
+            'pad-note, pad-expect, pad-snapshot, and pad-work become contenteditable editing hosts at runtime',
+            'runtime editing attributes are marked and stripped before cleanBodyHtml sends autosave HTML',
+            'generic contenteditable hosts share visible focus styling with pad-text',
+          ],
+        }
+      </pad-snapshot>
+
+      <pad-work state="done">
+        Promote text-bearing generic hosts to runtime editing hosts, keep attribute controls in shadow DOM, and strip all runtime editing affordances before saving the source body.
+      </pad-work>
     </pad-expect>
   </pad-scope>
 
