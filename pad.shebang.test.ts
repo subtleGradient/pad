@@ -512,8 +512,11 @@ describe("browser runtime", () => {
     expect(browserSource).toContain("Add story")
     expect(browserSource).toContain('"Work", workItemHtml')
     expect(browserSource).toContain("RUNTIME_CRUD_SELECTOR")
+    expect(browserSource).toContain("control.name = name")
+    expect(browserSource).toContain("min-height: 2.75rem")
     expect(cssSource).toContain("[data-pad-crud-kind=\"toolbar\"]")
     expect(cssSource).toContain("button[data-pad-crud-primary]")
+    expect(cssSource).toContain("font-variant-numeric: tabular-nums")
   })
 
   test("registers diff pad elements and assigns missing opaque ids", async () => {

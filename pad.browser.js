@@ -226,6 +226,7 @@ function appendAttributeControl(root, host, label, name, options) {
   const wrapper = document.createElement("label")
   wrapper.textContent = label
   const control = options ? document.createElement("select") : document.createElement("input")
+  control.name = name
   control.value = host.getAttribute(name) ?? ""
   control.setAttribute("aria-label", label)
   if (options) {
@@ -281,11 +282,14 @@ function makeGenericPadElement(name, assignsId) {
       const style = document.createElement("style")
       style.textContent = `
         :host { display: block; }
-        .chrome { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; margin-bottom: .45rem; font: 700 .68rem/1 ui-sans-serif, system-ui, sans-serif; color: color-mix(in srgb, currentColor 62%, transparent); }
+        .chrome { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; margin-bottom: .45rem; font: 700 .78rem/1 ui-sans-serif, system-ui, sans-serif; color: color-mix(in srgb, currentColor 62%, transparent); }
         label { display: inline-grid; gap: .12rem; text-transform: uppercase; letter-spacing: .08em; }
-        input, select { max-width: 10rem; border: 0; border-radius: 999px; padding: .24rem .45rem; background: rgba(127, 127, 127, .12); color: inherit; font: 600 .72rem/1 ui-sans-serif, system-ui, sans-serif; }
-        button { border: 0; border-radius: 999px; padding: .32rem .55rem; background: rgba(127, 127, 127, .16); color: inherit; font: 800 .72rem/1 ui-sans-serif, system-ui, sans-serif; cursor: pointer; }
+        input, select { min-height: 2.75rem; max-width: 12rem; border: 0; border-radius: 999px; padding: .45rem .75rem; background: rgba(127, 127, 127, .12); color: inherit; font: 600 1rem/1 ui-sans-serif, system-ui, sans-serif; }
+        button { min-height: 2.75rem; border: 0; border-radius: 999px; padding: .45rem .75rem; background: rgba(127, 127, 127, .16); color: inherit; font: 800 1rem/1 ui-sans-serif, system-ui, sans-serif; cursor: pointer; }
         button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid rgba(47, 109, 179, .75); outline-offset: 2px; }
+        @media (pointer: fine) {
+          input, select, button { min-height: 2rem; padding: .32rem .6rem; font-size: .72rem; }
+        }
       `
       this.shadowRoot.append(style)
       const chrome = document.createElement("div")

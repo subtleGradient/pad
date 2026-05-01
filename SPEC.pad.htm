@@ -294,6 +294,7 @@
             good: [
               'pad-ref displays kind and target attributes',
               'shadow controls edit kind, path, href, command, and role',
+              'shadow controls now carry name plus aria-label',
             ],
             missing: [
               'open target affordance',
@@ -409,14 +410,82 @@
             distance: 1,
             good: [
               'pad-metric displays name, value, and target',
+              'pad-metric uses tabular numbers for stable scanning',
             ],
             missing: [
-              'tabular-number styling',
               'optional target-min/target-max support if needle metrics need bands',
             ],
           }
         </pad-snapshot>
       </pad-expect>
     </pad-scope>
+  </pad-scope>
+
+  <pad-scope kind="todo" name="Custom ui.sh expect-pack">
+    <pad-note kind="why">
+      The uidotsh guidelines are too useful to leave as vibes in prose. They should become a shared expect-pack that can score PAD UI snapshots the same way golfing scores technical or story badness.
+    </pad-note>
+
+    <pad-expect kind="wish" matcher="core.expect-pack-contract" weight="high">
+      A future ui.sh expect-pack should import the uidotsh design rules and expose matchers for scope affordances, buttons, form controls, responsive behavior, surfaces, typography, and interactivity.
+
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="2">
+        {
+          distance: 2,
+          missing: [
+            'expect/ui-sh.ts or expect/ui-sh.sh',
+            'matcher registry that resolves ui.* matchers from pad-import',
+          ],
+          desiredMatchers: [
+            'ui.scope-affordance',
+            'ui.ref-affordance',
+            'ui.note-affordance',
+            'ui.expect-affordance',
+            'ui.snapshot-affordance',
+            'ui.work-affordance',
+            'ui.import-affordance',
+            'ui.metric-affordance',
+          ],
+        }
+      </pad-snapshot>
+
+      <pad-work state="proposed">
+        Define the expect-pack interface for ui.sh so matcher packs can emit observation snapshots, gap snapshots, distance, and work hints through one universal JSON5 snapshot mechanism.
+      </pad-work>
+
+      <pad-work state="proposed">
+        Create the first ui.sh matcher for shadow controls: every input/select has name plus aria-label, buttons have type=button, mobile controls keep touch-friendly sizing, and only interactive elements receive hover states.
+      </pad-work>
+    </pad-expect>
+  </pad-scope>
+
+  <pad-scope kind="todo" name="Next work after the basics">
+    <pad-note kind="plan">
+      The basics are the grammar, dogfood toy, JSON5 snapshots, and UI expectations. The next moves should keep closing the biggest remaining human-attention gaps without turning PAD into a full app framework.
+    </pad-note>
+
+    <pad-work state="proposed">
+      Build pad-scope focus mode: active subtree, ancestor breadcrumbs, collapsed siblings, and full-document autosave.
+    </pad-work>
+
+    <pad-work state="proposed">
+      Add a snapshot update command that reads pad-expect elements, runs matcher packs, and rewrites pad-snapshot children with 2-space JSON5.
+    </pad-work>
+
+    <pad-work state="proposed">
+      Add ref validation for pad-ref kind=file, kind=command, and kind=url, storing validation results as observation snapshots.
+    </pad-work>
+
+    <pad-work state="proposed">
+      Migrate pad-diff.diff.pad.htm from the legacy story/facet grammar to the generic pad-scope grammar after toy001 has been used for at least one game-building commit.
+    </pad-work>
+
+    <pad-work state="proposed">
+      Add blocked work affordances: state=blocked, a human-readable blocker note, and one obvious path back to proposed or approved.
+    </pad-work>
+
+    <pad-work state="proposed">
+      Add a hard-isolation experiment later: pad-scope can point at a sandboxed preview frame for playable game slices, but only after normal focus mode feels good.
+    </pad-work>
   </pad-scope>
 </pad-scope>

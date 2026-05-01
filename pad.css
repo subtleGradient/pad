@@ -383,6 +383,7 @@ real-file::before {
 pad-metric::before {
   content: attr(name) "=" attr(value) " target=" attr(target);
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 pad-ref::after,
