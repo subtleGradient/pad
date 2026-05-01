@@ -61,208 +61,6 @@ export const OC_CHAT_BRANCH = "pad-oc"
 export const OC_CHAT_PUBLIC_RUNNER = `#!/usr/bin/env -S bunx --bun -p https://github.com/subtleGradient/pad/archive/refs/heads/${OC_CHAT_BRANCH}.tar.gz pad`
 export const OC_CHAT_PUBLIC_ASSET_BASE = `https://cdn.jsdelivr.net/gh/subtleGradient/pad@refs/heads/${OC_CHAT_BRANCH}`
 
-export const OC_CHAT_STATIC_CSS = String.raw`
-:root {
-  color-scheme: light dark;
-  background: #f5f1e8;
-  color: #171411;
-  font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  width: min(72rem, calc(100vw - 2rem));
-  min-height: 100vh;
-  margin: 0 auto;
-  padding: clamp(2rem, 6vw, 5rem) 0;
-  background: #f5f1e8;
-  color: #171411;
-  font-size: clamp(1rem, 1.8vw, 1.15rem);
-  line-height: 1.55;
-}
-
-oc-chat,
-oc-session-card,
-oc-runtime-panel,
-oc-transcript,
-oc-system-prompt,
-oc-user-message,
-oc-assistant-message,
-oc-message-meta,
-oc-text-part,
-oc-reasoning-part,
-oc-file-part,
-oc-tool-call,
-oc-tool-input,
-oc-tool-output,
-oc-patch-part,
-oc-snapshot-part,
-oc-step-start,
-oc-step-finish,
-oc-agent-part,
-oc-subtask-part,
-oc-retry-part,
-oc-compaction-part,
-oc-unknown-part,
-oc-connection-status,
-oc-composer {
-  display: block;
-}
-
-oc-chat {
-  display: grid;
-  gap: 1.25rem;
-}
-
-oc-session-card {
-  border-bottom: 1px solid color-mix(in srgb, currentColor 18%, transparent);
-  padding-bottom: 1.25rem;
-}
-
-oc-session-card h1 {
-  max-width: 16ch;
-  margin: 0 0 0.5rem;
-  font-size: clamp(2.4rem, 9vw, 5.8rem);
-  font-weight: 850;
-  letter-spacing: -0.07em;
-  line-height: 0.9;
-}
-
-oc-session-card dl,
-oc-message-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.7rem;
-  margin: 0;
-  color: color-mix(in srgb, currentColor 62%, transparent);
-  font: 0.78rem/1.35 ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-oc-session-card dd,
-oc-session-card dt {
-  margin: 0;
-}
-
-oc-session-card dt::after {
-  content: ":";
-}
-
-oc-runtime-panel {
-  position: sticky;
-  bottom: 1rem;
-  z-index: 10;
-  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
-  border-radius: 1rem;
-  padding: 0.85rem;
-  background: color-mix(in srgb, Canvas 86%, transparent);
-  box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.12);
-  backdrop-filter: blur(16px);
-}
-
-oc-runtime-panel[hidden] {
-  display: none;
-}
-
-oc-transcript {
-  display: grid;
-  gap: 1rem;
-}
-
-oc-system-prompt,
-oc-user-message,
-oc-assistant-message {
-  --rail: #777;
-  border-left: 0.35rem solid var(--rail);
-  padding: 0.95rem 1rem;
-  background: color-mix(in srgb, currentColor 4%, transparent);
-}
-
-oc-system-prompt {
-  --rail: #a66a00;
-}
-
-oc-user-message {
-  --rail: #3157d5;
-}
-
-oc-assistant-message {
-  --rail: #16815f;
-}
-
-oc-tool-call,
-oc-file-part,
-oc-patch-part,
-oc-snapshot-part,
-oc-step-finish,
-oc-retry-part,
-oc-unknown-part {
-  margin: 0.75rem 0;
-  border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
-  border-radius: 0.6rem;
-  padding: 0.75rem;
-  background: color-mix(in srgb, currentColor 3%, transparent);
-  font: 0.88rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-pre {
-  max-width: 100%;
-  overflow: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-oc-text-part > pre,
-oc-reasoning-part pre,
-oc-tool-input pre,
-oc-tool-output pre {
-  margin: 0.65rem 0 0;
-}
-
-oc-composer form {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.6rem;
-  margin-top: 0.7rem;
-}
-
-oc-composer textarea {
-  min-height: 4.5rem;
-  resize: vertical;
-  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
-  border-radius: 0.7rem;
-  padding: 0.7rem 0.8rem;
-  background: color-mix(in srgb, Canvas 92%, transparent);
-  color: inherit;
-  font: inherit;
-}
-
-oc-composer button {
-  align-self: end;
-  border: 0;
-  border-radius: 999px;
-  padding: 0.7rem 1rem;
-  background: #171411;
-  color: #f5f1e8;
-  font: 700 0.9rem/1 ui-sans-serif, system-ui, sans-serif;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root,
-  body {
-    background: #11110f;
-    color: #f3ead7;
-  }
-
-  oc-composer button {
-    background: #f3ead7;
-    color: #11110f;
-  }
-}
-`.trim()
-
 const DEFAULT_RUNNER = OC_CHAT_PUBLIC_RUNNER
 
 function escapeText(value: unknown) {
@@ -541,8 +339,8 @@ export function renderChatDocument({
   session,
   messages,
   runner = DEFAULT_RUNNER,
-  cssHref = `${OC_CHAT_PUBLIC_ASSET_BASE}/oc-chat.css`,
-  scriptSrc = `${OC_CHAT_PUBLIC_ASSET_BASE}/oc-chat.browser.js`,
+  cssHref = `${OC_CHAT_PUBLIC_ASSET_BASE}/pad.css`,
+  scriptSrc = `${OC_CHAT_PUBLIC_ASSET_BASE}/pad.browser.js`,
   exportedAt = new Date(),
 }: RenderChatDocumentOptions) {
   const title = `${readableTitle(session)}.chat.html`
@@ -555,9 +353,6 @@ export function renderChatDocument({
 <meta name="oc-chat-format" content="${OC_CHAT_FORMAT}" />
 <title>${escapeText(title)}</title>
 <link rel="stylesheet" href="${escapeAttribute(cssHref)}" />
-<style data-oc-static>
-${OC_CHAT_STATIC_CSS}
-</style>
 <script type="module" src="${escapeAttribute(scriptSrc)}"></script>
 
 ${renderChatBody({ session, messages, exportedAt })}

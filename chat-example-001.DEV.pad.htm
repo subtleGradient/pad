@@ -1,0 +1,38 @@
+#!/usr/bin/env -S bun ./pad.shebang.tsx
+<!-- PAD: semantic chat DEV example. Run only if you trust this file as local Bun code. -->
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light dark" />
+<title>chat-example-001.DEV.pad.htm</title>
+<link rel="stylesheet" href="./pad.css" />
+<script type="module" src="./pad.browser.js"></script>
+
+<pad-document>
+  <pad-stack gap="loose">
+    <pad-stack gap="tight">
+      <pad-text kind="title" static="">PAD Chat</pad-text>
+      <pad-text static="">A chat is a semantic list of messages. The source stays focused on
+        <code>pad-chat</code> and <code>pad-message</code>, while the browser
+        runtime renders a shadow-DOM list editor with role controls and markdown
+        preview.</pad-text>
+    </pad-stack>
+
+    <pad-panel>
+      <pad-text kind="heading" static="">Try It</pad-text>
+      <pad-chat aria-label="Example markdown chat">
+        <pad-message role="system">You are helping someone understand **Portable App Documents**.</pad-message>
+        <pad-message role="user">Explain how a PAD chat can keep the file source semantic.</pad-message>
+        <pad-message role="assistant">The source only stores messages:
+
+```html
+&lt;pad-message role="user"&gt;Hello **chat**&lt;/pad-message&gt;
+```
+
+The runtime renders editing controls in shadow DOM, then autosaves the semantic
+markdown source back into the file.</pad-message>
+        <pad-message role="user">t</pad-message>
+      <pad-message role="user">abc</pad-message><pad-message role="user"></pad-message></pad-chat>
+    </pad-panel>
+  </pad-stack>
+</pad-document>

@@ -11,7 +11,8 @@
     "test": "bun test"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "puppeteer-core": "^24.42.0"
   },
   "peerDependencies": {
     "typescript": "^5"

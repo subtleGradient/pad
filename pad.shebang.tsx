@@ -9,7 +9,7 @@ import {
   renderChatDocument,
   type OpenCodeMessageBundle,
   type OpenCodeSessionLike,
-} from "./oc-chat.ts"
+} from "./open-code-chat.ts"
 
 export interface WebSocketData {
   client: ClientState
@@ -307,6 +307,22 @@ const HOST = "127.0.0.1"
 const FIRST_CLIENT_TIMEOUT_MS = 60_000
 const IDLE_SHUTDOWN_MS = 250
 const HOT_RELOAD_DELAY_MS = 50
+const ROOT_BROWSER_ASSETS = new Set([
+  "pad.browser.js",
+  "pad.css",
+])
+const PAD_BROWSER_MODULES = [
+  "browser/chat-model.js",
+  "browser/chat.js",
+  "browser/dom.js",
+  "browser/editing.js",
+  "browser/elements.js",
+  "browser/list.js",
+  "browser/markdown.js",
+  "browser/open-code-chat.js",
+  "browser/pad-main.js",
+  "browser/runtime.js",
+]
 
 function die(message: string): never {
   console.error(message)
@@ -324,6 +340,15 @@ export function contentType(pathname: string) {
     return "text/html; charset=utf-8"
   }
   return "text/plain; charset=utf-8"
+}
+
+function packageAssetPath(pathname: string) {
+  const name = pathname.replace(/^\/+/, "")
+  if (ROOT_BROWSER_ASSETS.has(name)) return nodePath.resolve(packageRoot(), name)
+  if (/^browser\/[A-Za-z0-9._-]+\.js$/.test(name)) {
+    return nodePath.resolve(packageRoot(), name)
+  }
+  return undefined
 }
 
 export function stripShebang(source: string) {
@@ -414,13 +439,8 @@ export class PadApplication {
       return new Response(null, { status: 204 })
     }
 
-    if (
-      url.pathname === "/pad.browser.js" ||
-      url.pathname === "/pad.css" ||
-      url.pathname === "/oc-chat.browser.js" ||
-      url.pathname === "/oc-chat.css"
-    ) {
-      const assetPath = nodePath.resolve(packageRoot(), url.pathname.slice(1))
+    const assetPath = packageAssetPath(url.pathname)
+    if (assetPath) {
       return new Response(Bun.file(assetPath), {
         headers: {
           "cache-control": "no-store",
@@ -601,10 +621,7 @@ export class PadApplication {
   }
 
   private watchReloadFiles() {
-    const assetNames =
-      this.state.kind === "chat"
-        ? ["oc-chat.browser.js", "oc-chat.css"]
-        : ["pad.browser.js", "pad.css"]
+    const assetNames = ["pad.browser.js", "pad.css", ...PAD_BROWSER_MODULES]
     const paths = [
       this.state.padPath,
       ...assetNames.map((name) => nodePath.resolve(packageRoot(), name)),

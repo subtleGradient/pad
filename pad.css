@@ -24,6 +24,8 @@ pad-document,
 pad-stack,
 pad-grid,
 pad-panel,
+pad-chat,
+pad-message,
 pad-list,
 pad-list-item,
 pad-text,
@@ -71,6 +73,34 @@ pad-list {
   display: grid;
   gap: 0.55rem;
   min-width: 0;
+}
+
+pad-chat {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+pad-message {
+  min-width: 0;
+  border: 1px solid rgba(21, 21, 21, 0.13);
+  border-radius: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  background: rgba(255, 255, 255, 0.24);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+pad-message[role="system"] {
+  border-color: rgba(166, 106, 0, 0.38);
+}
+
+pad-message[role="user"] {
+  border-color: rgba(49, 87, 213, 0.32);
+}
+
+pad-message[role="assistant"] {
+  border-color: rgba(22, 129, 95, 0.34);
 }
 
 pad-list-item {
@@ -166,6 +196,176 @@ pad-status {
   pointer-events: none;
 }
 
+body:has(oc-chat) {
+  width: min(72rem, calc(100vw - 2rem));
+  padding: clamp(2rem, 6vw, 5rem) 0;
+}
+
+oc-chat,
+oc-session-card,
+oc-runtime-panel,
+oc-transcript,
+oc-system-prompt,
+oc-user-message,
+oc-assistant-message,
+oc-message-meta,
+oc-text-part,
+oc-reasoning-part,
+oc-file-part,
+oc-tool-call,
+oc-tool-input,
+oc-tool-output,
+oc-patch-part,
+oc-snapshot-part,
+oc-step-start,
+oc-step-finish,
+oc-agent-part,
+oc-subtask-part,
+oc-retry-part,
+oc-compaction-part,
+oc-unknown-part,
+oc-connection-status,
+oc-composer {
+  display: block;
+}
+
+oc-chat {
+  display: grid;
+  gap: 1.25rem;
+}
+
+oc-session-card {
+  border-bottom: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  padding-bottom: 1.25rem;
+}
+
+oc-session-card h1 {
+  max-width: 16ch;
+  margin: 0 0 0.5rem;
+  font-size: clamp(2.4rem, 9vw, 5.8rem);
+  font-weight: 850;
+  letter-spacing: -0.07em;
+  line-height: 0.9;
+}
+
+oc-session-card dl,
+oc-message-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.7rem;
+  margin: 0;
+  color: color-mix(in srgb, currentColor 62%, transparent);
+  font: 0.78rem/1.35 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+oc-session-card dd,
+oc-session-card dt {
+  margin: 0;
+}
+
+oc-session-card dt::after {
+  content: ":";
+}
+
+oc-runtime-panel {
+  position: sticky;
+  bottom: 1rem;
+  z-index: 10;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 1rem;
+  padding: 0.85rem;
+  background: color-mix(in srgb, Canvas 86%, transparent);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.12);
+  backdrop-filter: blur(16px);
+}
+
+oc-runtime-panel[hidden] {
+  display: none;
+}
+
+oc-transcript {
+  display: grid;
+  gap: 1rem;
+}
+
+oc-system-prompt,
+oc-user-message,
+oc-assistant-message {
+  --rail: #777;
+  border-left: 0.35rem solid var(--rail);
+  padding: 0.95rem 1rem;
+  background: color-mix(in srgb, currentColor 4%, transparent);
+}
+
+oc-system-prompt {
+  --rail: #a66a00;
+}
+
+oc-user-message {
+  --rail: #3157d5;
+}
+
+oc-assistant-message {
+  --rail: #16815f;
+}
+
+oc-tool-call,
+oc-file-part,
+oc-patch-part,
+oc-snapshot-part,
+oc-step-finish,
+oc-retry-part,
+oc-unknown-part {
+  margin: 0.75rem 0;
+  border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+  border-radius: 0.6rem;
+  padding: 0.75rem;
+  background: color-mix(in srgb, currentColor 3%, transparent);
+  font: 0.88rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+pre {
+  max-width: 100%;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+oc-text-part > pre,
+oc-reasoning-part pre,
+oc-tool-input pre,
+oc-tool-output pre {
+  margin: 0.65rem 0 0;
+}
+
+oc-composer form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.6rem;
+  margin-top: 0.7rem;
+}
+
+oc-composer textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-radius: 0.7rem;
+  padding: 0.7rem 0.8rem;
+  background: color-mix(in srgb, Canvas 92%, transparent);
+  color: inherit;
+  font: inherit;
+}
+
+oc-composer button {
+  align-self: end;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  background: #171411;
+  color: #f5f1e8;
+  font: 700 0.9rem/1 ui-sans-serif, system-ui, sans-serif;
+}
+
 @media (prefers-color-scheme: dark) {
   :root,
   body {
@@ -182,6 +382,11 @@ pad-status {
     background: rgba(255, 255, 255, 0.04);
   }
 
+  pad-message {
+    border-color: rgba(243, 234, 215, 0.16);
+    background: rgba(255, 255, 255, 0.035);
+  }
+
   pad-list-item[data-pad-empty]::before {
     color: rgba(243, 234, 215, 0.42);
   }
@@ -195,5 +400,10 @@ pad-status {
     border-color: rgba(243, 234, 215, 0.18);
     background: rgba(17, 17, 15, 0.86);
     color: rgba(243, 234, 215, 0.72);
+  }
+
+  oc-composer button {
+    background: #f3ead7;
+    color: #11110f;
   }
 }

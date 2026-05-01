@@ -2,6 +2,9 @@ import { describe, expect, test } from "bun:test"
 import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { setEditableState } from "./browser/editing.js"
+import { normalizePadList, normalizeTrailingEmptyItems } from "./browser/list.js"
+import { fallbackMarkdownToHtml } from "./browser/markdown.js"
 import {
   ClientState,
   PadApplication,
@@ -22,7 +25,7 @@ import {
   renderChatDocument,
   type OpenCodeMessageBundle,
   type OpenCodeSessionLike,
-} from "./oc-chat.ts"
+} from "./open-code-chat.ts"
 
 const BRANCH = "pad-oc"
 const LIST_TAG = "list-v0"
@@ -511,18 +514,20 @@ describe("PAD entry documents", () => {
     expect(source).not.toContain("cdn.jsdelivr.net")
   })
 
-  test("EXAMPLE chat uses local runner and chat browser assets", async () => {
+  test("EXAMPLE chat uses the shared local PAD browser assets", async () => {
     const source = await Bun.file("EXAMPLE.chat.html").text()
 
     expect(source.startsWith("#!/usr/bin/env -S bun ./pad.shebang.tsx\n")).toBe(
       true,
     )
-    expect(source).toContain('href="./oc-chat.css"')
+    expect(source).toContain('href="./pad.css"')
     expect(source).toContain(
-      '<script type="module" src="./oc-chat.browser.js"></script>',
+      '<script type="module" src="./pad.browser.js"></script>',
     )
     expect(source).toContain("<oc-chat")
     expect(source).toContain("<oc-tool-call")
+    expect(source).not.toContain("oc-chat.browser.js")
+    expect(source).not.toContain("oc-chat.css")
     expect(source).not.toContain("cdn.jsdelivr.net")
   })
 
@@ -592,6 +597,37 @@ describe("PAD entry documents", () => {
     expect(source).not.toContain("cdn.jsdelivr.net")
   })
 
+  test("chat example pins the GitHub runner and uses semantic pad-chat source", async () => {
+    const source = await Bun.file("chat-example-001.pad.htm").text()
+
+    expect(source.startsWith(`${publicShebang}\n`)).toBe(true)
+    expect(source).toContain(publicCss)
+    expect(source).toContain(publicJs)
+    expect(source).toContain("<pad-chat")
+    expect(source).toContain('<pad-message role="system"')
+    expect(source).toContain('<pad-message role="user"')
+    expect(source).toContain('<pad-message role="assistant"')
+    expect(source).toContain("**Portable App Documents**")
+    expect(source).toContain("markdown source back into the file")
+    expect(source).not.toContain('href="./pad.css"')
+  })
+
+  test("chat DEV example uses local runner and browser assets", async () => {
+    const source = await Bun.file("chat-example-001.DEV.pad.htm").text()
+
+    expect(source.startsWith("#!/usr/bin/env -S bun ./pad.shebang.tsx\n")).toBe(
+      true,
+    )
+    expect(source).toContain('href="./pad.css"')
+    expect(source).toContain(
+      '<script type="module" src="./pad.browser.js"></script>',
+    )
+    expect(source).toContain("<pad-chat")
+    expect(source).toContain('<pad-message role="assistant"')
+    expect(source).toContain("**Portable App Documents**")
+    expect(source).not.toContain("cdn.jsdelivr.net")
+  })
+
   test("list-v0 pad pins its runner and assets to the list-v0 tag", async () => {
     const source = await Bun.file("list-v0.pad.htm").text()
 
@@ -611,6 +647,9 @@ describe("contentType", () => {
   test("serves known browser asset and HTML types", () => {
     expect(contentType("pad.css")).toBe("text/css; charset=utf-8")
     expect(contentType("pad.browser.js")).toBe("text/javascript; charset=utf-8")
+    expect(contentType("browser/pad-main.js")).toBe(
+      "text/javascript; charset=utf-8",
+    )
     expect(contentType("SPEC.pad.htm")).toBe("text/html; charset=utf-8")
     expect(contentType("note.txt")).toBe("text/plain; charset=utf-8")
   })
@@ -622,7 +661,7 @@ describe("PAD CSS", () => {
 
     expect(source).toContain("pad-list-item {\n  min-width: 0;")
     expect(source).toContain("pad-text {\n  min-width: 0;")
-    expect(source.match(/overflow-wrap: anywhere;/g)).toHaveLength(2)
+    expect(source.match(/overflow-wrap: anywhere;/g)).toHaveLength(3)
   })
 })
 
@@ -644,8 +683,11 @@ describe("OC chat serializer", () => {
 
     expect(source).toContain('<meta name="oc-chat-format"')
     expect(source.startsWith(`${OC_CHAT_PUBLIC_RUNNER}\n`)).toBe(true)
-    expect(source).toContain(`${OC_CHAT_PUBLIC_ASSET_BASE}/oc-chat.css`)
-    expect(source).toContain(`${OC_CHAT_PUBLIC_ASSET_BASE}/oc-chat.browser.js`)
+    expect(source).toContain(`${OC_CHAT_PUBLIC_ASSET_BASE}/pad.css`)
+    expect(source).toContain(`${OC_CHAT_PUBLIC_ASSET_BASE}/pad.browser.js`)
+    expect(source).not.toContain("oc-chat.css")
+    expect(source).not.toContain("oc-chat.browser.js")
+    expect(source).not.toContain("data-oc-static")
     expect(source).toContain("<oc-chat")
     expect(source).toContain("<oc-system-prompt")
     expect(source).toContain("<oc-user-message")
@@ -751,6 +793,7 @@ describe("browser runtime", () => {
     localName: string
     textContent: string
     parent: FakeList | undefined
+    ownerDocument?: unknown
     attributes: Map<string, string>
     focusCount: number
     hasAttribute(name: string): boolean
@@ -768,51 +811,75 @@ describe("browser runtime", () => {
     readonly lastElementChild: FakeListItem | undefined
   }
 
-  async function loadPadBrowserRuntimeForTests(documentOverride?: unknown) {
-    const source = await Bun.file("pad.browser.js").text()
-    class FakeHTMLElement {}
-    const runBrowserRuntime = new Function(
-      "customElements",
-      "HTMLElement",
-      "document",
-      "WebSocket",
-      "location",
-      "window",
-      `${source}\nreturn { normalizePadList, setEditableState }`,
-    )
-    return runBrowserRuntime(
-      { get: () => undefined, define: () => {} },
-      FakeHTMLElement,
-      documentOverride ?? {
-        readyState: "loading",
-        addEventListener() {},
-        querySelectorAll: () => [],
-        createElement(name: string) {
-          return makeFakeListItem("", name)
-        },
-        body: makeFakeBody(),
-      },
-      class FakeWebSocket {},
-      { protocol: "file:" },
-      { addEventListener() {}, clearTimeout, setTimeout },
-    ) as {
-      normalizePadList(
-        list: FakeList,
-        options?: { focusClearedItem?: FakeListItem | null },
-      ): void
-      setEditableState(editable: boolean, reason: string): void
-    }
-  }
-
   function makeFakeBody() {
     return {
       dataset: {} as Record<string, string>,
       attributes: new Set<string>(),
+      hasAttribute(name: string) {
+        return this.attributes.has(name)
+      },
       toggleAttribute(name: string, force?: boolean) {
         if (force) this.attributes.add(name)
         else this.attributes.delete(name)
       },
     }
+  }
+
+  function makeFakeDocument({
+    activeElement,
+    querySelectorAll = () => [],
+  }: {
+    activeElement?: FakeListItem
+    querySelectorAll?: () => unknown[]
+  } = {}) {
+    return {
+      readyState: "loading",
+      activeElement,
+      body: makeFakeBody(),
+      addEventListener() {},
+      dispatchEvent() {
+        return true
+      },
+      querySelectorAll,
+      createElement(name: string) {
+        return makeFakeListItem("", name)
+      },
+    }
+  }
+
+  function installBrowserGlobals(documentOverride: unknown = makeFakeDocument()) {
+    const globals = globalThis as unknown as Record<string, unknown>
+    const previous = {
+      document: globals.document,
+      window: globals.window,
+      CustomEvent: globals.CustomEvent,
+    }
+    globals.document = documentOverride
+    globals.window = { addEventListener() {}, clearTimeout, setTimeout }
+    globals.CustomEvent = class FakeCustomEvent {
+      type: string
+      detail: unknown
+      constructor(type: string, init?: { detail?: unknown }) {
+        this.type = type
+        this.detail = init?.detail
+      }
+    }
+
+    return () => {
+      globals.document = previous.document
+      globals.window = previous.window
+      globals.CustomEvent = previous.CustomEvent
+    }
+  }
+
+  function normalizeFakePadList(
+    list: FakeList,
+    options: { focusClearedItem?: FakeListItem | null } = {},
+  ) {
+    return normalizePadList(
+      list as unknown as Element,
+      options as unknown as { focusClearedItem?: Element | null },
+    )
   }
 
   function makeFakeEditableElement(staticElement = false) {
@@ -878,43 +945,50 @@ describe("browser runtime", () => {
     return list
   }
 
-  test("keeps exactly one empty item at the end of each pad-list", async () => {
-    const { normalizePadList } = await loadPadBrowserRuntimeForTests()
+  test("keeps exactly one empty item at the end of each pad-list", () => {
+    const restore = installBrowserGlobals()
     const list = makeFakeList(["Alpha", "Beta"])
 
-    normalizePadList(list)
-    expect(list.children.map((item) => item.textContent)).toEqual([
-      "Alpha",
-      "Beta",
-      "",
-    ])
+    try {
+      normalizeFakePadList(list)
+      expect(list.children.map((item) => item.textContent)).toEqual([
+        "Alpha",
+        "Beta",
+        "",
+      ])
 
-    list.children[2]!.textContent = "Gamma"
-    normalizePadList(list)
-    expect(list.children.map((item) => item.textContent)).toEqual([
-      "Alpha",
-      "Beta",
-      "Gamma",
-      "",
-    ])
+      list.children[2]!.textContent = "Gamma"
+      normalizeFakePadList(list)
+      expect(list.children.map((item) => item.textContent)).toEqual([
+        "Alpha",
+        "Beta",
+        "Gamma",
+        "",
+      ])
 
-    list.children[2]!.textContent = ""
-    normalizePadList(list)
-    expect(list.children.map((item) => item.textContent)).toEqual([
-      "Alpha",
-      "Beta",
-      "",
-    ])
-    expect(list.children.at(-1)?.attributes.has("data-pad-empty")).toBe(true)
+      list.children[2]!.textContent = ""
+      normalizeFakePadList(list)
+      expect(list.children.map((item) => item.textContent)).toEqual([
+        "Alpha",
+        "Beta",
+        "",
+      ])
+      expect(list.children.at(-1)?.attributes.has("data-pad-empty")).toBe(true)
+    } finally {
+      restore()
+    }
   })
 
-  test("toggles editability and leaves static elements locked", async () => {
+  test("toggles editability and leaves static elements locked", () => {
     const body = makeFakeBody()
     const editable = makeFakeEditableElement()
     const staticElement = makeFakeEditableElement(true)
-    const { setEditableState } = await loadPadBrowserRuntimeForTests({
+    const restore = installBrowserGlobals({
       readyState: "loading",
       addEventListener() {},
+      dispatchEvent() {
+        return true
+      },
       querySelectorAll: () => [editable, staticElement],
       createElement(name: string) {
         return makeFakeListItem("", name)
@@ -922,160 +996,106 @@ describe("browser runtime", () => {
       body,
     })
 
-    setEditableState(false, "Read-only for test.")
-    expect(body.attributes.has("data-pad-readonly")).toBe(true)
-    expect(body.dataset.padReadonlyReason).toBe("Read-only for test.")
-    expect(editable.attributes.get("contenteditable")).toBe("false")
-    expect(staticElement.attributes.has("contenteditable")).toBe(false)
+    try {
+      setEditableState(false, "Read-only for test.")
+      expect(body.attributes.has("data-pad-readonly")).toBe(true)
+      expect(body.dataset.padReadonlyReason).toBe("Read-only for test.")
+      expect(editable.attributes.get("contenteditable")).toBe("false")
+      expect(staticElement.attributes.has("contenteditable")).toBe(false)
 
-    setEditableState(true, "")
-    expect(body.attributes.has("data-pad-readonly")).toBe(false)
-    expect(body.attributes.has("data-pad-editable")).toBe(true)
-    expect(body.dataset.padReadonlyReason).toBeUndefined()
-    expect(editable.attributes.get("contenteditable")).toBe("true")
+      setEditableState(true, "")
+      expect(body.attributes.has("data-pad-readonly")).toBe(false)
+      expect(body.attributes.has("data-pad-editable")).toBe(true)
+      expect(body.dataset.padReadonlyReason).toBeUndefined()
+      expect(editable.attributes.get("contenteditable")).toBe("true")
+    } finally {
+      setEditableState(false, "reset")
+      restore()
+    }
   })
 
-  test("new blank list items inherit the live editable state", async () => {
-    const { normalizePadList, setEditableState } =
-      await loadPadBrowserRuntimeForTests()
+  test("new blank list items inherit the live editable state", () => {
+    const restore = installBrowserGlobals()
     const list = makeFakeList(["Alpha"])
 
-    setEditableState(true, "")
-    normalizePadList(list)
+    try {
+      setEditableState(true, "")
+      normalizeFakePadList(list)
 
-    const newBlank = list.children.at(-1)
-    expect(newBlank?.textContent).toBe("")
-    expect(newBlank?.attributes.get("contenteditable")).toBe("true")
-    expect(newBlank?.attributes.get("aria-disabled")).toBe("false")
-    expect(newBlank?.attributes.has("data-pad-empty")).toBe(true)
+      const newBlank = list.children.at(-1)
+      expect(newBlank?.textContent).toBe("")
+      expect(newBlank?.attributes.get("contenteditable")).toBe("true")
+      expect(newBlank?.attributes.get("aria-disabled")).toBe("false")
+      expect(newBlank?.attributes.has("data-pad-empty")).toBe(true)
+    } finally {
+      setEditableState(false, "reset")
+      restore()
+    }
   })
 
-  test("does not move focus during generic normalization of a focused blank item", async () => {
+  test("does not move focus during generic normalization of a focused blank item", () => {
     const list = makeFakeList(["Alpha", ""])
-    const document = {
-      readyState: "loading",
-      activeElement: list.children[1],
-      addEventListener() {},
-      querySelectorAll: () => [],
-      createElement(name: string) {
-        return makeFakeListItem("", name)
-      },
-      body: makeFakeBody(),
+    const restore = installBrowserGlobals(
+      makeFakeDocument({ activeElement: list.children[1] }),
+    )
+
+    try {
+      normalizeFakePadList(list)
+
+      expect(list.children.map((item) => item.textContent)).toEqual(["Alpha", ""])
+      expect(list.children[0]?.focusCount).toBe(0)
+      expect(list.children[1]?.focusCount).toBe(0)
+    } finally {
+      restore()
     }
-    const { normalizePadList } = await loadPadBrowserRuntimeForTests(document)
-
-    normalizePadList(list)
-
-    expect(list.children.map((item) => item.textContent)).toEqual(["Alpha", ""])
-    expect(list.children[0]?.focusCount).toBe(0)
-    expect(list.children[1]?.focusCount).toBe(0)
   })
 
-  test("moves focus to the previous non-empty item when the focused tail item is cleared by input", async () => {
+  test("moves focus to the previous non-empty item when the focused tail item is cleared by input", () => {
     const list = makeFakeList(["Alpha", "Beta", ""])
-    const document = {
-      readyState: "loading",
-      activeElement: list.children[1],
-      addEventListener() {},
-      querySelectorAll: () => [],
-      createElement(name: string) {
-        return makeFakeListItem("", name)
-      },
-      body: makeFakeBody(),
+    const restore = installBrowserGlobals(
+      makeFakeDocument({ activeElement: list.children[1] }),
+    )
+
+    try {
+      setEditableState(true, "")
+      list.children[1]!.textContent = ""
+      normalizeFakePadList(list, { focusClearedItem: list.children[1] })
+
+      expect(list.children.map((item) => item.textContent)).toEqual(["Alpha", ""])
+      expect(list.children[0]?.focusCount).toBe(1)
+      expect(list.children[1]?.focusCount).toBe(0)
+      expect(list.children[1]?.attributes.has("data-pad-empty")).toBe(true)
+    } finally {
+      setEditableState(false, "reset")
+      restore()
     }
-    const { normalizePadList, setEditableState } =
-      await loadPadBrowserRuntimeForTests(document)
-
-    setEditableState(true, "")
-    list.children[1]!.textContent = ""
-    normalizePadList(list, { focusClearedItem: list.children[1] })
-
-    expect(list.children.map((item) => item.textContent)).toEqual(["Alpha", ""])
-    expect(list.children[0]?.focusCount).toBe(1)
-    expect(list.children[1]?.focusCount).toBe(0)
-    expect(list.children[1]?.attributes.has("data-pad-empty")).toBe(true)
   })
 
-  test("reloads the page when the server broadcasts a reload message", async () => {
-    const source = await Bun.file("pad.browser.js").text()
-    const sockets: {
-      listeners: Record<string, (event: { data: string }) => void>
-    }[] = []
-    const status = {
-      dataset: {} as Record<string, string>,
-      textContent: "",
-      set message(value: string) {
-        this.textContent = value
+  test("normalizes arbitrary trailing-empty item models", () => {
+    const items = ["Alpha", "", ""]
+    const removed: string[] = []
+    const result = normalizeTrailingEmptyItems({
+      items,
+      isEmpty: (item) => item === "",
+      appendBlank: () => {
+        items.push("")
+        return ""
       },
-    }
-    let reloads = 0
-
-    class FakeHTMLElement {}
-    class FakeWebSocket {
-      static OPEN = 1
-      readyState = FakeWebSocket.OPEN
-      listeners: Record<string, (event: { data: string }) => void> = {}
-
-      constructor() {
-        sockets.push(this)
-      }
-
-      addEventListener(
-        type: string,
-        listener: (event: { data: string }) => void,
-      ) {
-        this.listeners[type] = listener
-      }
-
-      send() {}
-    }
-
-    const runBrowserRuntime = new Function(
-      "customElements",
-      "HTMLElement",
-      "document",
-      "WebSocket",
-      "location",
-      "window",
-      source,
-    )
-    runBrowserRuntime(
-      { get: () => undefined, define: () => {} },
-      FakeHTMLElement,
-      {
-        readyState: "complete",
-        querySelector: () => status,
-        querySelectorAll: () => [],
-        createElement: () => status,
-        body: {
-          dataset: {} as Record<string, string>,
-          append() {},
-          addEventListener() {},
-          toggleAttribute() {},
-        },
-        addEventListener() {},
-      },
-      FakeWebSocket,
-      {
-        protocol: "http:",
-        host: "127.0.0.1:4321",
-        search: "?t=apptoken",
-        reload() {
-          reloads += 1
-        },
-      },
-      {
-        clearTimeout,
-        setTimeout,
-        addEventListener() {},
-      },
-    )
-
-    sockets[0]?.listeners.message?.({
-      data: JSON.stringify({ type: "reload", paths: ["pad.css"] }),
+      removeItem: (item) => removed.push(item),
     })
 
-    expect(reloads).toBe(1)
+    expect(result.changed).toBe(true)
+    expect(result.appendedItem).toBeNull()
+    expect(removed).toEqual([""])
+  })
+
+  test("renders a safe markdown fallback without browser dependencies", () => {
+    expect(fallbackMarkdownToHtml("# Title\n\nHello **world** and `code`.")).toContain(
+      "<strong>world</strong>",
+    )
+    expect(fallbackMarkdownToHtml("<script>alert(1)</script>")).toContain(
+      "&lt;script&gt;alert(1)&lt;/script&gt;",
+    )
   })
 })
 
@@ -1215,6 +1235,10 @@ describe("PadApplication unit runtime", () => {
       makeRequest("/pad.browser.js"),
       harness.fakeServer,
     )
+    const moduleJs = await harness.fetch(
+      makeRequest("/browser/pad-main.js"),
+      harness.fakeServer,
+    )
 
     expect(forbiddenPad?.status).toBe(403)
     expect(forbiddenWs?.status).toBe(403)
@@ -1228,9 +1252,14 @@ describe("PadApplication unit runtime", () => {
     expect(js?.headers.get("content-type")).toBe(
       "text/javascript; charset=utf-8",
     )
+    expect(moduleJs?.status).toBe(200)
+    expect(moduleJs?.headers.get("content-type")).toBe(
+      "text/javascript; charset=utf-8",
+    )
+    expect(await moduleJs?.text()).toContain("registerPadChatElements")
   })
 
-  test("serves OC chat documents and runtime assets", async () => {
+  test("serves OC chat documents through shared PAD runtime assets", async () => {
     const harness = await createPadHarness({
       source: unitChatSource,
       padPath: unitChatPath,
@@ -1241,11 +1270,15 @@ describe("PadApplication unit runtime", () => {
       harness.fakeServer,
     )
     const css = await harness.fetch(
-      makeRequest("/oc-chat.css"),
+      makeRequest("/pad.css"),
       harness.fakeServer,
     )
     const js = await harness.fetch(
-      makeRequest("/oc-chat.browser.js"),
+      makeRequest("/pad.browser.js"),
+      harness.fakeServer,
+    )
+    const moduleJs = await harness.fetch(
+      makeRequest("/browser/open-code-chat.js"),
       harness.fakeServer,
     )
 
@@ -1257,6 +1290,11 @@ describe("PadApplication unit runtime", () => {
     expect(js?.headers.get("content-type")).toBe(
       "text/javascript; charset=utf-8",
     )
+    expect(moduleJs?.status).toBe(200)
+    expect(moduleJs?.headers.get("content-type")).toBe(
+      "text/javascript; charset=utf-8",
+    )
+    expect(await moduleJs?.text()).toContain("connectOpenCodeChat")
   })
 
   test("continues OC chat sessions and appends new SDK messages", async () => {
@@ -1359,6 +1397,7 @@ describe("PadApplication unit runtime", () => {
       expect.arrayContaining([
         expect.stringContaining("unit.pad.htm"),
         expect.stringContaining("pad.browser.js"),
+        expect.stringContaining("browser/list.js"),
         expect.stringContaining("pad.css"),
       ]),
     )
@@ -1413,10 +1452,13 @@ describe("PadApplication unit runtime", () => {
     await Bun.sleep(75)
     harness.triggerWatch("pad.browser.js")
     await Bun.sleep(75)
+    harness.triggerWatch("list.js")
+    await Bun.sleep(75)
 
     expect(sent.slice(1).map((text) => JSON.parse(text))).toEqual([
       { type: "reload", paths: ["pad.css"] },
       { type: "reload", paths: ["pad.browser.js"] },
+      { type: "reload", paths: ["list.js"] },
     ])
   })
 })
