@@ -1,12 +1,12 @@
-#!/usr/bin/env -S bunx -p https://github.com/subtleGradient/pad/archive/refs/heads/pad-diff.tar.gz pad
+#!/usr/bin/env -S bun ./pad.shebang.tsx
 <!-- PAD DIFF SPEC: executable HTM. Run only if you trust this file as local Bun code. -->
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>SPEC.pad.htm</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/subtleGradient/pad@refs/heads/pad-diff/pad.css">
-<script type="module" src="https://cdn.jsdelivr.net/gh/subtleGradient/pad@refs/heads/pad-diff/pad.browser.js"></script>
+<link rel="stylesheet" href="./pad.css">
+<script type="module" src="./pad.browser.js"></script>
 
 <pad-scope kind="spec" name="PAD Diff as an attention sandbox">
   <pad-note kind="title">SPEC.pad.htm</pad-note>
@@ -22,6 +22,34 @@
   <pad-import kind="expect-pack" src="./expect/core.ts" as="core"></pad-import>
   <pad-import kind="expect-pack" src="./expect/thing-golf.ts" as="thingGolf"></pad-import>
   <pad-import kind="expect-pack" src="./expect/story-golf.ts" as="storyGolf"></pad-import>
+
+  <pad-scope kind="story" name="The spec must load the grammar it describes">
+    <pad-note kind="why">
+      A dogfooded spec cannot point at yesterday's CDN build while claiming today's grammar. The executable file has to load the local runner, stylesheet, and browser runtime so the page on screen matches the worktree under the author's hands.
+    </pad-note>
+
+    <pad-ref id="ref_spec_file" kind="file" path="SPEC.pad.htm" role="dogfood spec"></pad-ref>
+    <pad-ref id="ref_pad_css" kind="file" path="pad.css" role="scope styling"></pad-ref>
+    <pad-ref id="ref_pad_browser" kind="file" path="pad.browser.js" role="shadow affordances"></pad-ref>
+    <pad-ref id="ref_pad_runner" kind="file" path="pad.shebang.tsx" role="local runner"></pad-ref>
+
+    <pad-expect kind="wish" matcher="core.spec-local-runtime" weight="critical" refs="ref_spec_file ref_pad_css ref_pad_browser ref_pad_runner">
+      Running ./SPEC.pad.htm should show the same recursive scopes, title styling, and shadow-DOM affordances described by the current worktree.
+
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="0">
+        {
+          distance: 0,
+          closed: true,
+          evidence: [
+            'SPEC uses the local Bun shebang runner',
+            'SPEC loads ./pad.css',
+            'SPEC loads ./pad.browser.js',
+            'root pad-scope documents receive the app layout',
+          ],
+        }
+      </pad-snapshot>
+    </pad-expect>
+  </pad-scope>
 
   <pad-scope kind="story" name="The human attention bottleneck">
     <pad-note kind="why">

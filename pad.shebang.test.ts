@@ -353,7 +353,12 @@ describe("replaceBody", () => {
   })
 
   test("replaces the body after a jsDelivr browser script", async () => {
-    const source = await Bun.file("SPEC.pad.htm").text()
+    const source = `<!doctype html>
+<link rel="stylesheet" href="${publicCss}">
+<script type="module" src="${publicJs}"></script>
+
+<pad-document><pad-text>first simple PAD demo</pad-text></pad-document>
+`
     const replaced = replaceBody(source, replacementBody)
 
     expect(bodySplitIndex(source)).toBeGreaterThan(0)
@@ -388,20 +393,26 @@ ${replacementBody}
 })
 
 describe("PAD entry documents", () => {
-  test(`SPEC pins the GitHub runner and jsDelivr assets to ${BRANCH}`, async () => {
+  test("SPEC uses local runner and browser assets for dogfooding", async () => {
     const source = await Bun.file("SPEC.pad.htm").text()
 
-    expect(source.startsWith(`${publicShebang}\n`)).toBe(true)
-    expect(source).toContain(publicCss)
-    expect(source).toContain(publicJs)
+    expect(source.startsWith("#!/usr/bin/env -S bun ./pad.shebang.tsx\n")).toBe(
+      true,
+    )
+    expect(source).toContain('href="./pad.css"')
+    expect(source).toContain(
+      '<script type="module" src="./pad.browser.js"></script>',
+    )
     expect(source).toContain('<pad-scope kind="spec"')
     expect(source).toContain('<pad-expect kind="wish"')
     expect(source).toContain('<pad-snapshot kind="gap"')
     expect(source).toContain('<pad-import kind="expect-pack"')
+    expect(source).toContain('matcher="core.spec-local-runtime"')
     expect(source).toContain("UI/UX of the primitive elements")
     expect(source).toContain("uidotsh://ui/design-guidelines/buttons")
     expect(source).toContain("matcher=\"ui.scope-affordance\"")
     expect(source).not.toContain("format=\"")
+    expect(source).not.toContain("cdn.jsdelivr.net")
     expect(source).not.toContain("@main")
     expect(source).not.toContain(`github:subtleGradient`)
   })
@@ -517,6 +528,8 @@ describe("browser runtime", () => {
     expect(cssSource).toContain("[data-pad-crud-kind=\"toolbar\"]")
     expect(cssSource).toContain("button[data-pad-crud-primary]")
     expect(cssSource).toContain("font-variant-numeric: tabular-nums")
+    expect(cssSource).toContain("body:has(> pad-scope)")
+    expect(cssSource).toContain('pad-note[kind="title"]')
   })
 
   test("registers diff pad elements and assigns missing opaque ids", async () => {

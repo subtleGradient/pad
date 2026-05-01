@@ -89,7 +89,8 @@ pad-text[kind="heading"] {
   letter-spacing: -0.055em;
 }
 
-body:has(pad-diff) {
+body:has(pad-diff),
+body:has(> pad-scope) {
   width: min(82rem, calc(100vw - 1.5rem));
   font-family:
     ui-sans-serif,
@@ -98,8 +99,13 @@ body:has(pad-diff) {
   font-size: clamp(0.98rem, 1.5vw, 1.12rem);
 }
 
-body:has(pad-diff) pad-text[kind="title"] {
+body:has(pad-diff) pad-text[kind="title"],
+body:has(> pad-scope) pad-note[kind="title"] {
   max-width: 13ch;
+}
+
+body > pad-scope {
+  box-shadow: 0 1.2rem 3rem rgba(21, 21, 21, 0.07);
 }
 
 pad-diff {
@@ -147,6 +153,24 @@ pad-import {
 
 pad-note {
   border-left-color: #8b6f47;
+}
+
+pad-note[kind="title"] {
+  display: block;
+  margin-bottom: 0.5rem;
+  border-left: 0;
+  padding: 0;
+  background: transparent;
+  font:
+    800 clamp(3rem, 12vw, 7rem) / 0.86 ui-sans-serif,
+    system-ui,
+    sans-serif;
+  letter-spacing: -0.07em;
+  white-space: normal;
+}
+
+pad-note[kind="title"]::before {
+  content: none;
 }
 
 pad-expect {
