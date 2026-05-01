@@ -102,9 +102,34 @@ function createListItem() {
   return item
 }
 
+/** @param {Element} element */
+function focusEditableEnd(element) {
+  const focus = /** @type {{ focus?: (options?: { preventScroll?: boolean }) => void }} */ (
+    element
+  ).focus
+  if (typeof focus === "function") {
+    focus.call(element, { preventScroll: true })
+  }
+
+  if (
+    typeof document.createRange !== "function" ||
+    typeof window.getSelection !== "function"
+  ) {
+    return
+  }
+
+  const range = document.createRange()
+  range.selectNodeContents(element)
+  range.collapse(false)
+  const selection = window.getSelection()
+  selection?.removeAllRanges()
+  selection?.addRange(range)
+}
+
 /** @param {Element} list */
 function normalizePadList(list) {
   const items = listItems(list)
+  const activeElement = document.activeElement
 
   if (items.length === 0) {
     list.append(createListItem())
@@ -117,6 +142,16 @@ function normalizePadList(list) {
     if (items[index]?.textContent.trim() !== "") lastNonEmptyIndex = index
   }
 
+  const activeIndex = items.findIndex((item) => item === activeElement)
+  const shouldMoveFocusToPreviousItem =
+    activeIndex > lastNonEmptyIndex &&
+    activeIndex >= 0 &&
+    lastNonEmptyIndex >= 0 &&
+    items[activeIndex]?.textContent.trim() === ""
+  const previousNonEmptyItem = shouldMoveFocusToPreviousItem
+    ? items[lastNonEmptyIndex]
+    : undefined
+
   const trailingEmptyItems = items.slice(lastNonEmptyIndex + 1)
   for (const item of trailingEmptyItems.slice(1)) item.remove()
 
@@ -125,6 +160,7 @@ function normalizePadList(list) {
   }
 
   for (const item of listItems(list)) markListItemEmptyState(item)
+  if (previousNonEmptyItem) focusEditableEnd(previousNonEmptyItem)
 }
 
 function normalizePadLists() {

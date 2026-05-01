@@ -534,7 +534,7 @@ describe("PAD entry documents", () => {
     expect(source).toContain("<pad-stack")
     expect(source).toContain("<pad-panel")
     expect(source).toContain("<pad-list")
-    expect(source).toContain("<pad-list-item></pad-list-item>")
+    expect(source).toContain("<pad-list-item")
     expect(source).not.toContain("cdn.jsdelivr.net")
   })
 })
@@ -674,9 +674,11 @@ describe("browser runtime", () => {
     textContent: string
     parent: FakeList | undefined
     attributes: Map<string, string>
+    focusCount: number
     hasAttribute(name: string): boolean
     setAttribute(name: string, value: string): void
     toggleAttribute(name: string, force?: boolean): void
+    focus(options?: { preventScroll?: boolean }): void
     remove(): void
   }
 
@@ -751,6 +753,7 @@ describe("browser runtime", () => {
       textContent: text,
       parent: undefined,
       attributes: new Map<string, string>(),
+      focusCount: 0,
       hasAttribute(name: string) {
         return this.attributes.has(name)
       },
@@ -760,6 +763,9 @@ describe("browser runtime", () => {
       toggleAttribute(name: string, force?: boolean) {
         if (force) this.attributes.set(name, "")
         else this.attributes.delete(name)
+      },
+      focus() {
+        this.focusCount += 1
       },
       remove() {
         if (!this.parent) return
@@ -857,6 +863,31 @@ describe("browser runtime", () => {
     expect(newBlank?.attributes.get("contenteditable")).toBe("true")
     expect(newBlank?.attributes.get("aria-disabled")).toBe("false")
     expect(newBlank?.attributes.has("data-pad-empty")).toBe(true)
+  })
+
+  test("moves focus to the previous non-empty item when the focused tail item is cleared", async () => {
+    const list = makeFakeList(["Alpha", "Beta", ""])
+    const document = {
+      readyState: "loading",
+      activeElement: list.children[1],
+      addEventListener() {},
+      querySelectorAll: () => [],
+      createElement(name: string) {
+        return makeFakeListItem("", name)
+      },
+      body: makeFakeBody(),
+    }
+    const { normalizePadList, setEditableState } =
+      await loadPadBrowserRuntimeForTests(document)
+
+    setEditableState(true, "")
+    list.children[1]!.textContent = ""
+    normalizePadList(list)
+
+    expect(list.children.map((item) => item.textContent)).toEqual(["Alpha", ""])
+    expect(list.children[0]?.focusCount).toBe(1)
+    expect(list.children[1]?.focusCount).toBe(0)
+    expect(list.children[1]?.attributes.has("data-pad-empty")).toBe(true)
   })
 
   test("reloads the page when the server broadcasts a reload message", async () => {
