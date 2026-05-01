@@ -679,6 +679,7 @@ describe("browser runtime", () => {
     setAttribute(name: string, value: string): void
     toggleAttribute(name: string, force?: boolean): void
     focus(options?: { preventScroll?: boolean }): void
+    closest(selector: string): FakeList | undefined
     remove(): void
   }
 
@@ -717,7 +718,10 @@ describe("browser runtime", () => {
       { protocol: "file:" },
       { addEventListener() {}, clearTimeout, setTimeout },
     ) as {
-      normalizePadList(list: FakeList): void
+      normalizePadList(
+        list: FakeList,
+        options?: { focusClearedItem?: FakeListItem | null },
+      ): void
       setEditableState(editable: boolean, reason: string): void
     }
   }
@@ -766,6 +770,9 @@ describe("browser runtime", () => {
       },
       focus() {
         this.focusCount += 1
+      },
+      closest(selector: string) {
+        return selector === "pad-list" ? this.parent : undefined
       },
       remove() {
         if (!this.parent) return
@@ -865,7 +872,28 @@ describe("browser runtime", () => {
     expect(newBlank?.attributes.has("data-pad-empty")).toBe(true)
   })
 
-  test("moves focus to the previous non-empty item when the focused tail item is cleared", async () => {
+  test("does not move focus during generic normalization of a focused blank item", async () => {
+    const list = makeFakeList(["Alpha", ""])
+    const document = {
+      readyState: "loading",
+      activeElement: list.children[1],
+      addEventListener() {},
+      querySelectorAll: () => [],
+      createElement(name: string) {
+        return makeFakeListItem("", name)
+      },
+      body: makeFakeBody(),
+    }
+    const { normalizePadList } = await loadPadBrowserRuntimeForTests(document)
+
+    normalizePadList(list)
+
+    expect(list.children.map((item) => item.textContent)).toEqual(["Alpha", ""])
+    expect(list.children[0]?.focusCount).toBe(0)
+    expect(list.children[1]?.focusCount).toBe(0)
+  })
+
+  test("moves focus to the previous non-empty item when the focused tail item is cleared by input", async () => {
     const list = makeFakeList(["Alpha", "Beta", ""])
     const document = {
       readyState: "loading",
@@ -882,7 +910,7 @@ describe("browser runtime", () => {
 
     setEditableState(true, "")
     list.children[1]!.textContent = ""
-    normalizePadList(list)
+    normalizePadList(list, { focusClearedItem: list.children[1] })
 
     expect(list.children.map((item) => item.textContent)).toEqual(["Alpha", ""])
     expect(list.children[0]?.focusCount).toBe(1)

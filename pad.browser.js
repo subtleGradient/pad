@@ -126,10 +126,12 @@ function focusEditableEnd(element) {
   selection?.addRange(range)
 }
 
-/** @param {Element} list */
-function normalizePadList(list) {
+/**
+ * @param {Element} list
+ * @param {{ focusClearedItem?: Element | null }} [options]
+ */
+function normalizePadList(list, options = {}) {
   const items = listItems(list)
-  const activeElement = document.activeElement
 
   if (items.length === 0) {
     list.append(createListItem())
@@ -142,8 +144,10 @@ function normalizePadList(list) {
     if (items[index]?.textContent.trim() !== "") lastNonEmptyIndex = index
   }
 
-  const activeIndex = items.findIndex((item) => item === activeElement)
+  const { focusClearedItem } = options
+  const activeIndex = items.findIndex((item) => item === focusClearedItem)
   const shouldMoveFocusToPreviousItem =
+    document.activeElement === focusClearedItem &&
     activeIndex > lastNonEmptyIndex &&
     activeIndex >= 0 &&
     lastNonEmptyIndex >= 0 &&
@@ -164,7 +168,23 @@ function normalizePadList(list) {
 }
 
 function normalizePadLists() {
-  document.querySelectorAll("pad-list").forEach(normalizePadList)
+  document.querySelectorAll("pad-list").forEach((list) => normalizePadList(list))
+}
+
+/** @param {Element | null} target */
+function normalizeAfterInput(target) {
+  if (target?.localName !== "pad-list-item") {
+    normalizePadLists()
+    return
+  }
+
+  const list = target.closest("pad-list")
+  if (!list) {
+    normalizePadLists()
+    return
+  }
+
+  normalizePadList(list, { focusClearedItem: target })
 }
 
 function editableElements() {
@@ -253,7 +273,7 @@ function connect() {
     if (!canEdit) return
     const target = event.target instanceof Element ? event.target : null
     if (target?.closest("[data-pad-runtime]")) return
-    normalizePadLists()
+    normalizeAfterInput(target)
     dirty = true
     setStatus("Editing... autosave queued")
     window.clearTimeout(saveTimer)
