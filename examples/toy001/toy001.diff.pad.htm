@@ -1,0 +1,89 @@
+#!/usr/bin/env -S bun pad.shebang.tsx
+<!-- PAD DIFF: local development entrypoint. Run only if you trust this file as local Bun code. -->
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light dark" />
+<title>toy001.diff.pad.htm</title>
+<link rel="stylesheet" href="../../pad.css" />
+<script type="module" src="../../pad.browser.js"></script>
+
+<pad-scope kind="story" name="First tiny game">
+  <pad-note kind="title">toy001.diff.pad.htm</pad-note>
+
+  <pad-note kind="summary">
+    Build the smallest toy game through tiny commits. This pad is the rehearsal stage for the whole diff-pad system: focus one slice of reality, state the expectation, snapshot what is true, complain clearly, then propose the next move.
+  </pad-note>
+
+  <pad-ref id="ref_toy001_impl" kind="file" path="examples/toy001/toy001.tsx" role="implementation slice"></pad-ref>
+  <pad-ref id="ref_toy001_test" kind="file" path="examples/toy001/toy001.test.tsx" role="test slice"></pad-ref>
+  <pad-ref id="ref_toy001_test_command" kind="command" command="bun test examples/toy001/toy001.test.tsx" role="verification command"></pad-ref>
+
+  <pad-scope kind="slice" name="Toy game implementation" refs="ref_toy001_impl">
+    <pad-scope kind="requirement" name="Visible increment loop">
+      <pad-expect kind="wish" matcher="core.file-behavior" weight="high">
+        The implementation exposes the smallest playable toy game: a player can see a score and press one button to increase it.
+
+        <pad-snapshot kind="observation" rev="WORKTREE" format="json">
+          { "exists": false, "summary": "examples/toy001/toy001.tsx does not exist yet." }
+        </pad-snapshot>
+
+        <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="2">
+          { "distance": 2, "missing": ["implementation file", "visible increment loop"] }
+        </pad-snapshot>
+
+        <pad-work state="proposed">
+          Create the smallest possible score and increment button.
+        </pad-work>
+      </pad-expect>
+
+      <pad-expect kind="nightmare" edge="heads" matcher="core.not-missing-ui" weight="high">
+        There is no playable UI at all.
+
+        <pad-snapshot kind="observation" rev="WORKTREE" format="json">
+          { "state": "present", "reason": "The implementation file is missing." }
+        </pad-snapshot>
+      </pad-expect>
+
+      <pad-expect kind="nightmare" edge="tails" matcher="core.not-overbuilt" weight="medium">
+        The toy is overbuilt with routing, persistence, global app state, or ceremony before the toy needs it.
+
+        <pad-snapshot kind="observation" rev="WORKTREE" format="json">
+          { "state": "absent", "reason": "No implementation exists yet, so overshoot has not happened." }
+        </pad-snapshot>
+      </pad-expect>
+    </pad-scope>
+  </pad-scope>
+
+  <pad-scope kind="slice" name="Toy game proof" refs="ref_toy001_test">
+    <pad-scope kind="requirement" name="Initial score and increment proof">
+      <pad-expect kind="wish" matcher="core.test-behavior" weight="high">
+        The test proves the initial score and the one-button score increase.
+
+        <pad-snapshot kind="observation" rev="WORKTREE" format="json">
+          { "exists": false, "summary": "examples/toy001/toy001.test.tsx does not exist yet." }
+        </pad-snapshot>
+
+        <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="2">
+          { "distance": 2, "missing": ["test file", "initial score proof", "increment proof"] }
+        </pad-snapshot>
+
+        <pad-work state="proposed">
+          Create the smallest meaningful test for the initial score and one increment.
+        </pad-work>
+      </pad-expect>
+
+      <pad-expect kind="nightmare" edge="heads" matcher="core.not-unproved" weight="high">
+        The implementation exists but the behavior is only trusted by vibes.
+
+        <pad-snapshot kind="observation" rev="WORKTREE" format="json">
+          { "state": "not-yet-applicable", "reason": "Neither implementation nor test exists yet." }
+        </pad-snapshot>
+      </pad-expect>
+
+      <pad-work state="proposed" refs="ref_toy001_test_command">
+        Run bun test examples/toy001/toy001.test.tsx after creating the toy files.
+      </pad-work>
+    </pad-scope>
+  </pad-scope>
+</pad-scope>

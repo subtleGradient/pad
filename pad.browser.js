@@ -5,6 +5,13 @@ const SAVE_DELAY_MS = 180
 /** @typedef {{ type?: string, message?: string, savedAt?: string, paths?: string[] }} PadServerMessage */
 
 const GENERATED_ID_PREFIXES = new Map([
+  ["pad-scope", "scope"],
+  ["pad-ref", "ref"],
+  ["pad-note", "note"],
+  ["pad-expect", "expect"],
+  ["pad-snapshot", "snap"],
+  ["pad-work", "work"],
+  ["pad-metric", "metric"],
   ["pad-story", "story"],
   ["spec-wish", "wish"],
   ["spec-judgement", "judge"],
@@ -22,6 +29,14 @@ const GENERATED_ID_PREFIXES = new Map([
 
 const DIFF_PAD_ELEMENTS = [
   "pad-diff",
+  "pad-scope",
+  "pad-ref",
+  "pad-note",
+  "pad-expect",
+  "pad-snapshot",
+  "pad-work",
+  "pad-import",
+  "pad-metric",
   "pad-story",
   "story-spec",
   "story-real",
@@ -36,6 +51,7 @@ const DIFF_PAD_ELEMENTS = [
   "thread-tails",
   "thread-band",
   "golf-axis",
+  "file-ref",
   "real-pointer",
   "real-file",
   "real-observation",
@@ -51,6 +67,16 @@ const DIFF_PAD_ELEMENTS = [
 
 const GENERATED_ID_SELECTOR = [...GENERATED_ID_PREFIXES.keys()].join(",")
 const RUNTIME_CRUD_SELECTOR = "[data-pad-runtime][data-pad-crud]"
+const GENERIC_PAD_ELEMENTS = new Set([
+  "pad-scope",
+  "pad-ref",
+  "pad-note",
+  "pad-expect",
+  "pad-snapshot",
+  "pad-work",
+  "pad-import",
+  "pad-metric",
+])
 const MUTABLE_DIFF_ITEM_SELECTOR = [
   "spec-wish",
   "spec-judgement",
@@ -120,9 +146,241 @@ function ensureGeneratedId(element) {
 /** @param {string} name */
 function makeDiffPadElement(name) {
   const assignsId = GENERATED_ID_PREFIXES.has(name)
+  if (GENERIC_PAD_ELEMENTS.has(name)) return makeGenericPadElement(name, assignsId)
+
   return class extends HTMLElement {
     connectedCallback() {
       if (assignsId) ensureGeneratedId(this)
+    }
+  }
+}
+
+function padScopeHtml() {
+  return `<pad-scope kind="scope" name="New scope">
+  <pad-note kind="thought">Think out loud here...</pad-note>
+</pad-scope>`
+}
+
+function padRefHtml() {
+  return `<pad-ref kind="file" path="path/to/file" role="target"></pad-ref>`
+}
+
+function padNoteHtml() {
+  return `<pad-note kind="thought">Think out loud here...</pad-note>`
+}
+
+function padExpectHtml() {
+  return `<pad-expect kind="wish" matcher="core.todo" weight="medium">
+  Describe the expectation...
+  <pad-snapshot kind="observation" rev="WORKTREE" format="text">No observation captured yet.</pad-snapshot>
+  <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="1">{ "distance": 1 }</pad-snapshot>
+</pad-expect>`
+}
+
+function padSnapshotHtml() {
+  return `<pad-snapshot kind="observation" rev="WORKTREE" format="text">Observation snapshot...</pad-snapshot>`
+}
+
+function padWorkHtml() {
+  return `<pad-work state="proposed">Proposed work...</pad-work>`
+}
+
+/**
+ * @param {HTMLElement} host
+ * @param {string} name
+ */
+function setHostAttribute(host, name) {
+  /** @param {Event} event */
+  return (event) => {
+    const target = event.target
+    if (!(target instanceof HTMLInputElement) && !(target instanceof HTMLSelectElement)) {
+      return
+    }
+    const value = target.value.trim()
+    if (value) host.setAttribute(name, value)
+    else host.removeAttribute(name)
+    host.dispatchEvent(new Event("input", { bubbles: true, composed: true }))
+  }
+}
+
+/**
+ * @param {HTMLElement | ShadowRoot} root
+ * @param {HTMLElement} host
+ * @param {string} label
+ * @param {string} name
+ * @param {string[]} [options]
+ */
+function appendAttributeControl(root, host, label, name, options) {
+  const wrapper = document.createElement("label")
+  wrapper.textContent = label
+  const control = options ? document.createElement("select") : document.createElement("input")
+  control.value = host.getAttribute(name) ?? ""
+  control.setAttribute("aria-label", label)
+  if (options) {
+    for (const optionValue of options) {
+      const option = document.createElement("option")
+      option.value = optionValue
+      option.textContent = optionValue
+      control.append(option)
+    }
+  }
+  control.addEventListener("input", setHostAttribute(host, name))
+  control.addEventListener("change", setHostAttribute(host, name))
+  wrapper.append(control)
+  root.append(wrapper)
+}
+
+/**
+ * @param {HTMLElement | ShadowRoot} root
+ * @param {HTMLElement} host
+ * @param {string} label
+ * @param {() => HTMLElement} makeElement
+ */
+function appendShadowAction(root, host, label, makeElement) {
+  const button = document.createElement("button")
+  button.type = "button"
+  button.textContent = label
+  button.addEventListener("click", (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    const element = makeElement()
+    host.append(element)
+    assignMissingGeneratedIds()
+    host.dispatchEvent(new Event("input", { bubbles: true, composed: true }))
+  })
+  root.append(button)
+}
+
+/**
+ * @param {string} name
+ * @param {boolean} assignsId
+ */
+function makeGenericPadElement(name, assignsId) {
+  return class extends HTMLElement {
+    connectedCallback() {
+      if (assignsId) ensureGeneratedId(this)
+      if (!this.shadowRoot) this.attachShadow({ mode: "open" })
+      this.renderShadowControls()
+    }
+
+    renderShadowControls() {
+      if (!this.shadowRoot) return
+      this.shadowRoot.textContent = ""
+      const style = document.createElement("style")
+      style.textContent = `
+        :host { display: block; }
+        .chrome { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; margin-bottom: .45rem; font: 700 .68rem/1 ui-sans-serif, system-ui, sans-serif; color: color-mix(in srgb, currentColor 62%, transparent); }
+        label { display: inline-grid; gap: .12rem; text-transform: uppercase; letter-spacing: .08em; }
+        input, select { max-width: 10rem; border: 0; border-radius: 999px; padding: .24rem .45rem; background: rgba(127, 127, 127, .12); color: inherit; font: 600 .72rem/1 ui-sans-serif, system-ui, sans-serif; }
+        button { border: 0; border-radius: 999px; padding: .32rem .55rem; background: rgba(127, 127, 127, .16); color: inherit; font: 800 .72rem/1 ui-sans-serif, system-ui, sans-serif; cursor: pointer; }
+        button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid rgba(47, 109, 179, .75); outline-offset: 2px; }
+      `
+      this.shadowRoot.append(style)
+      const chrome = document.createElement("div")
+      chrome.className = "chrome"
+      this.shadowRoot.append(chrome)
+
+      if (name === "pad-scope") {
+        appendAttributeControl(chrome, this, "kind", "kind", [
+          "spec",
+          "story",
+          "slice",
+          "requirement",
+          "scope",
+          "experiment",
+        ])
+        appendAttributeControl(chrome, this, "name", "name")
+        appendAttributeControl(chrome, this, "refs", "refs")
+        appendShadowAction(chrome, this, "+scope", () => htmlToElement(padScopeHtml()))
+        appendShadowAction(chrome, this, "+note", () => htmlToElement(padNoteHtml()))
+        appendShadowAction(chrome, this, "+ref", () => htmlToElement(padRefHtml()))
+        appendShadowAction(chrome, this, "+expect", () => htmlToElement(padExpectHtml()))
+        appendShadowAction(chrome, this, "+work", () => htmlToElement(padWorkHtml()))
+      }
+
+      if (name === "pad-ref") {
+        appendAttributeControl(chrome, this, "kind", "kind", [
+          "file",
+          "url",
+          "symbol",
+          "asset",
+          "command",
+          "commit",
+        ])
+        appendAttributeControl(chrome, this, "path", "path")
+        appendAttributeControl(chrome, this, "href", "href")
+        appendAttributeControl(chrome, this, "command", "command")
+        appendAttributeControl(chrome, this, "role", "role")
+      }
+
+      if (name === "pad-note") {
+        appendAttributeControl(chrome, this, "kind", "kind", [
+          "thought",
+          "summary",
+          "why",
+          "rule",
+          "plan",
+          "question",
+          "decision",
+          "title",
+        ])
+      }
+
+      if (name === "pad-expect") {
+        appendAttributeControl(chrome, this, "kind", "kind", [
+          "wish",
+          "nightmare",
+          "judgement",
+          "razor",
+        ])
+        appendAttributeControl(chrome, this, "matcher", "matcher")
+        appendAttributeControl(chrome, this, "weight", "weight")
+        appendAttributeControl(chrome, this, "edge", "edge", ["", "heads", "tails"])
+        appendAttributeControl(chrome, this, "refs", "refs")
+        appendShadowAction(chrome, this, "+snapshot", () => htmlToElement(padSnapshotHtml()))
+        appendShadowAction(chrome, this, "+work", () => htmlToElement(padWorkHtml()))
+      }
+
+      if (name === "pad-snapshot") {
+        appendAttributeControl(chrome, this, "kind", "kind", [
+          "observation",
+          "gap",
+          "result",
+        ])
+        appendAttributeControl(chrome, this, "rev", "rev")
+        appendAttributeControl(chrome, this, "format", "format", [
+          "text",
+          "json",
+          "html",
+        ])
+        appendAttributeControl(chrome, this, "distance", "distance")
+      }
+
+      if (name === "pad-work") {
+        appendAttributeControl(chrome, this, "state", "state", [
+          "proposed",
+          "approved",
+          "active",
+          "blocked",
+          "done",
+          "dropped",
+        ])
+      }
+
+      if (name === "pad-import") {
+        appendAttributeControl(chrome, this, "kind", "kind", ["expect-pack"])
+        appendAttributeControl(chrome, this, "src", "src")
+        appendAttributeControl(chrome, this, "as", "as")
+      }
+
+      if (name === "pad-metric") {
+        appendAttributeControl(chrome, this, "name", "name")
+        appendAttributeControl(chrome, this, "value", "value")
+        appendAttributeControl(chrome, this, "target", "target")
+      }
+
+      const slot = document.createElement("slot")
+      this.shadowRoot.append(slot)
     }
   }
 }
@@ -197,7 +455,7 @@ function realJudgementHtml() {
 
 function realPointerHtml() {
   return `<real-pointer rev="SELF">
-  <real-file path="path/to/file" role="evidence"></real-file>
+  <file-ref path="path/to/file" role="evidence"></file-ref>
 </real-pointer>`
 }
 

@@ -394,6 +394,10 @@ describe("PAD entry documents", () => {
     expect(source.startsWith(`${publicShebang}\n`)).toBe(true)
     expect(source).toContain(publicCss)
     expect(source).toContain(publicJs)
+    expect(source).toContain('<pad-scope kind="spec"')
+    expect(source).toContain('<pad-expect kind="wish"')
+    expect(source).toContain('<pad-snapshot kind="gap"')
+    expect(source).toContain('<pad-import kind="expect-pack"')
     expect(source).not.toContain("@main")
     expect(source).not.toContain(`github:subtleGradient`)
   })
@@ -432,6 +436,39 @@ describe("PAD entry documents", () => {
     expect(source).toContain("Direct manipulation CRUD")
     expect(source).not.toContain("thread-left")
     expect(source).not.toContain("thread-right")
+    expect(source).not.toContain("schema=")
+  })
+
+  test("toy001 diff pad is a standalone static example", async () => {
+    const source = await Bun.file("examples/toy001/toy001.diff.pad.htm").text()
+
+    expect(source.startsWith("#!/usr/bin/env -S bun pad.shebang.tsx\n")).toBe(
+      true,
+    )
+    expect(source).toContain('href="../../pad.css"')
+    expect(source).toContain(
+      '<script type="module" src="../../pad.browser.js"></script>',
+    )
+    expect(source).toContain("toy001.diff.pad.htm")
+    expect(source).toContain('<pad-scope kind="story" name="First tiny game">')
+    expect(source).toContain('<pad-scope kind="slice"')
+    expect(source).toContain('<pad-expect kind="wish"')
+    expect(source).toContain('<pad-snapshot kind="observation"')
+    expect(source).toContain('<pad-snapshot kind="gap"')
+    expect(source).toContain('<pad-ref id="ref_toy001_impl"')
+    expect(source).toContain(
+      '<pad-ref id="ref_toy001_test"',
+    )
+    expect(source).toContain("examples/toy001/toy001.tsx")
+    expect(source).toContain("examples/toy001/toy001.test.tsx")
+    expect(source).toContain(
+      'kind="command" command="bun test examples/toy001/toy001.test.tsx"',
+    )
+    expect(source).not.toContain("story-spec")
+    expect(source).not.toContain("story-real")
+    expect(source).not.toContain("story-gaps")
+    expect(source).not.toContain("story-next")
+    expect(source).not.toContain("pad-text")
     expect(source).not.toContain("schema=")
   })
 })
@@ -477,6 +514,7 @@ describe("browser runtime", () => {
     const source = await Bun.file("pad.browser.js").text()
     const defined: string[] = []
     const elements = [
+      new FakeElement("pad-scope"),
       new FakeElement("pad-story"),
       new FakeElement("gap-item"),
       new FakeElement("work-item", { id: "work_existing" }),
@@ -532,13 +570,22 @@ describe("browser runtime", () => {
     )
 
     expect(defined).toContain("pad-diff")
+    expect(defined).toContain("pad-scope")
+    expect(defined).toContain("pad-ref")
+    expect(defined).toContain("pad-note")
+    expect(defined).toContain("pad-expect")
+    expect(defined).toContain("pad-snapshot")
+    expect(defined).toContain("pad-work")
+    expect(defined).toContain("pad-import")
     expect(defined).toContain("spec-thread")
     expect(defined).toContain("thread-heads")
     expect(defined).toContain("thread-tails")
+    expect(defined).toContain("file-ref")
     expect(defined).toContain("gap-axis")
-    expect(elements[0]?.getAttribute("id")).toMatch(/^story_[a-z0-9]+$/)
-    expect(elements[1]?.getAttribute("id")).toMatch(/^gap_[a-z0-9]+$/)
-    expect(elements[2]?.getAttribute("id")).toBe("work_existing")
+    expect(elements[0]?.getAttribute("id")).toMatch(/^scope_[a-z0-9]+$/)
+    expect(elements[1]?.getAttribute("id")).toMatch(/^story_[a-z0-9]+$/)
+    expect(elements[2]?.getAttribute("id")).toMatch(/^gap_[a-z0-9]+$/)
+    expect(elements[3]?.getAttribute("id")).toBe("work_existing")
   })
 
   test("autosaves generated ids after the trusted server connects", async () => {

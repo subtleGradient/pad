@@ -23,6 +23,14 @@ body {
 pad-document,
 pad-text,
 pad-diff,
+pad-scope,
+pad-ref,
+pad-note,
+pad-expect,
+pad-snapshot,
+pad-work,
+pad-import,
+pad-metric,
 pad-story,
 story-spec,
 story-real,
@@ -37,6 +45,7 @@ thread-heads,
 thread-tails,
 thread-band,
 golf-axis,
+file-ref,
 real-pointer,
 real-file,
 real-observation,
@@ -96,6 +105,110 @@ body:has(pad-diff) pad-text[kind="title"] {
 pad-diff {
   display: grid;
   gap: clamp(1.25rem, 3vw, 2rem);
+}
+
+pad-scope {
+  display: grid;
+  gap: 0.85rem;
+  border: 1px solid rgba(21, 21, 21, 0.16);
+  border-radius: 1.1rem;
+  padding: clamp(1rem, 2.5vw, 1.35rem);
+  background: rgba(255, 252, 245, 0.48);
+}
+
+pad-scope pad-scope {
+  background: rgba(245, 241, 232, 0.72);
+}
+
+pad-scope::before {
+  content: attr(kind) " / " attr(name);
+  color: rgba(21, 21, 21, 0.62);
+  font:
+    800 0.72rem/1.1 ui-sans-serif,
+    system-ui,
+    sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+pad-note,
+pad-expect,
+pad-snapshot,
+pad-work,
+pad-import {
+  display: grid;
+  gap: 0.55rem;
+  border-left: 0.28rem solid rgba(21, 21, 21, 0.24);
+  border-radius: 0.45rem;
+  padding: 0.7rem 0.75rem;
+  background: rgba(255, 255, 255, 0.42);
+  white-space: pre-wrap;
+}
+
+pad-note {
+  border-left-color: #8b6f47;
+}
+
+pad-expect {
+  border-left-color: #755fd3;
+}
+
+pad-expect[kind="nightmare"] {
+  border-left-color: #c45f34;
+}
+
+pad-snapshot {
+  border-left-color: #34856f;
+  font-family:
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  font-size: 0.86em;
+}
+
+pad-snapshot[kind="gap"] {
+  border-left-color: #c45f34;
+}
+
+pad-work {
+  border-left-color: #2f6db3;
+}
+
+pad-note::before,
+pad-expect::before,
+pad-snapshot::before,
+pad-work::before,
+pad-import::before {
+  color: rgba(21, 21, 21, 0.58);
+  font:
+    700 0.68rem/1.1 ui-sans-serif,
+    system-ui,
+    sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: normal;
+}
+
+pad-note::before {
+  content: "Note " attr(kind);
+}
+
+pad-expect::before {
+  content: "Expect " attr(kind) " / " attr(matcher);
+}
+
+pad-snapshot::before {
+  content: "Snapshot " attr(kind) " / " attr(rev);
+}
+
+pad-work::before {
+  content: "Work " attr(state);
+}
+
+pad-import::before {
+  content: "Import " attr(as) " <- " attr(src);
 }
 
 pad-story {
@@ -240,6 +353,9 @@ work-item::before {
   content: "Work " attr(state);
 }
 
+pad-ref,
+pad-metric,
+file-ref,
 real-file,
 golf-axis,
 gap-axis,
@@ -257,11 +373,20 @@ proof-link {
     monospace;
 }
 
+pad-ref::before,
+file-ref::before,
 real-file::before {
-  content: attr(path);
+  content: attr(kind) ": " attr(path) attr(href) attr(command);
   font-weight: 800;
 }
 
+pad-metric::before {
+  content: attr(name) "=" attr(value) " target=" attr(target);
+  font-weight: 800;
+}
+
+pad-ref::after,
+file-ref::after,
 real-file::after {
   content: " — " attr(role);
   color: rgba(21, 21, 21, 0.56);
@@ -402,6 +527,17 @@ button[data-pad-crud-button]:disabled {
   pad-story > pad-text[kind="heading"] {
     grid-column: 1 / -1;
   }
+
+  pad-scope[kind="story"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  pad-scope[kind="story"] > pad-note[kind="title"],
+  pad-scope[kind="story"] > pad-note[kind="summary"],
+  pad-scope[kind="story"] > pad-note[kind="why"],
+  pad-scope[kind="story"] > pad-note[kind="plan"] {
+    grid-column: 1 / -1;
+  }
 }
 
 pad-text[contenteditable="true"] {
@@ -456,6 +592,15 @@ pad-status {
     box-shadow: 0 1.2rem 3rem rgba(0, 0, 0, 0.25);
   }
 
+  pad-scope {
+    border-color: rgba(243, 234, 215, 0.15);
+    background: rgba(29, 28, 24, 0.72);
+  }
+
+  pad-scope pad-scope {
+    background: rgba(17, 17, 15, 0.72);
+  }
+
   story-spec,
   story-real,
   story-gaps,
@@ -471,6 +616,12 @@ pad-status {
   thread-heads::before,
   thread-tails::before,
   thread-band::before,
+  pad-scope::before,
+  pad-note::before,
+  pad-expect::before,
+  pad-snapshot::before,
+  pad-work::before,
+  pad-import::before,
   gap-item::before,
   work-item::before,
   proof-check::before {
@@ -483,6 +634,11 @@ pad-status {
   spec-razor,
   spec-thread,
   spec-golf,
+  pad-note,
+  pad-expect,
+  pad-snapshot,
+  pad-work,
+  pad-import,
   real-pointer,
   real-observation,
   real-judgement,
@@ -495,6 +651,9 @@ pad-status {
   thread-heads,
   thread-tails,
   thread-band,
+  pad-ref,
+  pad-metric,
+  file-ref,
   real-file,
   golf-axis,
   gap-axis,
@@ -504,6 +663,8 @@ pad-status {
     color: rgba(243, 234, 215, 0.78);
   }
 
+  pad-ref::after,
+  file-ref::after,
   real-file::after,
   gap-axis[target]::after,
   gap-axis[target-min]::after {
