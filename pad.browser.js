@@ -97,7 +97,9 @@ function listItems(list) {
 
 /** @returns {HTMLElement} */
 function createListItem() {
-  return document.createElement("pad-list-item")
+  const item = document.createElement("pad-list-item")
+  applyEditableElementState(item, canEdit)
+  return item
 }
 
 /** @param {Element} list */
@@ -134,6 +136,16 @@ function editableElements() {
 }
 
 /**
+ * @param {Element} element
+ * @param {boolean} editable
+ */
+function applyEditableElementState(element, editable) {
+  if (element.hasAttribute("static")) return
+  element.setAttribute("contenteditable", editable ? "true" : "false")
+  element.setAttribute("aria-disabled", editable ? "false" : "true")
+}
+
+/**
  * @param {boolean} editable
  * @param {string} reason
  */
@@ -148,9 +160,7 @@ function setEditableState(editable, reason) {
   }
 
   editableElements().forEach((element) => {
-    if (element.hasAttribute("static")) return
-    element.setAttribute("contenteditable", editable ? "true" : "false")
-    element.setAttribute("aria-disabled", editable ? "false" : "true")
+    applyEditableElementState(element, editable)
   })
 }
 

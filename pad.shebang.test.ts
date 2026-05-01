@@ -673,7 +673,9 @@ describe("browser runtime", () => {
     localName: string
     textContent: string
     parent: FakeList | undefined
-    attributes: Set<string>
+    attributes: Map<string, string>
+    hasAttribute(name: string): boolean
+    setAttribute(name: string, value: string): void
     toggleAttribute(name: string, force?: boolean): void
     remove(): void
   }
@@ -748,9 +750,15 @@ describe("browser runtime", () => {
       localName,
       textContent: text,
       parent: undefined,
-      attributes: new Set<string>(),
+      attributes: new Map<string, string>(),
+      hasAttribute(name: string) {
+        return this.attributes.has(name)
+      },
+      setAttribute(name: string, value: string) {
+        this.attributes.set(name, value)
+      },
       toggleAttribute(name: string, force?: boolean) {
-        if (force) this.attributes.add(name)
+        if (force) this.attributes.set(name, "")
         else this.attributes.delete(name)
       },
       remove() {
@@ -834,6 +842,21 @@ describe("browser runtime", () => {
     expect(body.attributes.has("data-pad-editable")).toBe(true)
     expect(body.dataset.padReadonlyReason).toBeUndefined()
     expect(editable.attributes.get("contenteditable")).toBe("true")
+  })
+
+  test("new blank list items inherit the live editable state", async () => {
+    const { normalizePadList, setEditableState } =
+      await loadPadBrowserRuntimeForTests()
+    const list = makeFakeList(["Alpha"])
+
+    setEditableState(true, "")
+    normalizePadList(list)
+
+    const newBlank = list.children.at(-1)
+    expect(newBlank?.textContent).toBe("")
+    expect(newBlank?.attributes.get("contenteditable")).toBe("true")
+    expect(newBlank?.attributes.get("aria-disabled")).toBe("false")
+    expect(newBlank?.attributes.has("data-pad-empty")).toBe(true)
   })
 
   test("reloads the page when the server broadcasts a reload message", async () => {
