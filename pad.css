@@ -123,6 +123,15 @@ pad-scope {
   background: rgba(255, 255, 252, 0.72);
 }
 
+pad-scope[data-pad-scope-disclosure]::before {
+  content: none;
+}
+
+pad-scope:not([data-pad-scope-expanded="true"]) {
+  gap: 0;
+  background: rgba(255, 255, 252, 0.52);
+}
+
 pad-scope pad-scope {
   background: rgba(244, 247, 244, 0.82);
 }
@@ -669,6 +678,10 @@ pad-status {
   pad-scope {
     border-color: rgba(238, 243, 239, 0.14);
     background: rgba(24, 29, 28, 0.82);
+  }
+
+  pad-scope:not([data-pad-scope-expanded="true"]) {
+    background: rgba(24, 29, 28, 0.52);
   }
 
   pad-scope pad-scope {

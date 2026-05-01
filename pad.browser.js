@@ -92,6 +92,11 @@ const EDITING_ATTRIBUTE_MARKERS = [
   ["role", "textbox", "data-pad-runtime-role"],
   ["aria-multiline", "true", "data-pad-runtime-aria-multiline"],
 ]
+const TEXT_NODE_TYPE = 3
+const SCOPE_EXPANDED_ATTRIBUTE = "data-pad-scope-expanded"
+const SCOPE_DISCLOSURE_ATTRIBUTE = "data-pad-scope-disclosure"
+const SCOPE_RUNTIME_EXPANDED_MARKER = "data-pad-runtime-scope-expanded"
+const SCOPE_RUNTIME_DISCLOSURE_MARKER = "data-pad-runtime-scope-disclosure"
 const MUTABLE_DIFF_ITEM_SELECTOR = [
   "spec-wish",
   "spec-judgement",
@@ -179,6 +184,197 @@ function enableEditableTextHost(host) {
   }
 }
 
+/**
+ * @param {Node | null | undefined} node
+ * @returns {node is Text}
+ */
+function isTextNode(node) {
+  return node?.nodeType === TEXT_NODE_TYPE
+}
+
+/** @param {HTMLElement} host */
+function directEditableText(host) {
+  const directText = Array.from(host.childNodes ?? [])
+    .filter(isTextNode)
+    .map((node) => node.data)
+    .join("")
+  return directText || (host.textContent ?? "")
+}
+
+/**
+ * @param {Selection} selection
+ * @param {HTMLElement} host
+ */
+function selectionIsInsideHost(selection, host) {
+  const anchor = selection.anchorNode
+  const focus = selection.focusNode
+  return (
+    (!anchor || anchor === host || host.contains(anchor)) &&
+    (!focus || focus === host || host.contains(focus))
+  )
+}
+
+/** @param {HTMLElement} host */
+function selectionCoversEditableHostText(host) {
+  const hostText = directEditableText(host)
+  if (!hostText.length) return true
+
+  const selection = document.getSelection?.()
+  if (!selection || selection.isCollapsed) return false
+  if (!selectionIsInsideHost(selection, host)) return false
+
+  const selectedText = selection.toString()
+  return selectedText === hostText || selectedText.trim() === hostText.trim()
+}
+
+/**
+ * @param {Text} node
+ * @param {number} offset
+ * @param {boolean} backward
+ * @param {Selection} selection
+ */
+function deleteCharacterFromTextNode(node, offset, backward, selection) {
+  const text = node.data
+  if (backward) {
+    if (offset <= 0) return false
+    node.data = `${text.slice(0, offset - 1)}${text.slice(offset)}`
+    selection.collapse(node, offset - 1)
+    return true
+  }
+
+  if (offset >= text.length) return false
+  node.data = `${text.slice(0, offset)}${text.slice(offset + 1)}`
+  selection.collapse(node, offset)
+  return true
+}
+
+/**
+ * @param {HTMLElement} host
+ * @param {Selection} selection
+ * @param {boolean} backward
+ */
+function deleteCollapsedEditableCharacter(host, selection, backward) {
+  const anchor = selection.anchorNode
+  const offset = selection.anchorOffset
+
+  if (isTextNode(anchor) && host.contains(anchor)) {
+    return deleteCharacterFromTextNode(anchor, offset, backward, selection)
+  }
+
+  if (anchor !== host) return false
+
+  const children = host.childNodes ?? []
+  const child = children[offset - (backward ? 1 : 0)]
+  if (!isTextNode(child)) return false
+  return deleteCharacterFromTextNode(
+    child,
+    backward ? child.data.length : 0,
+    backward,
+    selection,
+  )
+}
+
+/** @param {HTMLElement} host */
+function dispatchManualEdit(host) {
+  host.dispatchEvent(new Event("input", { bubbles: true, composed: true }))
+}
+
+/** @param {Event} event */
+function keepEditableHostOnDelete(event) {
+  if (!(event instanceof InputEvent)) return
+  if (
+    event.inputType !== "deleteContentBackward" &&
+    event.inputType !== "deleteContentForward" &&
+    event.inputType !== "deleteByCut"
+  ) {
+    return
+  }
+
+  const target = event.target
+  if (!(target instanceof HTMLElement)) return
+  if (!EDITABLE_TEXT_ELEMENTS.has(target.localName)) return
+  const selection = document.getSelection?.()
+  if (!selection || !selectionIsInsideHost(selection, target)) return
+
+  if (selectionCoversEditableHostText(target)) {
+    event.preventDefault()
+    return
+  }
+
+  if (!selection.isCollapsed) return
+
+  event.preventDefault()
+  const changed = deleteCollapsedEditableCharacter(
+    target,
+    selection,
+    event.inputType === "deleteContentBackward",
+  )
+  if (changed) dispatchManualEdit(target)
+}
+
+/** @param {HTMLElement} scope */
+function isRootScope(scope) {
+  return scope.parentElement === document.body
+}
+
+/** @param {HTMLElement} scope */
+function updateScopeDisclosure(scope) {
+  const title = scope.shadowRoot?.querySelector("[data-pad-scope-title]")
+  if (title instanceof HTMLElement) {
+    title.textContent = `${scope.getAttribute("kind") ?? "scope"} / ${scope.getAttribute("name") ?? "untitled"}`
+  }
+  const button = scope.shadowRoot?.querySelector("[data-pad-scope-toggle]")
+  if (!(button instanceof HTMLButtonElement)) return
+  const expanded = scope.getAttribute(SCOPE_EXPANDED_ATTRIBUTE) === "true"
+  button.setAttribute("aria-expanded", String(expanded))
+  button.textContent = expanded ? "Collapse" : "Expand"
+}
+
+/**
+ * @param {HTMLElement} scope
+ * @param {boolean} expanded
+ */
+function setScopeExpanded(scope, expanded) {
+  scope.setAttribute(SCOPE_DISCLOSURE_ATTRIBUTE, "")
+  scope.setAttribute(SCOPE_RUNTIME_DISCLOSURE_MARKER, "")
+  scope.setAttribute(SCOPE_EXPANDED_ATTRIBUTE, String(expanded))
+  scope.setAttribute(SCOPE_RUNTIME_EXPANDED_MARKER, "")
+  updateScopeDisclosure(scope)
+}
+
+/** @param {HTMLElement} scope */
+function collapseSiblingScopes(scope) {
+  const parent = scope.parentElement
+  if (!parent) return
+  for (const sibling of Array.from(parent.children)) {
+    if (sibling === scope || sibling.localName !== "pad-scope") continue
+    setScopeExpanded(/** @type {HTMLElement} */ (sibling), false)
+  }
+}
+
+/** @param {HTMLElement} scope */
+function ensureScopeDisclosure(scope) {
+  scope.setAttribute(SCOPE_DISCLOSURE_ATTRIBUTE, "")
+  scope.setAttribute(SCOPE_RUNTIME_DISCLOSURE_MARKER, "")
+  if (!scope.hasAttribute(SCOPE_EXPANDED_ATTRIBUTE)) {
+    setScopeExpanded(scope, isRootScope(scope))
+  } else {
+    scope.setAttribute(SCOPE_RUNTIME_EXPANDED_MARKER, "")
+    updateScopeDisclosure(scope)
+  }
+}
+
+/** @param {HTMLElement} scope */
+function toggleScopeDisclosure(scope) {
+  const expanded = scope.getAttribute(SCOPE_EXPANDED_ATTRIBUTE) === "true"
+  if (expanded && !isRootScope(scope)) {
+    setScopeExpanded(scope, false)
+    return
+  }
+  collapseSiblingScopes(scope)
+  setScopeExpanded(scope, true)
+}
+
 /** @param {string} name */
 function makeDiffPadElement(name) {
   const assignsId = GENERATED_ID_PREFIXES.has(name)
@@ -247,6 +443,7 @@ function setHostAttribute(host, name) {
     const value = target.value.trim()
     if (value) host.setAttribute(name, value)
     else host.removeAttribute(name)
+    updateScopeDisclosure(host)
     host.dispatchEvent(new Event("input", { bubbles: true, composed: true }))
   }
 }
@@ -328,6 +525,7 @@ function makeGenericPadElement(name, assignsId) {
       enableEditableTextHost(this)
       if (!this.shadowRoot) this.attachShadow({ mode: "open" })
       this.renderShadowControls()
+      if (name === "pad-scope") ensureScopeDisclosure(this)
     }
 
     renderShadowControls() {
@@ -338,6 +536,68 @@ function makeGenericPadElement(name, assignsId) {
         :host {
           display: block;
           position: relative;
+        }
+
+        .scope-disclosure {
+          display: grid;
+          gap: .75rem;
+        }
+
+        .scope-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: .75rem;
+          min-width: 0;
+        }
+
+        .scope-title {
+          min-width: 0;
+          color: color-mix(in srgb, currentColor 68%, transparent);
+          font: 800 .72rem/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+          letter-spacing: .08em;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+
+        .scope-toggle {
+          flex: 0 0 auto;
+          min-height: 2.75rem;
+          border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+          border-radius: 999px;
+          padding: .45rem .75rem;
+          background: color-mix(in srgb, Canvas 90%, currentColor 10%);
+          color: inherit;
+          font: 800 1rem/1 ui-sans-serif, system-ui, sans-serif;
+          cursor: pointer;
+        }
+
+        .scope-body {
+          display: grid;
+          gap: .9rem;
+        }
+
+        .scope-tools {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: end;
+          gap: .4rem;
+          border-block-start: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+          padding-block-start: .75rem;
+        }
+
+        .scope-adds {
+          display: flex;
+          flex-wrap: wrap;
+          gap: .4rem;
+          border-block-start: 1px dashed color-mix(in srgb, currentColor 14%, transparent);
+          padding-block-start: .75rem;
+        }
+
+        :host(:not([data-pad-scope-expanded="true"])) .scope-body {
+          display: none;
         }
 
         .chrome {
@@ -425,12 +685,15 @@ function makeGenericPadElement(name, assignsId) {
         button:focus-visible,
         input:focus-visible,
         select:focus-visible,
-        summary:focus-visible {
+        summary:focus-visible,
+        .scope-toggle:focus-visible {
           outline: 2px solid rgba(47, 109, 179, .75);
+          outline-offset: 2px;
         }
 
         @media (pointer: fine) {
           summary,
+          .scope-toggle,
           input,
           select,
           button {
@@ -452,18 +715,64 @@ function makeGenericPadElement(name, assignsId) {
             width: 100%;
             max-height: none;
           }
+
+          .scope-header {
+            align-items: start;
+          }
+
+          .scope-title {
+            white-space: normal;
+          }
+
+          .scope-tools {
+            align-items: stretch;
+          }
         }
       `
       this.shadowRoot.append(style)
-      const chrome = document.createElement("details")
-      chrome.className = "chrome"
-      const summary = document.createElement("summary")
-      summary.textContent = "Edit"
-      summary.setAttribute("aria-label", `Edit ${name.replace("pad-", "")}`)
-      const panel = document.createElement("div")
-      panel.className = "chrome-panel"
-      chrome.append(summary, panel)
-      this.shadowRoot.append(chrome)
+      let scopeBody = null
+      let panel = null
+      let scopeAddPanel = null
+      if (name === "pad-scope") {
+        const disclosure = document.createElement("div")
+        disclosure.className = "scope-disclosure"
+        const header = document.createElement("div")
+        header.className = "scope-header"
+        const title = document.createElement("span")
+        title.className = "scope-title"
+        title.dataset.padScopeTitle = ""
+        title.textContent = `${this.getAttribute("kind") ?? "scope"} / ${this.getAttribute("name") ?? "untitled"}`
+        const toggle = document.createElement("button")
+        toggle.type = "button"
+        toggle.className = "scope-toggle"
+        toggle.dataset.padScopeToggle = ""
+        toggle.addEventListener("click", (event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          toggleScopeDisclosure(this)
+        })
+        header.append(title, toggle)
+        scopeBody = document.createElement("div")
+        scopeBody.className = "scope-body"
+        panel = document.createElement("div")
+        panel.className = "scope-tools"
+        scopeBody.append(panel)
+        scopeAddPanel = document.createElement("div")
+        scopeAddPanel.className = "scope-adds"
+        disclosure.append(header, scopeBody)
+        this.shadowRoot.append(disclosure)
+      }
+      if (!panel) {
+        const chrome = document.createElement("details")
+        chrome.className = "chrome"
+        const summary = document.createElement("summary")
+        summary.textContent = "Edit"
+        summary.setAttribute("aria-label", `Edit ${name.replace("pad-", "")}`)
+        panel = document.createElement("div")
+        panel.className = "chrome-panel"
+        chrome.append(summary, panel)
+        this.shadowRoot.append(chrome)
+      }
 
       if (name === "pad-scope") {
         appendAttributeControl(panel, this, "kind", "kind", [
@@ -476,11 +785,12 @@ function makeGenericPadElement(name, assignsId) {
         ])
         appendAttributeControl(panel, this, "name", "name")
         appendAttributeControl(panel, this, "refs", "refs")
-        appendShadowAction(panel, this, "+scope", () => htmlToElement(padScopeHtml()))
-        appendShadowAction(panel, this, "+note", () => htmlToElement(padNoteHtml()))
-        appendShadowAction(panel, this, "+ref", () => htmlToElement(padRefHtml()))
-        appendShadowAction(panel, this, "+expect", () => htmlToElement(padExpectHtml()))
-        appendShadowAction(panel, this, "+work", () => htmlToElement(padWorkHtml()))
+        const addPanel = scopeAddPanel ?? panel
+        appendShadowAction(addPanel, this, "+scope", () => htmlToElement(padScopeHtml()))
+        appendShadowAction(addPanel, this, "+note", () => htmlToElement(padNoteHtml()))
+        appendShadowAction(addPanel, this, "+ref", () => htmlToElement(padRefHtml()))
+        appendShadowAction(addPanel, this, "+expect", () => htmlToElement(padExpectHtml()))
+        appendShadowAction(addPanel, this, "+work", () => htmlToElement(padWorkHtml()))
       }
 
       if (name === "pad-ref") {
@@ -560,7 +870,11 @@ function makeGenericPadElement(name, assignsId) {
       }
 
       const slot = document.createElement("slot")
-      this.shadowRoot.append(slot)
+      if (scopeBody) {
+        scopeBody.append(slot)
+        if (scopeAddPanel) scopeBody.append(scopeAddPanel)
+      } else this.shadowRoot.append(slot)
+      updateScopeDisclosure(this)
     }
   }
 }
@@ -992,6 +1306,16 @@ function cleanBodyHtml() {
       if (node.getAttribute(name) === value) node.removeAttribute(name)
     }
   })
+  clone.querySelectorAll("pad-scope").forEach((node) => {
+    if (node.hasAttribute(SCOPE_RUNTIME_DISCLOSURE_MARKER)) {
+      node.removeAttribute(SCOPE_RUNTIME_DISCLOSURE_MARKER)
+      node.removeAttribute(SCOPE_DISCLOSURE_ATTRIBUTE)
+    }
+    if (node.hasAttribute(SCOPE_RUNTIME_EXPANDED_MARKER)) {
+      node.removeAttribute(SCOPE_RUNTIME_EXPANDED_MARKER)
+      node.removeAttribute(SCOPE_EXPANDED_ATTRIBUTE)
+    }
+  })
   return clone.innerHTML.trim()
 }
 
@@ -1071,6 +1395,7 @@ function connect() {
   })
 
   document.body.addEventListener("input", scheduleSave)
+  document.body.addEventListener("beforeinput", keepEditableHostOnDelete)
   installDiffPadCrudControls(scheduleRuntimeSave)
 
   window.addEventListener("pagehide", () => {

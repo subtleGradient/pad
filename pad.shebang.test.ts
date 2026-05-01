@@ -413,6 +413,13 @@ describe("PAD entry documents", () => {
     expect(source).toContain('<pad-import kind="expect-pack"')
     expect(source).toContain('matcher="core.spec-local-runtime"')
     expect(source).toContain('matcher="core.generic-prose-editable"')
+    expect(source).toContain("single-open disclosure set")
+    expect(source).toContain("work_scope_single_open_disclosure")
+    expect(source).toContain("work_scope_inline_tools")
+    expect(source).toContain("work_scope_add_buttons_at_end")
+    expect(source).toContain("work_editing_backspace_keeps_node")
+    expect(source).toContain("work_editing_backspace_keeps_summary_text")
+    expect(source).toContain("work_editing_backspace_deletes_one_char")
     expect(source).toContain("UI/UX of the primitive elements")
     expect(source).toContain("uidotsh://ui/design-guidelines/buttons")
     expect(source).toContain("matcher=\"ui.scope-affordance\"")
@@ -532,17 +539,34 @@ describe("browser runtime", () => {
     expect(browserSource).toContain("const currentValue = host.getAttribute(name)")
     expect(browserSource).toContain("const chrome = document.createElement(\"details\")")
     expect(browserSource).toContain("min-height: 2.75rem")
+    expect(browserSource).toContain("SCOPE_EXPANDED_ATTRIBUTE")
+    expect(browserSource).toContain("data-pad-scope-toggle")
+    expect(browserSource).toContain("scope-tools")
+    expect(browserSource).toContain("scope-adds")
+    expect(browserSource).toContain("scopeBody.append(slot)")
+    expect(browserSource).toContain("scopeBody.append(scopeAddPanel)")
+    expect(browserSource).toContain("collapseSiblingScopes(scope)")
+    expect(browserSource).toContain("setScopeExpanded(scope, isRootScope(scope))")
+    expect(browserSource).toContain('clone.querySelectorAll("pad-scope")')
     expect(browserSource).toContain("EDITABLE_TEXT_ELEMENTS")
     expect(browserSource).toContain('"pad-expect"')
     expect(browserSource).toContain("enableEditableTextHost(this)")
     expect(browserSource).toContain("data-pad-runtime-contenteditable")
     expect(browserSource).toContain("clone.querySelectorAll(EDITABLE_TEXT_SELECTOR)")
+    expect(browserSource).toContain("keepEditableHostOnDelete")
+    expect(browserSource).toContain("selectionCoversEditableHostText")
+    expect(browserSource).toContain("deleteCollapsedEditableCharacter")
+    expect(browserSource).toContain("dispatchManualEdit(target)")
+    expect(browserSource).toContain('event.inputType !== "deleteContentBackward"')
+    expect(browserSource).toContain('document.body.addEventListener("beforeinput"')
     expect(cssSource).toContain("[data-pad-crud-kind=\"toolbar\"]")
     expect(cssSource).toContain("button[data-pad-crud-primary]")
     expect(cssSource).toContain("font-variant-numeric: tabular-nums")
     expect(cssSource).toContain("body:has(> pad-scope)")
     expect(cssSource).toContain('pad-note[kind="title"]')
     expect(cssSource).toContain('pad-expect[contenteditable="true"]')
+    expect(cssSource).toContain("pad-scope[data-pad-scope-disclosure]::before")
+    expect(cssSource).toContain('pad-scope:not([data-pad-scope-expanded="true"])')
   })
 
   test("registers diff pad elements and assigns missing opaque ids", async () => {
@@ -715,6 +739,12 @@ describe("browser runtime", () => {
       "data-pad-runtime-role": "",
       "data-pad-runtime-aria-multiline": "",
     })
+    const scope = new FakeElement("pad-scope", {
+      "data-pad-scope-disclosure": "",
+      "data-pad-scope-expanded": "true",
+      "data-pad-runtime-scope-disclosure": "",
+      "data-pad-runtime-scope-expanded": "",
+    })
     const status = new FakeElement("pad-status")
     const bodyListeners: Record<string, (event: { target: unknown }) => void> = {}
     const sockets: { sent: string[] }[] = []
@@ -767,13 +797,18 @@ describe("browser runtime", () => {
               return {
                 querySelectorAll(selector: string) {
                   if (selector === "[data-pad-runtime]") return []
+                  if (selector === "pad-scope") return [scope]
                   if (selector.includes("pad-note")) return [note]
                   return []
                 },
                 get innerHTML() {
-                  return note.hasAttribute("contenteditable")
+                  const scopeHtml = scope.hasAttribute("data-pad-scope-expanded")
+                    ? '<pad-scope data-pad-scope-expanded="true"></pad-scope>'
+                    : "<pad-scope></pad-scope>"
+                  const noteHtml = note.hasAttribute("contenteditable")
                     ? '<pad-note contenteditable="true">Editable</pad-note>'
                     : "<pad-note>Editable</pad-note>"
+                  return `${scopeHtml}${noteHtml}`
                 },
               }
             },
@@ -799,11 +834,245 @@ describe("browser runtime", () => {
 
       expect(JSON.parse(sockets[0]?.sent[0] ?? "{}")).toEqual({
         type: "body",
-        html: "<pad-note>Editable</pad-note>",
+        html: "<pad-scope></pad-scope><pad-note>Editable</pad-note>",
       })
     } finally {
       if (previousElement === undefined) delete globals.Element
       else globals.Element = previousElement
+    }
+  })
+
+  test("prevents backspace from clearing selected note summary text", async () => {
+    const source = await Bun.file("pad.browser.js").text()
+    const status = new FakeElement("pad-status")
+    const bodyListeners: Record<string, (event: unknown) => void> = {}
+
+    class FakeHTMLElement {
+      readonly localName = "pad-note"
+      textContent = "Keep this summary"
+
+      contains(node: unknown) {
+        return node === this
+      }
+    }
+
+    class FakeInputEvent {
+      defaultPrevented = false
+
+      constructor(
+        readonly inputType: string,
+        readonly target: unknown,
+      ) {}
+
+      preventDefault() {
+        this.defaultPrevented = true
+      }
+    }
+
+    class FakeWebSocket {
+      static OPEN = 1
+      readyState = FakeWebSocket.OPEN
+      addEventListener() {}
+      send() {}
+    }
+
+    const note = new FakeHTMLElement()
+    let selectionCollapsed = false
+    const globals = globalThis as unknown as { InputEvent?: unknown }
+    const previousInputEvent = globals.InputEvent
+    globals.InputEvent = FakeInputEvent
+
+    try {
+      const runBrowserRuntime = new Function(
+        "customElements",
+        "HTMLElement",
+        "document",
+        "WebSocket",
+        "location",
+        "window",
+        source,
+      )
+      runBrowserRuntime(
+        { get: () => undefined, define: () => {} },
+        FakeHTMLElement,
+        {
+          readyState: "complete",
+          querySelector: (selector: string) =>
+            selector === "pad-status[data-pad-runtime]" ? status : null,
+          querySelectorAll: () => [],
+          createElement: () => status,
+          getSelection: () => ({
+            anchorNode: note,
+            focusNode: note,
+            isCollapsed: selectionCollapsed,
+            toString: () => (selectionCollapsed ? "" : "Keep this summary"),
+          }),
+          body: {
+            append() {},
+            addEventListener(type: string, listener: (event: unknown) => void) {
+              bodyListeners[type] = listener
+            },
+          },
+        },
+        FakeWebSocket,
+        {
+          protocol: "http:",
+          host: "127.0.0.1:4321",
+          search: "?t=apptoken",
+        },
+        {
+          clearTimeout() {},
+          setTimeout() {
+            return 1
+          },
+          addEventListener() {},
+        },
+      )
+
+      const selectedAll = new FakeInputEvent("deleteContentBackward", note)
+      bodyListeners.beforeinput?.(selectedAll)
+      expect(selectedAll.defaultPrevented).toBe(true)
+
+      selectionCollapsed = true
+      const normalBackspace = new FakeInputEvent("deleteContentBackward", note)
+      bodyListeners.beforeinput?.(normalBackspace)
+      expect(normalBackspace.defaultPrevented).toBe(true)
+    } finally {
+      if (previousInputEvent === undefined) delete globals.InputEvent
+      else globals.InputEvent = previousInputEvent
+    }
+  })
+
+  test("deletes only one character for collapsed note summary backspace", async () => {
+    const source = await Bun.file("pad.browser.js").text()
+    const status = new FakeElement("pad-status")
+    const bodyListeners: Record<string, (event: unknown) => void> = {}
+
+    class FakeTextNode {
+      readonly nodeType = 3
+
+      constructor(public data: string) {}
+
+      get textContent() {
+        return this.data
+      }
+
+      set textContent(value: string | null) {
+        this.data = value ?? ""
+      }
+    }
+
+    class FakeHTMLElement {
+      readonly localName = "pad-note"
+      readonly textNode = new FakeTextNode("lulz!")
+      readonly childNodes = [this.textNode]
+      inputDispatches = 0
+
+      get textContent() {
+        return this.textNode.data
+      }
+
+      contains(node: unknown) {
+        return node === this.textNode
+      }
+
+      dispatchEvent() {
+        this.inputDispatches += 1
+        return true
+      }
+    }
+
+    class FakeInputEvent {
+      defaultPrevented = false
+
+      constructor(
+        readonly inputType: string,
+        readonly target: unknown,
+      ) {}
+
+      preventDefault() {
+        this.defaultPrevented = true
+      }
+    }
+
+    class FakeWebSocket {
+      static OPEN = 1
+      readyState = FakeWebSocket.OPEN
+      addEventListener() {}
+      send() {}
+    }
+
+    const note = new FakeHTMLElement()
+    const selection = {
+      anchorNode: note.textNode as unknown,
+      focusNode: note.textNode as unknown,
+      anchorOffset: note.textNode.data.length,
+      focusOffset: note.textNode.data.length,
+      isCollapsed: true,
+      toString: () => "",
+      collapse(node: unknown, offset: number) {
+        this.anchorNode = node
+        this.focusNode = node
+        this.anchorOffset = offset
+        this.focusOffset = offset
+      },
+    }
+    const globals = globalThis as unknown as { InputEvent?: unknown }
+    const previousInputEvent = globals.InputEvent
+    globals.InputEvent = FakeInputEvent
+
+    try {
+      const runBrowserRuntime = new Function(
+        "customElements",
+        "HTMLElement",
+        "document",
+        "WebSocket",
+        "location",
+        "window",
+        source,
+      )
+      runBrowserRuntime(
+        { get: () => undefined, define: () => {} },
+        FakeHTMLElement,
+        {
+          readyState: "complete",
+          querySelector: (selector: string) =>
+            selector === "pad-status[data-pad-runtime]" ? status : null,
+          querySelectorAll: () => [],
+          createElement: () => status,
+          getSelection: () => selection,
+          body: {
+            append() {},
+            addEventListener(type: string, listener: (event: unknown) => void) {
+              bodyListeners[type] = listener
+            },
+          },
+        },
+        FakeWebSocket,
+        {
+          protocol: "http:",
+          host: "127.0.0.1:4321",
+          search: "?t=apptoken",
+        },
+        {
+          clearTimeout() {},
+          setTimeout() {
+            return 1
+          },
+          addEventListener() {},
+        },
+      )
+
+      const backspace = new FakeInputEvent("deleteContentBackward", note)
+      bodyListeners.beforeinput?.(backspace)
+
+      expect(backspace.defaultPrevented).toBe(true)
+      expect(note.textContent).toBe("lulz")
+      expect(selection.anchorOffset).toBe(4)
+      expect(note.inputDispatches).toBe(1)
+    } finally {
+      if (previousInputEvent === undefined) delete globals.InputEvent
+      else globals.InputEvent = previousInputEvent
     }
   })
 
