@@ -1,5 +1,5 @@
 #!/usr/bin/env -S bunx -p https://github.com/subtleGradient/pad/archive/refs/heads/pad-diff.tar.gz pad
-<!-- PAD: executable HTM. Run only if you trust this file as local Bun code. -->
+<!-- PAD DIFF SPEC: executable HTM. Run only if you trust this file as local Bun code. -->
 <!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,11 +8,180 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/subtleGradient/pad@refs/heads/pad-diff/pad.css">
 <script type="module" src="https://cdn.jsdelivr.net/gh/subtleGradient/pad@refs/heads/pad-diff/pad.browser.js"></script>
 
-<pad-document>
-  <pad-text kind="title">SPEC.pad.htm</pad-text>
-  <pad-text>This is the first simple PAD demo.</pad-text>
-  <pad-text>Run this file as a program. It opens in the browser, the text is editable, and edits save back to this source file over WebSocket.</pad-text>
-  <pad-text>No npm package, no release channel, no folders, no SSI, no new-pad generator, no ShadowRealm, no iframe, no textarea, and no browser file picker.</pad-text>
-  <pad-text>The executable shebang and browser assets are pinned to the pad-diff GitHub branch.</pad-text>
-  <pad-text><br></pad-text>
-</pad-document>
+<pad-scope kind="spec" name="PAD Diff as an attention sandbox">
+  <pad-note kind="title">SPEC.pad.htm</pad-note>
+
+  <pad-note kind="summary">
+    The real bug is not that machines need another task format. Machines can hold the whole repo in their mouth and still ask for more. The bottleneck is a specific human mind trying to make one clean move without being dragged into every adjacent concern at once.
+  </pad-note>
+
+  <pad-note kind="reframe">
+    What this really is: a document that behaves like a tiny operating system for attention. Not a backlog. Not a schema museum. A pit of success where one subtree can become the whole world long enough for reality to talk back.
+  </pad-note>
+
+  <pad-import kind="expect-pack" src="./expect/core.ts" as="core"></pad-import>
+  <pad-import kind="expect-pack" src="./expect/thing-golf.ts" as="thingGolf"></pad-import>
+  <pad-import kind="expect-pack" src="./expect/story-golf.ts" as="storyGolf"></pad-import>
+
+  <pad-scope kind="story" name="The human attention bottleneck">
+    <pad-note kind="why">
+      A diff pad exists because I need permission to ignore almost everything. When I am tuning gamefeel for direct character manipulation, art and music and marketing are not evil. They are just not the room I am standing in.
+    </pad-note>
+
+    <pad-note kind="mechanism">
+      The document must support arbitrary recursive focus. A game can contain a character. A character can contain arms. Arms can contain holding. Holding can contain grip timing. A peer scope can contain pushing. Each one is a pocket universe with its own local expectations, observations, gaps, and work.
+    </pad-note>
+
+    <pad-expect kind="wish" matcher="core.scope-can-nest" weight="critical">
+      Any scope can contain any number of child scopes, and focusing one scope should make its ancestors understandable while making siblings safe to ignore.
+
+      <pad-snapshot kind="observation" rev="WORKTREE" format="text">
+        The old specific grammar can describe stories and facets, but it does not yet make arbitrary recursive focus the central primitive.
+      </pad-snapshot>
+
+      <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="2">
+        { "distance": 2, "missing": ["pad-scope", "focus mode"], "risk": "The author keeps seeing too much of the document at once." }
+      </pad-snapshot>
+
+      <pad-work state="approved">
+        Introduce a generic pad-scope element and make it the root recursive attention boundary.
+      </pad-work>
+    </pad-expect>
+  </pad-scope>
+
+  <pad-scope kind="story" name="The grammar compression law">
+    <pad-note kind="rule">
+      If there can only ever be one of a thing inside the current context, it should be an attribute. If there can be many, it should be an element. If it is long human prose, it should be the host element text content, not an attribute and not a required pad-text child.
+    </pad-note>
+
+    <pad-expect kind="wish" matcher="core.grammar-law" weight="critical">
+      The light DOM should stay declarative and small: singleton scalar facts live in attributes; repeatable structured facts live in child elements; runtime controls live in shadow DOM.
+
+      <pad-snapshot kind="observation" rev="WORKTREE" format="text">
+        The current docs still carry older tags such as pad-story, story-spec, story-real, story-gaps, story-next, gap-item, gap-axis, and repeated pad-text children.
+      </pad-snapshot>
+
+      <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="3">
+        { "distance": 3, "replaceWith": ["pad-scope", "pad-ref", "pad-note", "pad-expect", "pad-snapshot", "pad-work", "pad-import"], "keepLegacyWorking": true }
+      </pad-snapshot>
+
+      <pad-work state="approved">
+        Add the generic elements without breaking the older specific tags, then dogfood the generic shape in toy001.
+      </pad-work>
+    </pad-expect>
+  </pad-scope>
+
+  <pad-scope kind="story" name="Refs make reality concrete">
+    <pad-note kind="why">
+      Loose file names in prose feel convenient until the work gets real. A scope should be able to say exactly which files, assets, URLs, commands, symbols, commits, or scenes it is talking about.
+    </pad-note>
+
+    <pad-expect kind="wish" matcher="core.refs-are-specific" weight="high">
+      A scope can own or inherit a space-separated refs attribute that points at concrete pad-ref nodes. The runtime may create pad-ref nodes and generated IDs for the human.
+
+      <pad-ref id="ref_spec" kind="file" path="SPEC.pad.htm" role="current spec document"></pad-ref>
+
+      <pad-snapshot kind="observation" rev="WORKTREE" format="text">
+        The toy diff pad now uses file-ref in several places, which proves the need, but the generic pad-ref/refs model is not yet the standard.
+      </pad-snapshot>
+
+      <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="1">
+        { "distance": 1, "from": "file-ref", "to": "pad-ref kind=file plus refs" }
+      </pad-snapshot>
+    </pad-expect>
+  </pad-scope>
+
+  <pad-scope kind="story" name="BDD for design work">
+    <pad-note kind="reframe">
+      The rough analog is describe, it, expect. A scope describes the world. A child scope narrows the case. A pad-expect says what should or must not be true. A pad-snapshot is the inline truth we captured from reality.
+    </pad-note>
+
+    <pad-expect kind="wish" matcher="core.expect-snapshot-loop" weight="critical">
+      Every expectation can contain observation snapshots and gap snapshots, using one universal inline snapshot mechanism instead of bespoke gap grammar.
+
+      <pad-snapshot kind="observation" rev="WORKTREE" format="text">
+        We have gap-item and gap-vector today, but the better mental model is toMatchInlineSnapshot for reality and gaps.
+      </pad-snapshot>
+
+      <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="2">
+        { "distance": 2, "removePressure": ["gap-item as separate concept", "gap-axis as special vector grammar"], "addPressure": ["pad-snapshot kind=observation", "pad-snapshot kind=gap"] }
+      </pad-snapshot>
+
+      <pad-work state="approved">
+        Add pad-expect and pad-snapshot, then migrate toy001 so snapshots live inline under expectations.
+      </pad-work>
+    </pad-expect>
+  </pad-scope>
+
+  <pad-scope kind="story" name="Custom matchers without custom snapshot formats">
+    <pad-note kind="why">
+      Golfing works because it turns taste and fear into legible axes. But each golf skill should not need its own document grammar. It should act like a custom expect matcher that feeds the same universal snapshot pipe.
+    </pad-note>
+
+    <pad-expect kind="wish" matcher="thingGolf.thing-badness" target-max="4" weight="high">
+      Expect packs can be imported and shared across docs. They observe reality, normalize it, score it, and emit observation/gap snapshots through the same pad-snapshot mechanism.
+
+      <pad-snapshot kind="observation" rev="WORKTREE" format="json">
+        { "safety": 0, "burden": 3, "chaos": 2, "betrayal": 0, "control": 1 }
+      </pad-snapshot>
+
+      <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="2">
+        { "overTarget": ["burden", "chaos"], "workHints": ["Prefer fewer generic elements", "Do not build agent dispatch before the document grammar feels good"] }
+      </pad-snapshot>
+    </pad-expect>
+  </pad-scope>
+
+  <pad-scope kind="story" name="Shadow DOM is the affordance layer">
+    <pad-note kind="rule">
+      STYLE is styling only. Do not smuggle logic into CSS. Custom elements own behavior. Shadow DOM owns runtime affordances. Light DOM owns persisted meaning.
+    </pad-note>
+
+    <pad-expect kind="wish" matcher="core.shadow-affordances" weight="high">
+      Each generic element exposes obvious controls for the job it owns: pad-scope adds subscopes, notes, refs, expectations, and focus; pad-ref edits resource attributes; pad-expect edits matcher/kind/weight; pad-snapshot edits rev/format/kind; pad-work edits state.
+
+      <pad-snapshot kind="observation" rev="WORKTREE" format="text">
+        The current runtime uses external CRUD chrome. Useful, but it is not yet the clean component-owned affordance model.
+      </pad-snapshot>
+
+      <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="2">
+        { "distance": 2, "next": "generic elements first, shadow controls second" }
+      </pad-snapshot>
+    </pad-expect>
+  </pad-scope>
+
+  <pad-scope kind="story" name="Native web stack, not a fake framework">
+    <pad-note kind="principle">
+      We should take the web seriously. Native HTML gives us documents. Custom elements give us domain atoms. Shadow DOM gives us affordances that do not serialize. CSS styles; it does not decide. iframe/object isolation can come later when a scope needs a hard sandbox.
+    </pad-note>
+
+    <pad-expect kind="nightmare" edge="heads" matcher="core.not-too-thin">
+      The document becomes plain prose again and loses the ability to point at reality, snapshot observations, and drive work.
+    </pad-expect>
+
+    <pad-expect kind="nightmare" edge="tails" matcher="core.not-app-shell">
+      PAD becomes a full app framework with routing, storage, modal forms, provider lock-in, and a control surface heavier than the work it is meant to clarify.
+    </pad-expect>
+  </pad-scope>
+
+  <pad-scope kind="story" name="The first dogfood path">
+    <pad-note kind="plan">
+      The toy001 example is the rehearsal stage. It should start painfully small: one story, one implementation slice, one test slice, a few expectations, inline snapshots that admit the files are missing, and proposed work for the next tiny commit.
+    </pad-note>
+
+    <pad-ref id="ref_toy_pad" kind="file" path="examples/toy001/toy001.diff.pad.htm" role="dogfood document"></pad-ref>
+    <pad-ref id="ref_toy_impl" kind="file" path="examples/toy001/toy001.tsx" role="implementation slice"></pad-ref>
+    <pad-ref id="ref_toy_test" kind="file" path="examples/toy001/toy001.test.tsx" role="test slice"></pad-ref>
+
+    <pad-expect kind="wish" matcher="core.toy-doc-uses-generic-scope" refs="ref_toy_pad" weight="high">
+      toy001 should use pad-scope, pad-ref, pad-note, pad-expect, pad-snapshot, and pad-work so the system is built by using itself.
+
+      <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="1">
+        { "distance": 1, "reason": "toy001 still uses the older story-spec/story-real/story-gaps/story-next shape" }
+      </pad-snapshot>
+
+      <pad-work state="approved">
+        Rewrite toy001 into the generic BDD snapshot grammar after the generic runtime elements exist.
+      </pad-work>
+    </pad-expect>
+  </pad-scope>
+</pad-scope>
