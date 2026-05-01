@@ -37,23 +37,26 @@
 
       <pad-snapshot kind="observation" rev="WORKTREE">
         {
-          summary: 'The old specific grammar can describe stories and facets, but it does not yet make arbitrary recursive focus the central primitive.',
+          summary: 'pad-scope now exists, can nest arbitrarily, and is used by SPEC and toy001. Focus mode is still not implemented.',
         }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="2">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
         {
-          distance: 2,
+          distance: 1,
           missing: [
-            'pad-scope',
             'focus mode',
           ],
-          risk: 'The author keeps seeing too much of the document at once.',
+          risk: 'The author can now decompose the document, but cannot yet make one subtree visually become the whole world.',
         }
       </pad-snapshot>
 
-      <pad-work state="approved">
+      <pad-work state="done">
         Introduce a generic pad-scope element and make it the root recursive attention boundary.
+      </pad-work>
+
+      <pad-work state="proposed">
+        Add focus mode for pad-scope so ancestors become breadcrumbs, siblings collapse, and edits remain scoped to the active subtree.
       </pad-work>
     </pad-expect>
   </pad-scope>
@@ -68,27 +71,22 @@
 
       <pad-snapshot kind="observation" rev="WORKTREE">
         {
-          summary: 'The current docs still carry older tags such as pad-story, story-spec, story-real, story-gaps, story-next, gap-item, gap-axis, and repeated pad-text children.',
+          summary: 'The generic elements exist and toy001 uses them without pad-text children. Legacy tags still exist so older documents keep working.',
         }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="3">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
         {
-          distance: 3,
-          replaceWith: [
-            'pad-scope',
-            'pad-ref',
-            'pad-note',
-            'pad-expect',
-            'pad-snapshot',
-            'pad-work',
-            'pad-import',
+          distance: 1,
+          remaining: [
+            'legacy-specific tags remain supported and styled',
+            'pad-diff.diff.pad.htm still uses the legacy grammar',
           ],
           keepLegacyWorking: true,
         }
       </pad-snapshot>
 
-      <pad-work state="approved">
+      <pad-work state="done">
         Add the generic elements without breaking the older specific tags, then dogfood the generic shape in toy001.
       </pad-work>
     </pad-expect>
@@ -106,15 +104,15 @@
 
       <pad-snapshot kind="observation" rev="WORKTREE">
         {
-          summary: 'The toy diff pad now uses file-ref in several places, which proves the need, but the generic pad-ref/refs model is not yet the standard.',
+          summary: 'SPEC and toy001 now use pad-ref plus refs for concrete files and commands. file-ref remains as legacy compatibility only.',
         }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="0">
         {
-          distance: 1,
-          from: 'file-ref',
-          to: 'pad-ref kind=file plus refs',
+          distance: 0,
+          closed: true,
+          remainingWatch: 'Future refs should cover symbols, URLs, assets, commands, commits, and preview targets without adding one-off elements.',
         }
       </pad-snapshot>
     </pad-expect>
@@ -130,25 +128,20 @@
 
       <pad-snapshot kind="observation" rev="WORKTREE">
         {
-          summary: 'We have gap-item and gap-vector today, but the better mental model is toMatchInlineSnapshot for reality and gaps.',
+          summary: 'pad-expect and pad-snapshot exist, toy001 uses inline observation and gap snapshots, and snapshots default to JSON5 without a format attribute.',
         }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="2">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="0">
         {
-          distance: 2,
-          removePressure: [
-            'gap-item as separate concept',
-            'gap-axis as special vector grammar',
-          ],
-          addPressure: [
-            'pad-snapshot kind=observation',
-            'pad-snapshot kind=gap',
-          ],
+          distance: 0,
+          closed: true,
+          defaultSnapshotFormat: 'json5',
+          defaultIndent: 2,
         }
       </pad-snapshot>
 
-      <pad-work state="approved">
+      <pad-work state="done">
         Add pad-expect and pad-snapshot, then migrate toy001 so snapshots live inline under expectations.
       </pad-work>
     </pad-expect>
@@ -197,14 +190,18 @@
 
       <pad-snapshot kind="observation" rev="WORKTREE">
         {
-          summary: 'The current runtime uses external CRUD chrome. Useful, but it is not yet the clean component-owned affordance model.',
+          summary: 'The generic elements now expose minimal shadow DOM controls for their singleton attributes and local add actions. Legacy external CRUD chrome still exists for the older story/facet grammar.',
         }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="2">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
         {
-          distance: 2,
-          next: 'generic elements first, shadow controls second',
+          distance: 1,
+          remaining: [
+            'shadow controls are minimal and visually crowded',
+            'host text editing is still mostly raw light DOM rather than a polished prose editor',
+            'focus mode is not implemented',
+          ],
         }
       </pad-snapshot>
     </pad-expect>
@@ -236,16 +233,190 @@
     <pad-expect kind="wish" matcher="core.toy-doc-uses-generic-scope" refs="ref_toy_pad" weight="high">
       toy001 should use pad-scope, pad-ref, pad-note, pad-expect, pad-snapshot, and pad-work so the system is built by using itself.
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="0">
         {
-          distance: 1,
-          reason: 'toy001 still uses the older story-spec/story-real/story-gaps/story-next shape',
+          distance: 0,
+          closed: true,
+          reason: 'toy001 now uses pad-scope, pad-ref, pad-note, pad-expect, pad-snapshot, and pad-work.',
         }
       </pad-snapshot>
 
-      <pad-work state="approved">
+      <pad-work state="done">
         Rewrite toy001 into the generic BDD snapshot grammar after the generic runtime elements exist.
       </pad-work>
     </pad-expect>
+  </pad-scope>
+
+  <pad-scope kind="story" name="UI/UX of the primitive elements">
+    <pad-note kind="why">
+      The primitives are only useful if they protect focus instead of becoming another tiny form prison. The UI should feel like a document that quietly grows handles exactly where the human needs them.
+    </pad-note>
+
+    <pad-ref id="ref_ui_general" kind="url" href="uidotsh://ui/design-guidelines/general" role="general UI guidance"></pad-ref>
+    <pad-ref id="ref_ui_buttons" kind="url" href="uidotsh://ui/design-guidelines/buttons" role="button guidance"></pad-ref>
+    <pad-ref id="ref_ui_forms" kind="url" href="uidotsh://ui/design-guidelines/form-controls" role="form control guidance"></pad-ref>
+    <pad-ref id="ref_ui_interactivity" kind="url" href="uidotsh://ui/design-guidelines/interactivity" role="interactivity guidance"></pad-ref>
+    <pad-ref id="ref_ui_responsive" kind="url" href="uidotsh://ui/design-guidelines/responsive-design" role="responsive guidance"></pad-ref>
+    <pad-ref id="ref_ui_surfaces" kind="url" href="uidotsh://ui/design-guidelines/surfaces" role="surface guidance"></pad-ref>
+    <pad-ref id="ref_ui_typography" kind="url" href="uidotsh://ui/design-guidelines/typography" role="typography guidance"></pad-ref>
+
+    <pad-scope kind="slice" name="pad-scope UI" refs="ref_ui_responsive ref_ui_surfaces ref_ui_buttons">
+      <pad-expect kind="wish" matcher="ui.scope-affordance" weight="high">
+        A scope shows its kind and name, keeps nested scopes readable on mobile and desktop, and exposes exactly one dominant local action at a time. Focus should feel like stepping into a room, not opening an admin panel.
+
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+          {
+            distance: 1,
+            good: [
+              'pad-scope is visually distinct and recursively nestable',
+              'shadow controls can add subscopes, notes, refs, expectations, and work',
+            ],
+            missing: [
+              'true focus mode',
+              'clear primary-vs-secondary action hierarchy inside shadow controls',
+            ],
+          }
+        </pad-snapshot>
+
+        <pad-work state="proposed">
+          Add pad-scope focus mode and reduce shadow chrome so add-subscope/focus are more legible than every secondary action.
+        </pad-work>
+      </pad-expect>
+    </pad-scope>
+
+    <pad-scope kind="slice" name="pad-ref UI" refs="ref_ui_forms ref_ui_interactivity">
+      <pad-expect kind="wish" matcher="ui.ref-affordance" weight="high">
+        A ref should read like a compact evidence chip and edit like a small form: kind, path/href/command, and role must be obvious, accessible, and easy to validate or open.
+
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+          {
+            distance: 1,
+            good: [
+              'pad-ref displays kind and target attributes',
+              'shadow controls edit kind, path, href, command, and role',
+            ],
+            missing: [
+              'open target affordance',
+              'existence validation affordance',
+              'clear empty-state copy when path/href/command is missing',
+            ],
+          }
+        </pad-snapshot>
+      </pad-expect>
+    </pad-scope>
+
+    <pad-scope kind="slice" name="pad-note UI" refs="ref_ui_typography ref_ui_surfaces">
+      <pad-expect kind="wish" matcher="ui.note-affordance" weight="medium">
+        A note should feel safe for thinking out loud before the thought has hardened into an expectation. Typography should favor readable prose over chrome density.
+
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+          {
+            distance: 1,
+            good: [
+              'pad-note supports kind metadata and host text prose',
+            ],
+            missing: [
+              'promote note to expectation',
+              'more comfortable prose editing affordance',
+            ],
+          }
+        </pad-snapshot>
+      </pad-expect>
+    </pad-scope>
+
+    <pad-scope kind="slice" name="pad-expect UI" refs="ref_ui_buttons ref_ui_forms ref_ui_interactivity">
+      <pad-expect kind="wish" matcher="ui.expect-affordance" weight="high">
+        An expectation should make the testing analogy obvious: kind, matcher, weight, edge, snapshots, and work. Adding a snapshot or work item should be a secondary action, not visual noise.
+
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+          {
+            distance: 1,
+            good: [
+              'pad-expect can add snapshots and work from shadow controls',
+            ],
+            missing: [
+              'matcher picker backed by imported expect packs',
+              'separate wish/nightmare visual language',
+              'clear pass/fail/distance summary',
+            ],
+          }
+        </pad-snapshot>
+      </pad-expect>
+    </pad-scope>
+
+    <pad-scope kind="slice" name="pad-snapshot UI" refs="ref_ui_typography ref_ui_forms">
+      <pad-expect kind="wish" matcher="ui.snapshot-affordance" weight="high">
+        Snapshots default to JSON5, omit the format attribute, and display as 2-space-pretty structured evidence. Distance should be legible without forcing a separate vector grammar.
+
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="0">
+          {
+            distance: 0,
+            closed: true,
+            evidence: [
+              'SPEC snapshots omit format',
+              'toy001 snapshots omit format',
+              'runtime templates omit format and use JSON5-shaped objects',
+            ],
+          }
+        </pad-snapshot>
+      </pad-expect>
+    </pad-scope>
+
+    <pad-scope kind="slice" name="pad-work UI" refs="ref_ui_buttons ref_ui_interactivity">
+      <pad-expect kind="wish" matcher="ui.work-affordance" weight="medium">
+        Work state should be easy to read and safe to change. Proposed, approved, active, blocked, done, and dropped are lifecycle values, not separate elements.
+
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+          {
+            distance: 1,
+            good: [
+              'pad-work has state controls',
+            ],
+            missing: [
+              'approval affordance that is harder to hit by accident than propose/done',
+              'blocked reason capture',
+            ],
+          }
+        </pad-snapshot>
+      </pad-expect>
+    </pad-scope>
+
+    <pad-scope kind="slice" name="pad-import UI" refs="ref_ui_forms ref_ui_interactivity">
+      <pad-expect kind="wish" matcher="ui.import-affordance" weight="medium">
+        Imports should read as trust boundaries. The UI must make source, alias, and kind visible before any matcher pack is allowed to influence snapshots.
+
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+          {
+            distance: 1,
+            good: [
+              'pad-import exists and exposes kind, src, and alias controls',
+            ],
+            missing: [
+              'trusted/untrusted visual state',
+              'load/error observation snapshot',
+            ],
+          }
+        </pad-snapshot>
+      </pad-expect>
+    </pad-scope>
+
+    <pad-scope kind="slice" name="pad-metric UI" refs="ref_ui_general ref_ui_typography">
+      <pad-expect kind="wish" matcher="ui.metric-affordance" weight="medium">
+        Metrics should behave like compact numeric chips with stable digit width. They should support rapid scanning without becoming a second gap-vector language.
+
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+          {
+            distance: 1,
+            good: [
+              'pad-metric displays name, value, and target',
+            ],
+            missing: [
+              'tabular-number styling',
+              'optional target-min/target-max support if needle metrics need bands',
+            ],
+          }
+        </pad-snapshot>
+      </pad-expect>
+    </pad-scope>
   </pad-scope>
 </pad-scope>

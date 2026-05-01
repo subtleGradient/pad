@@ -398,6 +398,10 @@ describe("PAD entry documents", () => {
     expect(source).toContain('<pad-expect kind="wish"')
     expect(source).toContain('<pad-snapshot kind="gap"')
     expect(source).toContain('<pad-import kind="expect-pack"')
+    expect(source).toContain("UI/UX of the primitive elements")
+    expect(source).toContain("uidotsh://ui/design-guidelines/buttons")
+    expect(source).toContain("matcher=\"ui.scope-affordance\"")
+    expect(source).not.toContain("format=\"")
     expect(source).not.toContain("@main")
     expect(source).not.toContain(`github:subtleGradient`)
   })
@@ -455,6 +459,8 @@ describe("PAD entry documents", () => {
     expect(source).toContain('<pad-expect kind="wish"')
     expect(source).toContain('<pad-snapshot kind="observation"')
     expect(source).toContain('<pad-snapshot kind="gap"')
+    expect(source).toContain("exists: false")
+    expect(source).not.toContain("format=\"")
     expect(source).toContain('<pad-ref id="ref_toy001_impl"')
     expect(source).toContain(
       '<pad-ref id="ref_toy001_test"',
