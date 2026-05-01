@@ -593,6 +593,16 @@ describe("contentType", () => {
   })
 })
 
+describe("PAD CSS", () => {
+  test("allows long URLs to wrap inside text and list blocks", async () => {
+    const source = await Bun.file("pad.css").text()
+
+    expect(source).toContain("pad-list-item {\n  min-width: 0;")
+    expect(source).toContain("pad-text {\n  min-width: 0;")
+    expect(source.match(/overflow-wrap: anywhere;/g)).toHaveLength(2)
+  })
+})
+
 describe("documentKindForPath", () => {
   test("recognizes PAD and OpenCode chat documents", () => {
     expect(documentKindForPath("demo.pad.htm")).toBe("pad")
