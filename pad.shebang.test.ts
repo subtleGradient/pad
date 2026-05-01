@@ -521,8 +521,21 @@ describe("PAD entry documents", () => {
     expect(source).not.toContain("cdn.jsdelivr.net")
   })
 
-  test("list example uses local runner, PAD assets, and list elements", async () => {
+  test("list example pins the GitHub runner and jsDelivr PAD assets", async () => {
     const source = await Bun.file("list-example-001.pad.htm").text()
+
+    expect(source.startsWith(`${publicShebang}\n`)).toBe(true)
+    expect(source).toContain(publicCss)
+    expect(source).toContain(publicJs)
+    expect(source).toContain("<pad-stack")
+    expect(source).toContain("<pad-panel")
+    expect(source).toContain("<pad-list")
+    expect(source).toContain("<pad-list-item")
+    expect(source).not.toContain('href="./pad.css"')
+  })
+
+  test("list DEV example uses local runner and PAD assets", async () => {
+    const source = await Bun.file("list-example-001.DEV.pad.htm").text()
 
     expect(source.startsWith("#!/usr/bin/env -S bun ./pad.shebang.tsx\n")).toBe(
       true,
