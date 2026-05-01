@@ -550,6 +550,38 @@ describe("PAD entry documents", () => {
     expect(source).toContain("<pad-list-item")
     expect(source).not.toContain("cdn.jsdelivr.net")
   })
+
+  test("onboarding list example is standalone and teaches trust/run steps", async () => {
+    const source = await Bun.file("list-example-002.pad.htm").text()
+
+    expect(source.startsWith(`${publicShebang}\n`)).toBe(true)
+    expect(source).toContain(publicCss)
+    expect(source).toContain(publicJs)
+    expect(source).toContain("https://github.com/subtleGradient/pad/tree/pad-oc")
+    expect(source).toContain("How To Run It")
+    expect(source).toContain("Try The List")
+    expect(source).toContain("When the WebSocket disconnects")
+    expect(source).toContain("<pad-grid")
+    expect(source).toContain("<pad-panel")
+    expect(source).toContain("<pad-list")
+    expect(source).not.toContain('href="./pad.css"')
+  })
+
+  test("onboarding list DEV example uses local runner and assets", async () => {
+    const source = await Bun.file("list-example-002.DEV.pad.htm").text()
+
+    expect(source.startsWith("#!/usr/bin/env -S bun ./pad.shebang.tsx\n")).toBe(
+      true,
+    )
+    expect(source).toContain('href="./pad.css"')
+    expect(source).toContain(
+      '<script type="module" src="./pad.browser.js"></script>',
+    )
+    expect(source).toContain("https://github.com/subtleGradient/pad/tree/pad-oc")
+    expect(source).toContain("How To Run It")
+    expect(source).toContain("Try The List")
+    expect(source).not.toContain("cdn.jsdelivr.net")
+  })
 })
 
 describe("contentType", () => {
