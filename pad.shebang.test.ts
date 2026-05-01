@@ -529,6 +529,8 @@ describe("browser runtime", () => {
     expect(browserSource).toContain('"Work", workItemHtml')
     expect(browserSource).toContain("RUNTIME_CRUD_SELECTOR")
     expect(browserSource).toContain("control.name = name")
+    expect(browserSource).toContain("const currentValue = host.getAttribute(name)")
+    expect(browserSource).toContain("const chrome = document.createElement(\"details\")")
     expect(browserSource).toContain("min-height: 2.75rem")
     expect(browserSource).toContain("EDITABLE_TEXT_ELEMENTS")
     expect(browserSource).toContain('"pad-expect"')

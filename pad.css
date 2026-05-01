@@ -1,7 +1,7 @@
 :root {
   color-scheme: light dark;
-  background: #f5f1e8;
-  color: #151515;
+  background: #f6f6ef;
+  color: #17181c;
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
 }
 
@@ -10,13 +10,13 @@
 }
 
 body {
-  width: min(44rem, calc(100vw - 2rem));
+  width: min(44rem, calc(100vw - 1rem));
   min-height: 100vh;
   margin: 0 auto;
-  padding: clamp(3rem, 8vw, 6rem) 0;
-  background: #f5f1e8;
-  color: #151515;
-  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  padding: 2rem 0 4rem;
+  background: #f6f6ef;
+  color: #17181c;
+  font-size: 1rem;
   line-height: 1.55;
 }
 
@@ -74,29 +74,30 @@ pad-text {
 pad-text[kind="title"] {
   max-width: 11ch;
   margin-bottom: 0.5rem;
-  font-size: clamp(3rem, 12vw, 7rem);
+  font-size: 3rem;
   font-weight: 800;
-  line-height: 0.86;
-  letter-spacing: -0.07em;
+  line-height: 0.9;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 pad-text[kind="heading"] {
   max-width: 32rem;
   font:
-    800 clamp(1.6rem, 5vw, 3.5rem) / 0.95 ui-sans-serif,
+    700 2rem/1 ui-sans-serif,
     system-ui,
     sans-serif;
-  letter-spacing: -0.055em;
+  letter-spacing: 0;
 }
 
 body:has(pad-diff),
 body:has(> pad-scope) {
-  width: min(82rem, calc(100vw - 1.5rem));
+  width: min(92rem, calc(100vw - 1rem));
   font-family:
     ui-sans-serif,
     system-ui,
     sans-serif;
-  font-size: clamp(0.98rem, 1.5vw, 1.12rem);
+  font-size: 1rem;
 }
 
 body:has(pad-diff) pad-text[kind="title"],
@@ -105,35 +106,41 @@ body:has(> pad-scope) pad-note[kind="title"] {
 }
 
 body > pad-scope {
-  box-shadow: 0 1.2rem 3rem rgba(21, 21, 21, 0.07);
+  box-shadow: none;
 }
 
 pad-diff {
   display: grid;
-  gap: clamp(1.25rem, 3vw, 2rem);
+  gap: 1.5rem;
 }
 
 pad-scope {
   display: grid;
-  gap: 0.85rem;
-  border: 1px solid rgba(21, 21, 21, 0.16);
-  border-radius: 1.1rem;
-  padding: clamp(1rem, 2.5vw, 1.35rem);
-  background: rgba(255, 252, 245, 0.48);
+  gap: 0.9rem;
+  border: 1px solid rgba(23, 24, 28, 0.14);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 252, 0.72);
 }
 
 pad-scope pad-scope {
-  background: rgba(245, 241, 232, 0.72);
+  background: rgba(244, 247, 244, 0.82);
 }
 
 pad-scope::before {
   content: attr(kind) " / " attr(name);
-  color: rgba(21, 21, 21, 0.62);
+  justify-self: start;
+  border-radius: 0.25rem;
+  padding: 0.18rem 0.42rem;
+  background: rgba(23, 24, 28, 0.06);
+  color: rgba(23, 24, 28, 0.62);
   font:
-    800 0.72rem/1.1 ui-sans-serif,
-    system-ui,
-    sans-serif;
-  letter-spacing: 0.12em;
+    800 0.72rem/1.1 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -144,10 +151,10 @@ pad-work,
 pad-import {
   display: grid;
   gap: 0.55rem;
-  border-left: 0.28rem solid rgba(21, 21, 21, 0.24);
-  border-radius: 0.45rem;
+  border-left: 0.28rem solid rgba(23, 24, 28, 0.24);
+  border-radius: 0.38rem;
   padding: 0.7rem 0.75rem;
-  background: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.64);
   white-space: pre-wrap;
 }
 
@@ -162,10 +169,11 @@ pad-note[kind="title"] {
   padding: 0;
   background: transparent;
   font:
-    800 clamp(3rem, 12vw, 7rem) / 0.86 ui-sans-serif,
+    800 3rem/0.9 ui-sans-serif,
     system-ui,
     sans-serif;
-  letter-spacing: -0.07em;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
   white-space: normal;
 }
 
@@ -205,12 +213,14 @@ pad-expect::before,
 pad-snapshot::before,
 pad-work::before,
 pad-import::before {
-  color: rgba(21, 21, 21, 0.58);
+  color: rgba(23, 24, 28, 0.58);
   font:
-    700 0.68rem/1.1 ui-sans-serif,
-    system-ui,
-    sans-serif;
-  letter-spacing: 0.1em;
+    700 0.68rem/1.1 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: normal;
 }
@@ -238,11 +248,11 @@ pad-import::before {
 pad-story {
   display: grid;
   gap: 0.85rem;
-  border: 1px solid rgba(21, 21, 21, 0.16);
-  border-radius: 1.1rem;
-  padding: clamp(1rem, 2.5vw, 1.35rem);
-  background: rgba(255, 252, 245, 0.55);
-  box-shadow: 0 1.2rem 3rem rgba(21, 21, 21, 0.07);
+  border: 1px solid rgba(23, 24, 28, 0.14);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 252, 0.72);
+  box-shadow: none;
 }
 
 story-spec,
@@ -254,10 +264,10 @@ story-next {
   align-content: start;
   gap: 0.75rem;
   min-width: 0;
-  border: 1px solid rgba(21, 21, 21, 0.12);
-  border-radius: 0.85rem;
+  border: 1px solid rgba(23, 24, 28, 0.11);
+  border-radius: 0.5rem;
   padding: 2.25rem 0.85rem 0.85rem;
-  background: rgba(245, 241, 232, 0.82);
+  background: rgba(244, 247, 244, 0.82);
 }
 
 story-spec::before,
@@ -267,15 +277,17 @@ story-next::before {
   position: absolute;
   top: 0.7rem;
   left: 0.85rem;
-  border-radius: 999px;
+  border-radius: 0.28rem;
   padding: 0.14rem 0.46rem;
-  color: rgba(21, 21, 21, 0.66);
-  background: rgba(21, 21, 21, 0.07);
+  color: rgba(23, 24, 28, 0.66);
+  background: rgba(23, 24, 28, 0.07);
   font:
-    700 0.68rem/1 ui-sans-serif,
-    system-ui,
-    sans-serif;
-  letter-spacing: 0.12em;
+    700 0.68rem/1 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.08em;
 }
 
 story-spec::before {
@@ -307,10 +319,10 @@ work-item,
 work-judgement {
   display: grid;
   gap: 0.55rem;
-  border-left: 0.28rem solid rgba(21, 21, 21, 0.24);
-  border-radius: 0.45rem;
+  border-left: 0.28rem solid rgba(23, 24, 28, 0.24);
+  border-radius: 0.38rem;
   padding: 0.7rem 0.75rem;
-  background: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.64);
 }
 
 spec-razor,
@@ -337,9 +349,9 @@ work-judgement {
 thread-heads,
 thread-tails,
 thread-band {
-  border-radius: 0.5rem;
+  border-radius: 0.38rem;
   padding: 0.6rem 0.7rem;
-  background: rgba(21, 21, 21, 0.055);
+  background: rgba(23, 24, 28, 0.055);
 }
 
 thread-heads::before,
@@ -348,12 +360,14 @@ thread-band::before,
 gap-item::before,
 work-item::before,
 proof-check::before {
-  color: rgba(21, 21, 21, 0.58);
+  color: rgba(23, 24, 28, 0.58);
   font:
-    700 0.68rem/1.1 ui-sans-serif,
-    system-ui,
-    sans-serif;
-  letter-spacing: 0.1em;
+    700 0.68rem/1.1 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -385,10 +399,10 @@ golf-axis,
 gap-axis,
 proof-check,
 proof-link {
-  border-radius: 0.45rem;
+  border-radius: 0.38rem;
   padding: 0.42rem 0.55rem;
-  background: rgba(21, 21, 21, 0.06);
-  color: rgba(21, 21, 21, 0.78);
+  background: rgba(23, 24, 28, 0.06);
+  color: rgba(23, 24, 28, 0.78);
   font:
     0.78rem/1.35 ui-monospace,
     SFMono-Regular,
@@ -414,7 +428,7 @@ pad-ref::after,
 file-ref::after,
 real-file::after {
   content: " — " attr(role);
-  color: rgba(21, 21, 21, 0.56);
+  color: rgba(23, 24, 28, 0.56);
 }
 
 golf-axis::before {
@@ -437,12 +451,12 @@ gap-axis::before {
 
 gap-axis[target]::after {
   content: " target=" attr(target);
-  color: rgba(21, 21, 21, 0.52);
+  color: rgba(23, 24, 28, 0.52);
 }
 
 gap-axis[target-min]::after {
   content: " target=" attr(target-min) ".." attr(target-max);
-  color: rgba(21, 21, 21, 0.52);
+  color: rgba(23, 24, 28, 0.52);
 }
 
 proof-check::before {
@@ -470,10 +484,10 @@ proof-link::before {
   top: 0.75rem;
   z-index: 9;
   justify-content: flex-end;
-  border: 1px solid rgba(21, 21, 21, 0.12);
+  border: 1px solid rgba(23, 24, 28, 0.12);
   border-radius: 999px;
   padding: 0.35rem;
-  background: rgba(245, 241, 232, 0.82);
+  background: rgba(246, 246, 239, 0.86);
   backdrop-filter: blur(14px);
 }
 
@@ -495,8 +509,8 @@ button[data-pad-crud-button] {
   border: 0;
   border-radius: 999px;
   padding: 0.45rem 0.75rem;
-  background: rgba(21, 21, 21, 0.075);
-  color: rgba(21, 21, 21, 0.78);
+  background: rgba(23, 24, 28, 0.075);
+  color: rgba(23, 24, 28, 0.78);
   font:
     700 0.88rem/1 ui-sans-serif,
     system-ui,
@@ -505,8 +519,8 @@ button[data-pad-crud-button] {
 }
 
 button[data-pad-crud-primary] {
-  background: #151515;
-  color: #f5f1e8;
+  background: #17181c;
+  color: #f6f6ef;
 }
 
 button[data-pad-crud-danger] {
@@ -515,7 +529,7 @@ button[data-pad-crud-danger] {
 }
 
 button[data-pad-crud-button]:hover:not(:disabled) {
-  background: rgba(21, 21, 21, 0.13);
+  background: rgba(23, 24, 28, 0.13);
 }
 
 button[data-pad-crud-primary]:hover:not(:disabled) {
@@ -545,6 +559,29 @@ button[data-pad-crud-button]:disabled {
 }
 
 @media (min-width: 58rem) {
+  body {
+    padding-top: 3rem;
+  }
+
+  body:has(pad-diff),
+  body:has(> pad-scope) {
+    font-size: 1.05rem;
+  }
+
+  pad-text[kind="title"],
+  pad-note[kind="title"] {
+    font-size: 5.5rem;
+  }
+
+  pad-text[kind="heading"] {
+    font-size: 2.75rem;
+  }
+
+  pad-scope,
+  pad-story {
+    padding: 1.25rem;
+  }
+
   pad-story {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -579,7 +616,7 @@ pad-note[contenteditable="true"]:focus,
 pad-expect[contenteditable="true"]:focus,
 pad-snapshot[contenteditable="true"]:focus,
 pad-work[contenteditable="true"]:focus {
-  outline: 2px solid rgba(21, 21, 21, 0.28);
+  outline: 2px solid rgba(23, 24, 28, 0.28);
   outline-offset: 0.3rem;
 }
 
@@ -589,11 +626,11 @@ pad-status {
   bottom: 0.75rem;
   z-index: 10;
   max-width: min(28rem, calc(100vw - 1.5rem));
-  border: 1px solid rgba(21, 21, 21, 0.18);
+  border: 1px solid rgba(23, 24, 28, 0.18);
   border-radius: 999px;
   padding: 0.45rem 0.7rem;
-  background: rgba(245, 241, 232, 0.88);
-  color: rgba(21, 21, 21, 0.72);
+  background: rgba(246, 246, 239, 0.9);
+  color: rgba(23, 24, 28, 0.72);
   font:
     0.78rem/1.2 ui-sans-serif,
     system-ui,
@@ -605,8 +642,8 @@ pad-status {
 @media (prefers-color-scheme: dark) {
   :root,
   body {
-    background: #11110f;
-    color: #f3ead7;
+    background: #101413;
+    color: #eef3ef;
   }
 
   pad-text[contenteditable="true"]:focus,
@@ -614,36 +651,36 @@ pad-status {
   pad-expect[contenteditable="true"]:focus,
   pad-snapshot[contenteditable="true"]:focus,
   pad-work[contenteditable="true"]:focus {
-    outline-color: rgba(243, 234, 215, 0.3);
+    outline-color: rgba(238, 243, 239, 0.3);
   }
 
   pad-status {
-    border-color: rgba(243, 234, 215, 0.18);
-    background: rgba(17, 17, 15, 0.86);
-    color: rgba(243, 234, 215, 0.72);
+    border-color: rgba(238, 243, 239, 0.18);
+    background: rgba(16, 20, 19, 0.9);
+    color: rgba(238, 243, 239, 0.72);
   }
 
   pad-story {
-    border-color: rgba(243, 234, 215, 0.15);
-    background: rgba(29, 28, 24, 0.72);
-    box-shadow: 0 1.2rem 3rem rgba(0, 0, 0, 0.25);
+    border-color: rgba(238, 243, 239, 0.14);
+    background: rgba(24, 29, 28, 0.82);
+    box-shadow: none;
   }
 
   pad-scope {
-    border-color: rgba(243, 234, 215, 0.15);
-    background: rgba(29, 28, 24, 0.72);
+    border-color: rgba(238, 243, 239, 0.14);
+    background: rgba(24, 29, 28, 0.82);
   }
 
   pad-scope pad-scope {
-    background: rgba(17, 17, 15, 0.72);
+    background: rgba(15, 19, 18, 0.82);
   }
 
   story-spec,
   story-real,
   story-gaps,
   story-next {
-    border-color: rgba(243, 234, 215, 0.13);
-    background: rgba(17, 17, 15, 0.72);
+    border-color: rgba(238, 243, 239, 0.12);
+    background: rgba(15, 19, 18, 0.82);
   }
 
   story-spec::before,
@@ -662,8 +699,8 @@ pad-status {
   gap-item::before,
   work-item::before,
   proof-check::before {
-    color: rgba(243, 234, 215, 0.62);
-    background: rgba(243, 234, 215, 0.07);
+    color: rgba(238, 243, 239, 0.62);
+    background: rgba(238, 243, 239, 0.07);
   }
 
   spec-wish,
@@ -682,7 +719,7 @@ pad-status {
   gap-item,
   work-item,
   work-judgement {
-    background: rgba(243, 234, 215, 0.055);
+    background: rgba(238, 243, 239, 0.055);
   }
 
   thread-heads,
@@ -696,8 +733,8 @@ pad-status {
   gap-axis,
   proof-check,
   proof-link {
-    background: rgba(243, 234, 215, 0.08);
-    color: rgba(243, 234, 215, 0.78);
+    background: rgba(238, 243, 239, 0.08);
+    color: rgba(238, 243, 239, 0.78);
   }
 
   pad-ref::after,
@@ -705,22 +742,22 @@ pad-status {
   real-file::after,
   gap-axis[target]::after,
   gap-axis[target-min]::after {
-    color: rgba(243, 234, 215, 0.54);
+    color: rgba(238, 243, 239, 0.54);
   }
 
   [data-pad-crud-kind="toolbar"] {
-    border-color: rgba(243, 234, 215, 0.13);
-    background: rgba(17, 17, 15, 0.78);
+    border-color: rgba(238, 243, 239, 0.13);
+    background: rgba(16, 20, 19, 0.82);
   }
 
   button[data-pad-crud-button] {
-    background: rgba(243, 234, 215, 0.08);
-    color: rgba(243, 234, 215, 0.78);
+    background: rgba(238, 243, 239, 0.08);
+    color: rgba(238, 243, 239, 0.78);
   }
 
   button[data-pad-crud-primary] {
-    background: #f3ead7;
-    color: #11110f;
+    background: #eef3ef;
+    color: #101413;
   }
 
   button[data-pad-crud-danger] {
@@ -729,11 +766,11 @@ pad-status {
   }
 
   button[data-pad-crud-button]:hover:not(:disabled) {
-    background: rgba(243, 234, 215, 0.14);
+    background: rgba(238, 243, 239, 0.14);
   }
 
   button[data-pad-crud-primary]:hover:not(:disabled) {
-    background: #fff7e6;
+    background: #fff;
   }
 
   button[data-pad-crud-danger]:hover:not(:disabled) {

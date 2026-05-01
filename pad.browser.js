@@ -260,19 +260,36 @@ function setHostAttribute(host, name) {
  */
 function appendAttributeControl(root, host, label, name, options) {
   const wrapper = document.createElement("label")
+  const currentValue = host.getAttribute(name) ?? ""
   wrapper.textContent = label
-  const control = options ? document.createElement("select") : document.createElement("input")
-  control.name = name
-  control.value = host.getAttribute(name) ?? ""
-  control.setAttribute("aria-label", label)
+  /** @type {HTMLInputElement | HTMLSelectElement} */
+  let control
   if (options) {
+    const select = document.createElement("select")
     for (const optionValue of options) {
       const option = document.createElement("option")
       option.value = optionValue
-      option.textContent = optionValue
-      control.append(option)
+      option.textContent = optionValue || "none"
+      select.append(option)
     }
+    if (
+      currentValue &&
+      !Array.from(select.options).some((option) => option.value === currentValue)
+    ) {
+      const option = document.createElement("option")
+      option.value = currentValue
+      option.textContent = currentValue
+      select.append(option)
+    }
+    control = select
+  } else {
+    const input = document.createElement("input")
+    input.type = "text"
+    control = input
   }
+  control.name = name
+  control.setAttribute("aria-label", label)
+  control.value = currentValue
   control.addEventListener("input", setHostAttribute(host, name))
   control.addEventListener("change", setHostAttribute(host, name))
   wrapper.append(control)
@@ -318,23 +335,138 @@ function makeGenericPadElement(name, assignsId) {
       this.shadowRoot.textContent = ""
       const style = document.createElement("style")
       style.textContent = `
-        :host { display: block; }
-        .chrome { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; margin-bottom: .45rem; font: 700 .78rem/1 ui-sans-serif, system-ui, sans-serif; color: color-mix(in srgb, currentColor 62%, transparent); }
-        label { display: inline-grid; gap: .12rem; text-transform: uppercase; letter-spacing: .08em; }
-        input, select { min-height: 2.75rem; max-width: 12rem; border: 0; border-radius: 999px; padding: .45rem .75rem; background: rgba(127, 127, 127, .12); color: inherit; font: 600 1rem/1 ui-sans-serif, system-ui, sans-serif; }
-        button { min-height: 2.75rem; border: 0; border-radius: 999px; padding: .45rem .75rem; background: rgba(127, 127, 127, .16); color: inherit; font: 800 1rem/1 ui-sans-serif, system-ui, sans-serif; cursor: pointer; }
-        button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid rgba(47, 109, 179, .75); outline-offset: 2px; }
+        :host {
+          display: block;
+          position: relative;
+        }
+
+        .chrome {
+          position: absolute;
+          inset-block-start: .55rem;
+          inset-inline-end: .55rem;
+          z-index: 2;
+          color: color-mix(in srgb, currentColor 70%, transparent);
+          font: 700 .75rem/1 ui-sans-serif, system-ui, sans-serif;
+          opacity: 0;
+          pointer-events: none;
+        }
+
+        :host(:hover) .chrome,
+        :host(:focus-within) .chrome,
+        .chrome[open] {
+          opacity: 1;
+          pointer-events: auto;
+        }
+
+        summary {
+          min-height: 2.75rem;
+          border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+          border-radius: 999px;
+          padding: .45rem .75rem;
+          background: color-mix(in srgb, Canvas 86%, currentColor 14%);
+          box-shadow: 0 .5rem 1.4rem rgba(0, 0, 0, .12);
+          cursor: pointer;
+          list-style: none;
+          user-select: none;
+        }
+
+        summary::-webkit-details-marker {
+          display: none;
+        }
+
+        .chrome-panel {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: end;
+          gap: .4rem;
+          width: min(34rem, calc(100vw - 3rem));
+          max-height: min(70vh, 36rem);
+          margin-block-start: .35rem;
+          overflow: auto;
+          border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+          border-radius: .5rem;
+          padding: .55rem;
+          background: color-mix(in srgb, Canvas 92%, currentColor 8%);
+          box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, .18);
+        }
+
+        label {
+          display: inline-grid;
+          gap: .18rem;
+          color: color-mix(in srgb, currentColor 76%, transparent);
+          font: 700 .68rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+          letter-spacing: .08em;
+          text-transform: uppercase;
+        }
+
+        input,
+        select {
+          min-height: 2.75rem;
+          max-width: 12rem;
+          border: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+          border-radius: .45rem;
+          padding: .45rem .65rem;
+          background: color-mix(in srgb, Canvas 88%, currentColor 12%);
+          color: inherit;
+          font: 600 1rem/1.2 ui-sans-serif, system-ui, sans-serif;
+        }
+
+        button {
+          min-height: 2.75rem;
+          border: 0;
+          border-radius: .45rem;
+          padding: .45rem .7rem;
+          background: rgba(47, 109, 179, .16);
+          color: inherit;
+          font: 800 1rem/1 ui-sans-serif, system-ui, sans-serif;
+          cursor: pointer;
+        }
+
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        summary:focus-visible {
+          outline: 2px solid rgba(47, 109, 179, .75);
+        }
+
         @media (pointer: fine) {
-          input, select, button { min-height: 2rem; padding: .32rem .6rem; font-size: .72rem; }
+          summary,
+          input,
+          select,
+          button {
+            min-height: 2rem;
+            padding: .32rem .55rem;
+            font-size: .78rem;
+          }
+        }
+
+        @media (max-width: 42rem) {
+          .chrome {
+            position: static;
+            margin-block-end: .55rem;
+            opacity: .72;
+            pointer-events: auto;
+          }
+
+          .chrome-panel {
+            width: 100%;
+            max-height: none;
+          }
         }
       `
       this.shadowRoot.append(style)
-      const chrome = document.createElement("div")
+      const chrome = document.createElement("details")
       chrome.className = "chrome"
+      const summary = document.createElement("summary")
+      summary.textContent = "Edit"
+      summary.setAttribute("aria-label", `Edit ${name.replace("pad-", "")}`)
+      const panel = document.createElement("div")
+      panel.className = "chrome-panel"
+      chrome.append(summary, panel)
       this.shadowRoot.append(chrome)
 
       if (name === "pad-scope") {
-        appendAttributeControl(chrome, this, "kind", "kind", [
+        appendAttributeControl(panel, this, "kind", "kind", [
           "spec",
           "story",
           "slice",
@@ -342,17 +474,17 @@ function makeGenericPadElement(name, assignsId) {
           "scope",
           "experiment",
         ])
-        appendAttributeControl(chrome, this, "name", "name")
-        appendAttributeControl(chrome, this, "refs", "refs")
-        appendShadowAction(chrome, this, "+scope", () => htmlToElement(padScopeHtml()))
-        appendShadowAction(chrome, this, "+note", () => htmlToElement(padNoteHtml()))
-        appendShadowAction(chrome, this, "+ref", () => htmlToElement(padRefHtml()))
-        appendShadowAction(chrome, this, "+expect", () => htmlToElement(padExpectHtml()))
-        appendShadowAction(chrome, this, "+work", () => htmlToElement(padWorkHtml()))
+        appendAttributeControl(panel, this, "name", "name")
+        appendAttributeControl(panel, this, "refs", "refs")
+        appendShadowAction(panel, this, "+scope", () => htmlToElement(padScopeHtml()))
+        appendShadowAction(panel, this, "+note", () => htmlToElement(padNoteHtml()))
+        appendShadowAction(panel, this, "+ref", () => htmlToElement(padRefHtml()))
+        appendShadowAction(panel, this, "+expect", () => htmlToElement(padExpectHtml()))
+        appendShadowAction(panel, this, "+work", () => htmlToElement(padWorkHtml()))
       }
 
       if (name === "pad-ref") {
-        appendAttributeControl(chrome, this, "kind", "kind", [
+        appendAttributeControl(panel, this, "kind", "kind", [
           "file",
           "url",
           "symbol",
@@ -360,14 +492,14 @@ function makeGenericPadElement(name, assignsId) {
           "command",
           "commit",
         ])
-        appendAttributeControl(chrome, this, "path", "path")
-        appendAttributeControl(chrome, this, "href", "href")
-        appendAttributeControl(chrome, this, "command", "command")
-        appendAttributeControl(chrome, this, "role", "role")
+        appendAttributeControl(panel, this, "path", "path")
+        appendAttributeControl(panel, this, "href", "href")
+        appendAttributeControl(panel, this, "command", "command")
+        appendAttributeControl(panel, this, "role", "role")
       }
 
       if (name === "pad-note") {
-        appendAttributeControl(chrome, this, "kind", "kind", [
+        appendAttributeControl(panel, this, "kind", "kind", [
           "thought",
           "summary",
           "why",
@@ -380,32 +512,32 @@ function makeGenericPadElement(name, assignsId) {
       }
 
       if (name === "pad-expect") {
-        appendAttributeControl(chrome, this, "kind", "kind", [
+        appendAttributeControl(panel, this, "kind", "kind", [
           "wish",
           "nightmare",
           "judgement",
           "razor",
         ])
-        appendAttributeControl(chrome, this, "matcher", "matcher")
-        appendAttributeControl(chrome, this, "weight", "weight")
-        appendAttributeControl(chrome, this, "edge", "edge", ["", "heads", "tails"])
-        appendAttributeControl(chrome, this, "refs", "refs")
-        appendShadowAction(chrome, this, "+snapshot", () => htmlToElement(padSnapshotHtml()))
-        appendShadowAction(chrome, this, "+work", () => htmlToElement(padWorkHtml()))
+        appendAttributeControl(panel, this, "matcher", "matcher")
+        appendAttributeControl(panel, this, "weight", "weight")
+        appendAttributeControl(panel, this, "edge", "edge", ["", "heads", "tails"])
+        appendAttributeControl(panel, this, "refs", "refs")
+        appendShadowAction(panel, this, "+snapshot", () => htmlToElement(padSnapshotHtml()))
+        appendShadowAction(panel, this, "+work", () => htmlToElement(padWorkHtml()))
       }
 
       if (name === "pad-snapshot") {
-        appendAttributeControl(chrome, this, "kind", "kind", [
+        appendAttributeControl(panel, this, "kind", "kind", [
           "observation",
           "gap",
           "result",
         ])
-        appendAttributeControl(chrome, this, "rev", "rev")
-        appendAttributeControl(chrome, this, "distance", "distance")
+        appendAttributeControl(panel, this, "rev", "rev")
+        appendAttributeControl(panel, this, "distance", "distance")
       }
 
       if (name === "pad-work") {
-        appendAttributeControl(chrome, this, "state", "state", [
+        appendAttributeControl(panel, this, "state", "state", [
           "proposed",
           "approved",
           "active",
@@ -416,15 +548,15 @@ function makeGenericPadElement(name, assignsId) {
       }
 
       if (name === "pad-import") {
-        appendAttributeControl(chrome, this, "kind", "kind", ["expect-pack"])
-        appendAttributeControl(chrome, this, "src", "src")
-        appendAttributeControl(chrome, this, "as", "as")
+        appendAttributeControl(panel, this, "kind", "kind", ["expect-pack"])
+        appendAttributeControl(panel, this, "src", "src")
+        appendAttributeControl(panel, this, "as", "as")
       }
 
       if (name === "pad-metric") {
-        appendAttributeControl(chrome, this, "name", "name")
-        appendAttributeControl(chrome, this, "value", "value")
-        appendAttributeControl(chrome, this, "target", "target")
+        appendAttributeControl(panel, this, "name", "name")
+        appendAttributeControl(panel, this, "value", "value")
+        appendAttributeControl(panel, this, "target", "target")
       }
 
       const slot = document.createElement("slot")

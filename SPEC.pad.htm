@@ -8,14 +8,14 @@
 <link rel="stylesheet" href="./pad.css">
 <script type="module" src="./pad.browser.js"></script>
 
-<pad-scope kind="spec" name="PAD Diff as an attention sandbox">
-  <pad-note kind="title">SPEC.pad.htm</pad-note>
+<pad-scope kind="spec" name="PAD Diff as an attention sandbox" id="scope_013c569631b64419816a5a0cc3d4d420">
+  <pad-note kind="title" id="note_2f50569bf51f4635b0a9b14ea4fc1e76">SPEC.pad.htm</pad-note>
 
-  <pad-note kind="summary">
+  <pad-note kind="summary" id="note_48ccf08dda5b471c97c83376a2a0733e">
     The real bug is not that machines need another task format. Machines can hold the whole repo in their mouth and still ask for more. The bottleneck is a specific human mind trying to make one clean move without being dragged into every adjacent concern at once.
   </pad-note>
 
-  <pad-note kind="reframe">
+  <pad-note kind="reframe" id="note_10c7859a8fd843868b8b809fdd6a134b">
     What this really is: a document that behaves like a tiny operating system for attention. Not a backlog. Not a schema museum. A pit of success where one subtree can become the whole world long enough for reality to talk back.
   </pad-note>
 
@@ -23,8 +23,8 @@
   <pad-import kind="expect-pack" src="./expect/thing-golf.ts" as="thingGolf"></pad-import>
   <pad-import kind="expect-pack" src="./expect/story-golf.ts" as="storyGolf"></pad-import>
 
-  <pad-scope kind="story" name="The spec must load the grammar it describes">
-    <pad-note kind="why">
+  <pad-scope kind="story" name="The spec must load the grammar it describes" id="scope_6babc7c498784d1e8492218a390fcc49">
+    <pad-note kind="why" id="note_688dc70958e5403394262015248711d7">
       A dogfooded spec cannot point at yesterday's CDN build while claiming today's grammar. The executable file has to load the local runner, stylesheet, and browser runtime so the page on screen matches the worktree under the author's hands.
     </pad-note>
 
@@ -33,10 +33,10 @@
     <pad-ref id="ref_pad_browser" kind="file" path="pad.browser.js" role="shadow affordances"></pad-ref>
     <pad-ref id="ref_pad_runner" kind="file" path="pad.shebang.tsx" role="local runner"></pad-ref>
 
-    <pad-expect kind="wish" matcher="core.spec-local-runtime" weight="critical" refs="ref_spec_file ref_pad_css ref_pad_browser ref_pad_runner">
+    <pad-expect kind="wish" matcher="core.spec-local-runtime" weight="critical" refs="ref_spec_file ref_pad_css ref_pad_browser ref_pad_runner" id="expect_008422d531a54e1aab771daac358b027">
       Running ./SPEC.pad.htm should show the same recursive scopes, title styling, and shadow-DOM affordances described by the current worktree.
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="0">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="0" id="snap_1aff40907e9f4902b2bb672448c85f9e">
         {
           distance: 0,
           closed: true,
@@ -49,27 +49,30 @@
         }
       </pad-snapshot>
     </pad-expect>
-  </pad-scope>
+  <pad-scope kind="scope" name="New scope" id="scope_f3f022535613445a915b2ce713dc7925">
+  <pad-note kind="thought" id="note_7d0649ec63f94046a2d43e25397a9707">Think out loud here...</pad-note>
+<pad-expect kind="wish" matcher="core.todo" weight="medium" id="expect_a9410f59f9ef446f8268e5daf5b50f17"><br>
+</pad-expect><pad-expect kind="wish" matcher="core.todo" weight="medium" id="expect_3853ea32d09542dbbeacc1840079db26"></pad-expect></pad-scope></pad-scope>
 
-  <pad-scope kind="story" name="The human attention bottleneck">
-    <pad-note kind="why">
+  <pad-scope kind="story" name="The human attention bottleneck" id="scope_650fd79d38714a4bbebe71af7516192b">
+    <pad-note kind="why" id="note_6c24c24ed976484b96a39ae778b0f3a5">
       A diff pad exists because I need permission to ignore almost everything. When I am tuning gamefeel for direct character manipulation, art and music and marketing are not evil. They are just not the room I am standing in.
     </pad-note>
 
-    <pad-note kind="mechanism">
+    <pad-note kind="mechanism" id="note_9bcc755525564cb185f4ca6f5d1085c8">
       The document must support arbitrary recursive focus. A game can contain a character. A character can contain arms. Arms can contain holding. Holding can contain grip timing. A peer scope can contain pushing. Each one is a pocket universe with its own local expectations, observations, gaps, and work.
     </pad-note>
 
-    <pad-expect kind="wish" matcher="core.scope-can-nest" weight="critical">
+    <pad-expect kind="wish" matcher="core.scope-can-nest" weight="critical" id="expect_b6df47c0f0744dfb82c7159e77e1a98e">
       Any scope can contain any number of child scopes, and focusing one scope should make its ancestors understandable while making siblings safe to ignore.
 
-      <pad-snapshot kind="observation" rev="WORKTREE">
+      <pad-snapshot kind="observation" rev="WORKTREE" id="snap_0a899f277c37437fb58e4bca5df5c1f4">
         {
           summary: 'pad-scope now exists, can nest arbitrarily, and is used by SPEC and toy001. Focus mode is still not implemented.',
         }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="1" id="snap_645422a87aee45e28d402925a91dc683">
         {
           distance: 1,
           missing: [
@@ -79,31 +82,31 @@
         }
       </pad-snapshot>
 
-      <pad-work state="done">
+      <pad-work state="done" id="work_1b7b3d6e988a41aa875554db8ccf9bc8">
         Introduce a generic pad-scope element and make it the root recursive attention boundary.
       </pad-work>
 
-      <pad-work state="proposed">
+      <pad-work state="proposed" id="work_b9449e1f73f34763891014cfc6a48b39">
         Add focus mode for pad-scope so ancestors become breadcrumbs, siblings collapse, and edits remain scoped to the active subtree.
       </pad-work>
     </pad-expect>
   </pad-scope>
 
-  <pad-scope kind="story" name="The grammar compression law">
-    <pad-note kind="rule">
+  <pad-scope kind="story" name="The grammar compression law" id="scope_7bbd92211161414f88533024d6770a21">
+    <pad-note kind="rule" id="note_156267367af54cc395710b4be0fb904f">
       If there can only ever be one of a thing inside the current context, it should be an attribute. If there can be many, it should be an element. If it is long human prose, it should be the host element text content, not an attribute and not a required pad-text child.
     </pad-note>
 
-    <pad-expect kind="wish" matcher="core.grammar-law" weight="critical">
+    <pad-expect kind="wish" matcher="core.grammar-law" weight="critical" id="expect_694eafad6d464bcdbe788fcd3e36f92f">
       The light DOM should stay declarative and small: singleton scalar facts live in attributes; repeatable structured facts live in child elements; runtime controls live in shadow DOM.
 
-      <pad-snapshot kind="observation" rev="WORKTREE">
+      <pad-snapshot kind="observation" rev="WORKTREE" id="snap_76e536eef11848118fe91d959b73e54b">
         {
           summary: 'The generic elements exist and toy001 uses them without pad-text children. Legacy tags still exist so older documents keep working.',
         }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="1" id="snap_7f3097a203b04f61827db62d46406402">
         {
           distance: 1,
           remaining: [
@@ -114,29 +117,29 @@
         }
       </pad-snapshot>
 
-      <pad-work state="done">
+      <pad-work state="done" id="work_2358636ff20f48fc9395011f0a06feb0">
         Add the generic elements without breaking the older specific tags, then dogfood the generic shape in toy001.
       </pad-work>
     </pad-expect>
   </pad-scope>
 
-  <pad-scope kind="story" name="Refs make reality concrete">
-    <pad-note kind="why">
+  <pad-scope kind="story" name="Refs make reality concrete" id="scope_123e034e207f489ea01b7e769931f446">
+    <pad-note kind="why" id="note_4e326f02b55a4691aeae17dad5cb7b33">
       Loose file names in prose feel convenient until the work gets real. A scope should be able to say exactly which files, assets, URLs, commands, symbols, commits, or scenes it is talking about.
     </pad-note>
 
-    <pad-expect kind="wish" matcher="core.refs-are-specific" weight="high">
+    <pad-expect kind="wish" matcher="core.refs-are-specific" weight="high" id="expect_4375b3f0df5e4caa87a1b377771c21c7">
       A scope can own or inherit a space-separated refs attribute that points at concrete pad-ref nodes. The runtime may create pad-ref nodes and generated IDs for the human.
 
       <pad-ref id="ref_spec" kind="file" path="SPEC.pad.htm" role="current spec document"></pad-ref>
 
-      <pad-snapshot kind="observation" rev="WORKTREE">
+      <pad-snapshot kind="observation" rev="WORKTREE" id="snap_01a99b5f38b448c5b636482e21c4a129">
         {
           summary: 'SPEC and toy001 now use pad-ref plus refs for concrete files and commands. file-ref remains as legacy compatibility only.',
         }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="0">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="0" id="snap_faca8f0a3f8a48d09cf4781303400aa1">
         {
           distance: 0,
           closed: true,
@@ -146,21 +149,21 @@
     </pad-expect>
   </pad-scope>
 
-  <pad-scope kind="story" name="BDD for design work">
-    <pad-note kind="reframe">
+  <pad-scope kind="story" name="BDD for design work" id="scope_a2865c885bfe42569f5183e49fdf1260">
+    <pad-note kind="reframe" id="note_5e5df44085814e60bf3fe34c75b589ea">
       The rough analog is describe, it, expect. A scope describes the world. A child scope narrows the case. A pad-expect says what should or must not be true. A pad-snapshot is the inline truth we captured from reality.
     </pad-note>
 
-    <pad-expect kind="wish" matcher="core.expect-snapshot-loop" weight="critical">
+    <pad-expect kind="wish" matcher="core.expect-snapshot-loop" weight="critical" id="expect_138a1ec43f7848038f131d363ebca2a9">
       Every expectation can contain observation snapshots and gap snapshots, using one universal inline snapshot mechanism instead of bespoke gap grammar.
 
-      <pad-snapshot kind="observation" rev="WORKTREE">
+      <pad-snapshot kind="observation" rev="WORKTREE" id="snap_e8572c37d0ac4ddc95783f6fa7230cfb">
         {
           summary: 'pad-expect and pad-snapshot exist, toy001 uses inline observation and gap snapshots, and snapshots default to JSON5 without a format attribute.',
         }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="0">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="0" id="snap_765698220e304437bb971c2bed92e5af">
         {
           distance: 0,
           closed: true,
@@ -169,21 +172,21 @@
         }
       </pad-snapshot>
 
-      <pad-work state="done">
+      <pad-work state="done" id="work_c9ebc95282b749049a980c89ed7a7d3a">
         Add pad-expect and pad-snapshot, then migrate toy001 so snapshots live inline under expectations.
       </pad-work>
     </pad-expect>
   </pad-scope>
 
-  <pad-scope kind="story" name="Custom matchers without custom snapshot formats">
-    <pad-note kind="why">
+  <pad-scope kind="story" name="Custom matchers without custom snapshot formats" id="scope_368f7739108a4236bcd7e06ce731e5a9">
+    <pad-note kind="why" id="note_0239d03b8fa3496bb66622df21d007dc">
       Golfing works because it turns taste and fear into legible axes. But each golf skill should not need its own document grammar. It should act like a custom expect matcher that feeds the same universal snapshot pipe.
     </pad-note>
 
-    <pad-expect kind="wish" matcher="thingGolf.thing-badness" target-max="4" weight="high">
+    <pad-expect kind="wish" matcher="thingGolf.thing-badness" target-max="4" weight="high" id="expect_22dbdf2f8b084659a4097f694397f674">
       Expect packs can be imported and shared across docs. They observe reality, normalize it, score it, and emit observation/gap snapshots through the same pad-snapshot mechanism.
 
-      <pad-snapshot kind="observation" rev="WORKTREE">
+      <pad-snapshot kind="observation" rev="WORKTREE" id="snap_e29b2caaab404a62ba42220851b26d9e">
         {
           safety: 0,
           burden: 3,
@@ -193,7 +196,7 @@
         }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="2">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="2" id="snap_a835f5e5471a43bcae5adb7a081c28ed">
         {
           overTarget: [
             'burden',
@@ -208,21 +211,21 @@
     </pad-expect>
   </pad-scope>
 
-  <pad-scope kind="story" name="Shadow DOM is the affordance layer">
-    <pad-note kind="rule">
+  <pad-scope kind="story" name="Shadow DOM is the affordance layer" id="scope_2571fa728fbe4c2aa53c67ecb54920f4">
+    <pad-note kind="rule" id="note_941ba691f7654204a93cf3213842f02b">
       STYLE is styling only. Do not smuggle logic into CSS. Custom elements own behavior. Shadow DOM owns runtime affordances. Light DOM owns persisted meaning.
     </pad-note>
 
-    <pad-expect kind="wish" matcher="core.shadow-affordances" weight="high">
+    <pad-expect kind="wish" matcher="core.shadow-affordances" weight="high" id="expect_49d32c0159434531a3f26ba866049ec7">
       Each generic element exposes obvious controls for the job it owns: pad-scope adds subscopes, notes, refs, expectations, and focus; pad-ref edits resource attributes; pad-expect edits matcher/kind/weight; pad-snapshot edits rev/format/kind; pad-work edits state.
 
-      <pad-snapshot kind="observation" rev="WORKTREE">
+      <pad-snapshot kind="observation" rev="WORKTREE" id="snap_c9d2747f34424134a23226a1d468ae10">
         {
           summary: 'The generic elements now expose minimal shadow DOM controls for their singleton attributes and local add actions. Legacy external CRUD chrome still exists for the older story/facet grammar.',
         }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="1" id="snap_8eef52d9089f4f9e8b56d09d848e589c">
         {
           distance: 1,
           remaining: [
@@ -234,10 +237,10 @@
       </pad-snapshot>
     </pad-expect>
 
-    <pad-expect kind="wish" matcher="core.generic-prose-editable" weight="critical" refs="ref_spec_file ref_pad_browser ref_pad_css">
+    <pad-expect kind="wish" matcher="core.generic-prose-editable" weight="critical" refs="ref_spec_file ref_pad_browser ref_pad_css" id="expect_dabbf3a7bcfa484e98f7571e09e4709b">
       Text-bearing generic elements must make their persisted light-DOM prose editable in the browser and autosave those edits without serializing runtime editing attributes or shadow chrome.
 
-      <pad-snapshot kind="observation" rev="WORKTREE">
+      <pad-snapshot kind="observation" rev="WORKTREE" id="snap_1bb52b0b821a4bcbb656d3c456da7cfc">
         {
           previousFailure: './SPEC.pad.htm showed scoped text but none of the generic host text could be edited directly in the web UI.',
           cause: 'Only pad-text was upgraded to contenteditable, while the new generic grammar stores prose directly on pad-note, pad-expect, pad-snapshot, and pad-work hosts.',
@@ -245,7 +248,7 @@
         }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="0">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="0" id="snap_9b9ad49454bb4cb3b3d702882a3ecda0">
         {
           distance: 0,
           closed: true,
@@ -257,28 +260,28 @@
         }
       </pad-snapshot>
 
-      <pad-work state="done">
+      <pad-work state="done" id="work_a4cbf7437b9545868d746acae5dfdc48">
         Promote text-bearing generic hosts to runtime editing hosts, keep attribute controls in shadow DOM, and strip all runtime editing affordances before saving the source body.
       </pad-work>
     </pad-expect>
   </pad-scope>
 
-  <pad-scope kind="story" name="Native web stack, not a fake framework">
-    <pad-note kind="principle">
+  <pad-scope kind="story" name="Native web stack, not a fake framework" id="scope_add4305131264e3b92b9936b801f57c1">
+    <pad-note kind="principle" id="note_c4a072bfbc9749f9a6fa795611fd75f2">
       We should take the web seriously. Native HTML gives us documents. Custom elements give us domain atoms. Shadow DOM gives us affordances that do not serialize. CSS styles; it does not decide. iframe/object isolation can come later when a scope needs a hard sandbox.
     </pad-note>
 
-    <pad-expect kind="nightmare" edge="heads" matcher="core.not-too-thin">
+    <pad-expect kind="nightmare" edge="heads" matcher="core.not-too-thin" id="expect_ecb65419bc274df982ebb02b4b069b73">
       The document becomes plain prose again and loses the ability to point at reality, snapshot observations, and drive work.
     </pad-expect>
 
-    <pad-expect kind="nightmare" edge="tails" matcher="core.not-app-shell">
+    <pad-expect kind="nightmare" edge="tails" matcher="core.not-app-shell" id="expect_304706cfbf9440c18b2801f99a15cb4a">
       PAD becomes a full app framework with routing, storage, modal forms, provider lock-in, and a control surface heavier than the work it is meant to clarify.
     </pad-expect>
   </pad-scope>
 
-  <pad-scope kind="story" name="The first dogfood path">
-    <pad-note kind="plan">
+  <pad-scope kind="story" name="The first dogfood path" id="scope_ffa3852bbaab476080c779746227a54c">
+    <pad-note kind="plan" id="note_e2fc153234aa4364aca80c755432dbfa">
       The toy001 example is the rehearsal stage. It should start painfully small: one story, one implementation slice, one test slice, a few expectations, inline snapshots that admit the files are missing, and proposed work for the next tiny commit.
     </pad-note>
 
@@ -286,10 +289,10 @@
     <pad-ref id="ref_toy_impl" kind="file" path="examples/toy001/toy001.tsx" role="implementation slice"></pad-ref>
     <pad-ref id="ref_toy_test" kind="file" path="examples/toy001/toy001.test.tsx" role="test slice"></pad-ref>
 
-    <pad-expect kind="wish" matcher="core.toy-doc-uses-generic-scope" refs="ref_toy_pad" weight="high">
+    <pad-expect kind="wish" matcher="core.toy-doc-uses-generic-scope" refs="ref_toy_pad" weight="high" id="expect_7e1fb38efbb24368a4ddeb662e4b67a1">
       toy001 should use pad-scope, pad-ref, pad-note, pad-expect, pad-snapshot, and pad-work so the system is built by using itself.
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="0">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="0" id="snap_eab6b6a429f3499e9049c8738781671c">
         {
           distance: 0,
           closed: true,
@@ -297,14 +300,14 @@
         }
       </pad-snapshot>
 
-      <pad-work state="done">
+      <pad-work state="done" id="work_6e1b18b41be046ef916d570d208013e3">
         Rewrite toy001 into the generic BDD snapshot grammar after the generic runtime elements exist.
       </pad-work>
     </pad-expect>
   </pad-scope>
 
-  <pad-scope kind="story" name="UI/UX of the primitive elements">
-    <pad-note kind="why">
+  <pad-scope kind="story" name="UI/UX of the primitive elements" id="scope_1e3cd4e1780b42b998707199fc08055c">
+    <pad-note kind="why" id="note_1b563c5949de41b9af5a450c9e9977c7">
       The primitives are only useful if they protect focus instead of becoming another tiny form prison. The UI should feel like a document that quietly grows handles exactly where the human needs them.
     </pad-note>
 
@@ -316,11 +319,11 @@
     <pad-ref id="ref_ui_surfaces" kind="url" href="uidotsh://ui/design-guidelines/surfaces" role="surface guidance"></pad-ref>
     <pad-ref id="ref_ui_typography" kind="url" href="uidotsh://ui/design-guidelines/typography" role="typography guidance"></pad-ref>
 
-    <pad-scope kind="slice" name="pad-scope UI" refs="ref_ui_responsive ref_ui_surfaces ref_ui_buttons">
-      <pad-expect kind="wish" matcher="ui.scope-affordance" weight="high">
+    <pad-scope kind="slice" name="pad-scope UI" refs="ref_ui_responsive ref_ui_surfaces ref_ui_buttons" id="scope_973bf7992fe94cf2930c3c18a3ffbb7b">
+      <pad-expect kind="wish" matcher="ui.scope-affordance" weight="high" id="expect_40868107824c43d9b97bedbe0a6e9396">
         A scope shows its kind and name, keeps nested scopes readable on mobile and desktop, and exposes exactly one dominant local action at a time. Focus should feel like stepping into a room, not opening an admin panel.
 
-        <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="1" id="snap_6749ba48cb8941c9a869ab8c4846a365">
           {
             distance: 1,
             good: [
@@ -334,17 +337,17 @@
           }
         </pad-snapshot>
 
-        <pad-work state="proposed">
+        <pad-work state="proposed" id="work_6e9f6ef7d72e45fc9165d3bd94d571d5">
           Add pad-scope focus mode and reduce shadow chrome so add-subscope/focus are more legible than every secondary action.
         </pad-work>
       </pad-expect>
     </pad-scope>
 
-    <pad-scope kind="slice" name="pad-ref UI" refs="ref_ui_forms ref_ui_interactivity">
-      <pad-expect kind="wish" matcher="ui.ref-affordance" weight="high">
+    <pad-scope kind="slice" name="pad-ref UI" refs="ref_ui_forms ref_ui_interactivity" id="scope_48f4a632de0f4adeaed42dcfdc562c0c">
+      <pad-expect kind="wish" matcher="ui.ref-affordance" weight="high" id="expect_cf39750ae02848adac7ee111aeb64eb9">
         A ref should read like a compact evidence chip and edit like a small form: kind, path/href/command, and role must be obvious, accessible, and easy to validate or open.
 
-        <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="1" id="snap_fd6d5e1b1004452a9fc6c1647c7dd2f0">
           {
             distance: 1,
             good: [
@@ -362,11 +365,11 @@
       </pad-expect>
     </pad-scope>
 
-    <pad-scope kind="slice" name="pad-note UI" refs="ref_ui_typography ref_ui_surfaces">
-      <pad-expect kind="wish" matcher="ui.note-affordance" weight="medium">
+    <pad-scope kind="slice" name="pad-note UI" refs="ref_ui_typography ref_ui_surfaces" id="scope_23127524d8cf42fd99fe3a104b43ed2c">
+      <pad-expect kind="wish" matcher="ui.note-affordance" weight="medium" id="expect_9a73eb8a72eb4a41827a9edab7d66d37">
         A note should feel safe for thinking out loud before the thought has hardened into an expectation. Typography should favor readable prose over chrome density.
 
-        <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="1" id="snap_51fa6c552c90412caabf715b9c74be00">
           {
             distance: 1,
             good: [
@@ -381,11 +384,11 @@
       </pad-expect>
     </pad-scope>
 
-    <pad-scope kind="slice" name="pad-expect UI" refs="ref_ui_buttons ref_ui_forms ref_ui_interactivity">
-      <pad-expect kind="wish" matcher="ui.expect-affordance" weight="high">
+    <pad-scope kind="slice" name="pad-expect UI" refs="ref_ui_buttons ref_ui_forms ref_ui_interactivity" id="scope_e7292bf816154a85a258f2d1d3a12848">
+      <pad-expect kind="wish" matcher="ui.expect-affordance" weight="high" id="expect_1cc35d7365194bc0962862ca43d359ca">
         An expectation should make the testing analogy obvious: kind, matcher, weight, edge, snapshots, and work. Adding a snapshot or work item should be a secondary action, not visual noise.
 
-        <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="1" id="snap_0d4c21efc678496da0019dd561d6faa6">
           {
             distance: 1,
             good: [
@@ -401,11 +404,11 @@
       </pad-expect>
     </pad-scope>
 
-    <pad-scope kind="slice" name="pad-snapshot UI" refs="ref_ui_typography ref_ui_forms">
-      <pad-expect kind="wish" matcher="ui.snapshot-affordance" weight="high">
+    <pad-scope kind="slice" name="pad-snapshot UI" refs="ref_ui_typography ref_ui_forms" id="scope_512131d2ff9d43c89c3ed17103053f59">
+      <pad-expect kind="wish" matcher="ui.snapshot-affordance" weight="high" id="expect_9c94c242142943a5bad2fe5727956f78">
         Snapshots default to JSON5, omit the format attribute, and display as 2-space-pretty structured evidence. Distance should be legible without forcing a separate vector grammar.
 
-        <pad-snapshot kind="gap" rev="WORKTREE" distance="0">
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="0" id="snap_ba9492b779b84363a0819d222b8fb2ab">
           {
             distance: 0,
             closed: true,
@@ -419,11 +422,11 @@
       </pad-expect>
     </pad-scope>
 
-    <pad-scope kind="slice" name="pad-work UI" refs="ref_ui_buttons ref_ui_interactivity">
-      <pad-expect kind="wish" matcher="ui.work-affordance" weight="medium">
+    <pad-scope kind="slice" name="pad-work UI" refs="ref_ui_buttons ref_ui_interactivity" id="scope_0bb960011a504ca1b0494bf8a8540354">
+      <pad-expect kind="wish" matcher="ui.work-affordance" weight="medium" id="expect_c9ffcfd71eff46e3ab55d02ad0d189ee">
         Work state should be easy to read and safe to change. Proposed, approved, active, blocked, done, and dropped are lifecycle values, not separate elements.
 
-        <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="1" id="snap_fa43d110e7ff41a889d7d31950c421ab">
           {
             distance: 1,
             good: [
@@ -438,11 +441,11 @@
       </pad-expect>
     </pad-scope>
 
-    <pad-scope kind="slice" name="pad-import UI" refs="ref_ui_forms ref_ui_interactivity">
-      <pad-expect kind="wish" matcher="ui.import-affordance" weight="medium">
+    <pad-scope kind="slice" name="pad-import UI" refs="ref_ui_forms ref_ui_interactivity" id="scope_bdb05817f3284e699101408ca34c63b1">
+      <pad-expect kind="wish" matcher="ui.import-affordance" weight="medium" id="expect_bc38662614e34c16a5554b70225dfcce">
         Imports should read as trust boundaries. The UI must make source, alias, and kind visible before any matcher pack is allowed to influence snapshots.
 
-        <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="1" id="snap_efdfb7a57ce0441083bc19c168ed2220">
           {
             distance: 1,
             good: [
@@ -457,11 +460,11 @@
       </pad-expect>
     </pad-scope>
 
-    <pad-scope kind="slice" name="pad-metric UI" refs="ref_ui_general ref_ui_typography">
-      <pad-expect kind="wish" matcher="ui.metric-affordance" weight="medium">
+    <pad-scope kind="slice" name="pad-metric UI" refs="ref_ui_general ref_ui_typography" id="scope_eb56d0bb865a49c18a82684148d538af">
+      <pad-expect kind="wish" matcher="ui.metric-affordance" weight="medium" id="expect_70788ea0a4b0448089aa3276d5548af7">
         Metrics should behave like compact numeric chips with stable digit width. They should support rapid scanning without becoming a second gap-vector language.
 
-        <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="1" id="snap_737efc17c4b5490a9f966bd5557cc1c0">
           {
             distance: 1,
             good: [
@@ -477,15 +480,15 @@
     </pad-scope>
   </pad-scope>
 
-  <pad-scope kind="todo" name="Custom ui.sh expect-pack">
-    <pad-note kind="why">
+  <pad-scope kind="todo" name="Custom ui.sh expect-pack" id="scope_f185aef00e0d4941b71e6b2948a76458">
+    <pad-note kind="why" id="note_52e638d9234c4c3db36876580a50cf4d">
       The uidotsh guidelines are too useful to leave as vibes in prose. They should become a shared expect-pack that can score PAD UI snapshots the same way golfing scores technical or story badness.
     </pad-note>
 
-    <pad-expect kind="wish" matcher="core.expect-pack-contract" weight="high">
+    <pad-expect kind="wish" matcher="core.expect-pack-contract" weight="high" id="expect_460091923964412aa5db8b2638295793">
       A future ui.sh expect-pack should import the uidotsh design rules and expose matchers for scope affordances, buttons, form controls, responsive behavior, surfaces, typography, and interactivity.
 
-      <pad-snapshot kind="gap" rev="WORKTREE" distance="2">
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="2" id="snap_198f3595c7b245e5b2ef559e14df59b6">
         {
           distance: 2,
           missing: [
@@ -505,42 +508,42 @@
         }
       </pad-snapshot>
 
-      <pad-work state="proposed">
+      <pad-work state="proposed" id="work_5e3e31c55e44428d927b6a243210679d">
         Define the expect-pack interface for ui.sh so matcher packs can emit observation snapshots, gap snapshots, distance, and work hints through one universal JSON5 snapshot mechanism.
       </pad-work>
 
-      <pad-work state="proposed">
+      <pad-work state="proposed" id="work_960dcf6283b449c8a2d9b084ed398e09">
         Create the first ui.sh matcher for shadow controls: every input/select has name plus aria-label, buttons have type=button, mobile controls keep touch-friendly sizing, and only interactive elements receive hover states.
       </pad-work>
     </pad-expect>
   </pad-scope>
 
-  <pad-scope kind="todo" name="Next work after the basics">
-    <pad-note kind="plan">
+  <pad-scope kind="todo" name="Next work after the basics" id="scope_9bba8f9bb20c4f09b63da8684c140b87">
+    <pad-note kind="plan" id="note_d904b3f0a95a41798527314a82b23a72">
       The basics are the grammar, dogfood toy, JSON5 snapshots, and UI expectations. The next moves should keep closing the biggest remaining human-attention gaps without turning PAD into a full app framework.
     </pad-note>
 
-    <pad-work state="proposed">
+    <pad-work state="proposed" id="work_8b12d2a5d5554a86a06e8345b1feb1f3">
       Build pad-scope focus mode: active subtree, ancestor breadcrumbs, collapsed siblings, and full-document autosave.
     </pad-work>
 
-    <pad-work state="proposed">
+    <pad-work state="proposed" id="work_9af03a412fc74425b567d2964f3c9239">
       Add a snapshot update command that reads pad-expect elements, runs matcher packs, and rewrites pad-snapshot children with 2-space JSON5.
     </pad-work>
 
-    <pad-work state="proposed">
+    <pad-work state="proposed" id="work_e4eb2ae753084c16b1aacff3560bcaae">
       Add ref validation for pad-ref kind=file, kind=command, and kind=url, storing validation results as observation snapshots.
     </pad-work>
 
-    <pad-work state="proposed">
+    <pad-work state="proposed" id="work_ce33b0692fe946aca8869267209cffe0">
       Migrate pad-diff.diff.pad.htm from the legacy story/facet grammar to the generic pad-scope grammar after toy001 has been used for at least one game-building commit.
     </pad-work>
 
-    <pad-work state="proposed">
+    <pad-work state="proposed" id="work_810d02e7241e4e1789da031f805c2843">
       Add blocked work affordances: state=blocked, a human-readable blocker note, and one obvious path back to proposed or approved.
     </pad-work>
 
-    <pad-work state="proposed">
+    <pad-work state="proposed" id="work_a531e6fe8a1b44f3a9919270a7a23ba7">
       Add a hard-isolation experiment later: pad-scope can point at a sandboxed preview frame for playable game slices, but only after normal focus mode feels good.
     </pad-work>
   </pad-scope>
