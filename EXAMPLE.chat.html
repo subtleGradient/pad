@@ -1,0 +1,262 @@
+#!/usr/bin/env -S bun ./pad.shebang.tsx
+<!-- OC Session Pad: local example. Run only if you trust this file as local Bun code. -->
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light dark" />
+<meta name="oc-chat-format" content="oc-session-pad/v1" />
+<title>EXAMPLE.chat.html</title>
+<link rel="stylesheet" href="./oc-chat.css" />
+<script type="module" src="./oc-chat.browser.js"></script>
+
+<oc-chat
+  data-format="oc-session-pad/v1"
+  data-session-id="example-session"
+  data-project-id="example-project"
+  data-directory="/tmp/example-project"
+  data-title="Example OpenCode Session Pad"
+  data-exported-at="2026-05-01T00:00:00.000Z"
+>
+  <script type="application/json" data-oc-session>
+    {
+      "id": "example-session",
+      "projectID": "example-project",
+      "directory": "/tmp/example-project",
+      "title": "Example OpenCode Session Pad",
+      "version": "example",
+      "time": {
+        "created": 1777593600000,
+        "updated": 1777593660000
+      }
+    }
+  </script>
+
+  <oc-session-card>
+    <h1>Example OpenCode Session Pad</h1>
+    <dl>
+      <dt>session</dt>
+      <dd><code>example-session</code></dd>
+      <dt>directory</dt>
+      <dd><code>/tmp/example-project</code></dd>
+      <dt>format</dt>
+      <dd><code>oc-session-pad/v1</code></dd>
+    </dl>
+  </oc-session-card>
+
+  <oc-runtime-panel data-oc-runtime hidden>
+    <oc-connection-status
+      >Run this chat file as a program to continue the session.</oc-connection-status
+    >
+    <oc-composer></oc-composer>
+  </oc-runtime-panel>
+
+  <oc-transcript>
+    <oc-system-prompt
+      data-message-id="example-user-1"
+      data-created="2026-05-01T00:00:00.000Z"
+    >
+      <details>
+        <summary>System Prompt</summary>
+        <pre>You are OpenCode. Build small, verifiable slices.</pre>
+      </details>
+    </oc-system-prompt>
+
+    <oc-user-message
+      data-message-id="example-user-1"
+      data-created="2026-05-01T00:00:00.000Z"
+      data-agent="build"
+      data-provider-id="openai"
+      data-model-id="gpt-5.5"
+    >
+      <script type="application/json" data-oc-message>
+        {
+          "id": "example-user-1",
+          "sessionID": "example-session",
+          "role": "user",
+          "time": {
+            "created": 1777593600000
+          },
+          "system": "You are OpenCode. Build small, verifiable slices.",
+          "agent": "build",
+          "model": {
+            "providerID": "openai",
+            "modelID": "gpt-5.5"
+          }
+        }
+      </script>
+      <oc-message-meta>
+        <span>user</span>
+        <span>openai</span>
+        <span>gpt-5.5</span>
+        <time datetime="2026-05-01T00:00:00.000Z"
+          >2026-05-01T00:00:00.000Z</time
+        >
+      </oc-message-meta>
+      <oc-text-part data-part-id="example-user-text-1" data-format="markdown">
+        <script type="application/json" data-oc-part>
+          {
+            "id": "example-user-text-1",
+            "sessionID": "example-session",
+            "messageID": "example-user-1",
+            "type": "text",
+            "text": "Create a standalone chat pad format for OpenCode sessions."
+          }
+        </script>
+        <pre>Create a standalone chat pad format for OpenCode sessions.</pre>
+      </oc-text-part>
+    </oc-user-message>
+
+    <oc-assistant-message
+      data-message-id="example-assistant-1"
+      data-created="2026-05-01T00:00:01.000Z"
+      data-completed="2026-05-01T00:00:06.000Z"
+      data-provider-id="openai"
+      data-model-id="gpt-5.5"
+      data-mode="build"
+      data-cost="0.01"
+    >
+      <script type="application/json" data-oc-message>
+        {
+          "id": "example-assistant-1",
+          "sessionID": "example-session",
+          "role": "assistant",
+          "time": {
+            "created": 1777593601000,
+            "completed": 1777593606000
+          },
+          "parentID": "example-user-1",
+          "providerID": "openai",
+          "modelID": "gpt-5.5",
+          "mode": "build",
+          "path": {
+            "cwd": "/tmp/example-project",
+            "root": "/tmp/example-project"
+          },
+          "cost": 0.01,
+          "tokens": {
+            "input": 100,
+            "output": 80,
+            "reasoning": 0,
+            "cache": {
+              "read": 0,
+              "write": 0
+            }
+          },
+          "finish": "stop"
+        }
+      </script>
+      <oc-message-meta>
+        <span>assistant</span>
+        <span>openai</span>
+        <span>gpt-5.5</span>
+        <time datetime="2026-05-01T00:00:01.000Z"
+          >2026-05-01T00:00:01.000Z</time
+        >
+        <time datetime="2026-05-01T00:00:06.000Z"
+          >completed 2026-05-01T00:00:06.000Z</time
+        >
+      </oc-message-meta>
+
+      <oc-step-start data-part-id="example-step-start-1">
+        <script type="application/json" data-oc-part>
+          {
+            "id": "example-step-start-1",
+            "sessionID": "example-session",
+            "messageID": "example-assistant-1",
+            "type": "step-start"
+          }
+        </script>
+      </oc-step-start>
+
+      <oc-tool-call
+        data-part-id="example-tool-1"
+        data-call-id="example-call-1"
+        data-tool="read"
+        data-status="completed"
+      >
+        <script type="application/json" data-oc-part>
+          {
+            "id": "example-tool-1",
+            "sessionID": "example-session",
+            "messageID": "example-assistant-1",
+            "type": "tool",
+            "callID": "example-call-1",
+            "tool": "read",
+            "state": {
+              "status": "completed",
+              "input": {
+                "filePath": "/tmp/example-project/package.json"
+              },
+              "output": "{ \"name\": \"example\" }",
+              "title": "Read package manifest",
+              "metadata": {},
+              "time": {
+                "start": 1777593602000,
+                "end": 1777593603000
+              }
+            }
+          }
+        </script>
+        <details open>
+          <summary>read completed: Read package manifest</summary>
+          <oc-tool-input><pre>{ "filePath": "/tmp/example-project/package.json" }</pre></oc-tool-input>
+          <oc-tool-output><pre>{ "name": "example" }</pre></oc-tool-output>
+        </details>
+      </oc-tool-call>
+
+      <oc-patch-part data-part-id="example-patch-1" data-hash="examplehash">
+        <script type="application/json" data-oc-part>
+          {
+            "id": "example-patch-1",
+            "sessionID": "example-session",
+            "messageID": "example-assistant-1",
+            "type": "patch",
+            "hash": "examplehash",
+            "files": ["oc-chat.ts", "oc-chat.browser.js"]
+          }
+        </script>
+        <strong>Patch</strong> oc-chat.ts, oc-chat.browser.js
+      </oc-patch-part>
+
+      <oc-text-part data-part-id="example-assistant-text-1" data-format="markdown">
+        <script type="application/json" data-oc-part>
+          {
+            "id": "example-assistant-text-1",
+            "sessionID": "example-session",
+            "messageID": "example-assistant-1",
+            "type": "text",
+            "text": "Implemented the chat pad archive and runtime shell."
+          }
+        </script>
+        <pre>Implemented the chat pad archive and runtime shell.</pre>
+      </oc-text-part>
+
+      <oc-step-finish
+        data-part-id="example-step-finish-1"
+        data-reason="stop"
+        data-cost="0.01"
+      >
+        <script type="application/json" data-oc-part>
+          {
+            "id": "example-step-finish-1",
+            "sessionID": "example-session",
+            "messageID": "example-assistant-1",
+            "type": "step-finish",
+            "reason": "stop",
+            "cost": 0.01,
+            "tokens": {
+              "input": 100,
+              "output": 80,
+              "reasoning": 0,
+              "cache": {
+                "read": 0,
+                "write": 0
+              }
+            }
+          }
+        </script>
+        <strong>Step finished: stop</strong>
+      </oc-step-finish>
+    </oc-assistant-message>
+  </oc-transcript>
+</oc-chat>

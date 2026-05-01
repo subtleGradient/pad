@@ -505,6 +505,21 @@ describe("PAD entry documents", () => {
     )
     expect(source).not.toContain("cdn.jsdelivr.net")
   })
+
+  test("EXAMPLE chat uses local runner and chat browser assets", async () => {
+    const source = await Bun.file("EXAMPLE.chat.html").text()
+
+    expect(source.startsWith("#!/usr/bin/env -S bun ./pad.shebang.tsx\n")).toBe(
+      true,
+    )
+    expect(source).toContain('href="./oc-chat.css"')
+    expect(source).toContain(
+      '<script type="module" src="./oc-chat.browser.js"></script>',
+    )
+    expect(source).toContain("<oc-chat")
+    expect(source).toContain("<oc-tool-call")
+    expect(source).not.toContain("cdn.jsdelivr.net")
+  })
 })
 
 describe("contentType", () => {
