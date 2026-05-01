@@ -25,11 +25,16 @@ import {
 } from "./oc-chat.ts"
 
 const BRANCH = "pad-oc"
+const LIST_TAG = "list-v0"
 
 const publicShebang = `#!/usr/bin/env -S bunx --bun -p https://github.com/subtleGradient/pad/archive/refs/heads/${BRANCH}.tar.gz pad`
 const cdn = `https://cdn.jsdelivr.net/gh/subtleGradient/pad@refs/heads/${BRANCH}`
 const publicCss = `${cdn}/pad.css`
 const publicJs = `${cdn}/pad.browser.js`
+const listV0Shebang = `#!/usr/bin/env -S bunx --bun -p https://github.com/subtleGradient/pad/archive/refs/tags/${LIST_TAG}.tar.gz pad`
+const listV0Cdn = `https://cdn.jsdelivr.net/gh/subtleGradient/pad@refs/tags/${LIST_TAG}`
+const listV0Css = `${listV0Cdn}/pad.css`
+const listV0Js = `${listV0Cdn}/pad.browser.js`
 const replacementBody = `<pad-document>
   <pad-text>Changed body</pad-text>
 </pad-document>`
@@ -585,6 +590,20 @@ describe("PAD entry documents", () => {
     expect(source).toContain("How To Run It")
     expect(source).toContain("Try The List")
     expect(source).not.toContain("cdn.jsdelivr.net")
+  })
+
+  test("list-v0 pad pins its runner and assets to the list-v0 tag", async () => {
+    const source = await Bun.file("list-v0.pad.htm").text()
+
+    expect(source.startsWith(`${listV0Shebang}\n`)).toBe(true)
+    expect(source).toContain(listV0Css)
+    expect(source).toContain(listV0Js)
+    expect(source).toContain("https://github.com/subtleGradient/pad/tree/list-v0")
+    expect(source).toContain("PAD means Portable App Documents")
+    expect(source).toContain("Run it with: ./list-v0.pad.htm")
+    expect(source).toContain("<pad-grid")
+    expect(source).toContain("<pad-list")
+    expect(source).not.toContain("refs/heads/pad-oc")
   })
 })
 
