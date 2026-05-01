@@ -520,6 +520,23 @@ describe("PAD entry documents", () => {
     expect(source).toContain("<oc-tool-call")
     expect(source).not.toContain("cdn.jsdelivr.net")
   })
+
+  test("list example uses local runner, PAD assets, and list elements", async () => {
+    const source = await Bun.file("list-example-001.pad.htm").text()
+
+    expect(source.startsWith("#!/usr/bin/env -S bun ./pad.shebang.tsx\n")).toBe(
+      true,
+    )
+    expect(source).toContain('href="./pad.css"')
+    expect(source).toContain(
+      '<script type="module" src="./pad.browser.js"></script>',
+    )
+    expect(source).toContain("<pad-stack")
+    expect(source).toContain("<pad-panel")
+    expect(source).toContain("<pad-list")
+    expect(source).toContain("<pad-list-item></pad-list-item>")
+    expect(source).not.toContain("cdn.jsdelivr.net")
+  })
 })
 
 describe("contentType", () => {
@@ -652,6 +669,173 @@ describe("ClientState", () => {
 })
 
 describe("browser runtime", () => {
+  interface FakeListItem {
+    localName: string
+    textContent: string
+    parent: FakeList | undefined
+    attributes: Set<string>
+    toggleAttribute(name: string, force?: boolean): void
+    remove(): void
+  }
+
+  interface FakeList {
+    localName: string
+    children: FakeListItem[]
+    append(item: FakeListItem): void
+    readonly lastElementChild: FakeListItem | undefined
+  }
+
+  async function loadPadBrowserRuntimeForTests(documentOverride?: unknown) {
+    const source = await Bun.file("pad.browser.js").text()
+    class FakeHTMLElement {}
+    const runBrowserRuntime = new Function(
+      "customElements",
+      "HTMLElement",
+      "document",
+      "WebSocket",
+      "location",
+      "window",
+      `${source}\nreturn { normalizePadList, setEditableState }`,
+    )
+    return runBrowserRuntime(
+      { get: () => undefined, define: () => {} },
+      FakeHTMLElement,
+      documentOverride ?? {
+        readyState: "loading",
+        addEventListener() {},
+        querySelectorAll: () => [],
+        createElement(name: string) {
+          return makeFakeListItem("", name)
+        },
+        body: makeFakeBody(),
+      },
+      class FakeWebSocket {},
+      { protocol: "file:" },
+      { addEventListener() {}, clearTimeout, setTimeout },
+    ) as {
+      normalizePadList(list: FakeList): void
+      setEditableState(editable: boolean, reason: string): void
+    }
+  }
+
+  function makeFakeBody() {
+    return {
+      dataset: {} as Record<string, string>,
+      attributes: new Set<string>(),
+      toggleAttribute(name: string, force?: boolean) {
+        if (force) this.attributes.add(name)
+        else this.attributes.delete(name)
+      },
+    }
+  }
+
+  function makeFakeEditableElement(staticElement = false) {
+    const attributes = new Map<string, string>()
+    if (staticElement) attributes.set("static", "")
+    return {
+      attributes,
+      hasAttribute(name: string) {
+        return attributes.has(name)
+      },
+      setAttribute(name: string, value: string) {
+        attributes.set(name, value)
+      },
+    }
+  }
+
+  function makeFakeListItem(text: string, localName = "pad-list-item") {
+    const item: FakeListItem = {
+      localName,
+      textContent: text,
+      parent: undefined,
+      attributes: new Set<string>(),
+      toggleAttribute(name: string, force?: boolean) {
+        if (force) this.attributes.add(name)
+        else this.attributes.delete(name)
+      },
+      remove() {
+        if (!this.parent) return
+        this.parent.children = this.parent.children.filter(
+          (child: FakeListItem) => child !== item,
+        )
+      },
+    }
+    return item
+  }
+
+  function makeFakeList(texts: string[]) {
+    const list: FakeList = {
+      localName: "pad-list",
+      children: [],
+      append(item: FakeListItem) {
+        item.parent = list
+        list.children.push(item)
+      },
+      get lastElementChild() {
+        return list.children.at(-1)
+      },
+    }
+    for (const text of texts) list.append(makeFakeListItem(text))
+    return list
+  }
+
+  test("keeps exactly one empty item at the end of each pad-list", async () => {
+    const { normalizePadList } = await loadPadBrowserRuntimeForTests()
+    const list = makeFakeList(["Alpha", "Beta"])
+
+    normalizePadList(list)
+    expect(list.children.map((item) => item.textContent)).toEqual([
+      "Alpha",
+      "Beta",
+      "",
+    ])
+
+    list.children[2]!.textContent = "Gamma"
+    normalizePadList(list)
+    expect(list.children.map((item) => item.textContent)).toEqual([
+      "Alpha",
+      "Beta",
+      "Gamma",
+      "",
+    ])
+
+    list.children[2]!.textContent = ""
+    normalizePadList(list)
+    expect(list.children.map((item) => item.textContent)).toEqual([
+      "Alpha",
+      "Beta",
+      "",
+    ])
+    expect(list.children.at(-1)?.attributes.has("data-pad-empty")).toBe(true)
+  })
+
+  test("toggles editability and leaves static elements locked", async () => {
+    const body = makeFakeBody()
+    const editable = makeFakeEditableElement()
+    const staticElement = makeFakeEditableElement(true)
+    const { setEditableState } = await loadPadBrowserRuntimeForTests({
+      readyState: "loading",
+      addEventListener() {},
+      querySelectorAll: () => [editable, staticElement],
+      createElement(name: string) {
+        return makeFakeListItem("", name)
+      },
+      body,
+    })
+
+    setEditableState(false, "Read-only for test.")
+    expect(body.attributes.has("data-pad-readonly")).toBe(true)
+    expect(body.dataset.padReadonlyReason).toBe("Read-only for test.")
+    expect(editable.attributes.get("contenteditable")).toBe("false")
+    expect(staticElement.attributes.has("contenteditable")).toBe(false)
+
+    setEditableState(true, "")
+    expect(body.attributes.has("data-pad-readonly")).toBe(false)
+    expect(body.attributes.has("data-pad-editable")).toBe(true)
+    expect(body.dataset.padReadonlyReason).toBeUndefined()
+    expect(editable.attributes.get("contenteditable")).toBe("true")
+  })
+
   test("reloads the page when the server broadcasts a reload message", async () => {
     const source = await Bun.file("pad.browser.js").text()
     const sockets: {
@@ -701,11 +885,15 @@ describe("browser runtime", () => {
       {
         readyState: "complete",
         querySelector: () => status,
+        querySelectorAll: () => [],
         createElement: () => status,
         body: {
+          dataset: {} as Record<string, string>,
           append() {},
           addEventListener() {},
+          toggleAttribute() {},
         },
+        addEventListener() {},
       },
       FakeWebSocket,
       {

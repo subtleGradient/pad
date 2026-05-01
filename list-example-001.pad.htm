@@ -1,0 +1,30 @@
+#!/usr/bin/env -S bun ./pad.shebang.tsx
+<!-- PAD: local list prototype. Run only if you trust this file as local Bun code. -->
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light dark" />
+<title>list-example-001.pad.htm</title>
+<link rel="stylesheet" href="./pad.css" />
+<script type="module" src="./pad.browser.js"></script>
+
+<pad-document>
+  <pad-stack gap="loose">
+    <pad-stack gap="tight">
+      <pad-text kind="title" static>List 001</pad-text>
+      <pad-text static
+        >Run this file as a program to edit the list. Open it directly in a
+        browser to inspect the read-only archive.</pad-text
+      >
+    </pad-stack>
+
+    <pad-panel>
+      <pad-text kind="heading" static>Text Blocks</pad-text>
+      <pad-list aria-label="Text blocks">
+        <pad-list-item>First editable block.</pad-list-item>
+        <pad-list-item>Second editable block.</pad-list-item>
+        <pad-list-item></pad-list-item>
+      </pad-list>
+    </pad-panel>
+  </pad-stack>
+</pad-document>
