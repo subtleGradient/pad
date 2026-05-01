@@ -18,32 +18,22 @@
   <pad-stack gap="loose">
     <pad-stack gap="tight">
       <pad-text kind="title" static="">PAD</pad-text>
-      <pad-text static=""
-        >PAD means Portable App Documents: ordinary-looking files that carry a
+      <pad-text static="">PAD means Portable App Documents: ordinary-looking files that carry a
         tiny local app with them. Open a PAD to read it. Run a PAD to use it.
         This one teaches the idea by turning itself into an editable autosaving
-        list.</pad-text
-      >
+        list.</pad-text>
     </pad-stack>
 
     <pad-grid>
       <pad-panel>
         <pad-text kind="heading" static="">What A PAD Is</pad-text>
         <pad-list aria-label="Portable App Documents explanation" role="list">
-          <pad-list-item
-            >Portable: you can hand someone this one file.</pad-list-item
-          >
-          <pad-list-item
-            >App: when trusted and run, it starts a tiny localhost program for
-            interaction.</pad-list-item
-          >
-          <pad-list-item
-            >Document: when opened normally, it is still readable HTML.</pad-list-item
-          >
-          <pad-list-item
-            >This PAD edits list blocks in the browser and saves the changed HTML
-            back into itself.</pad-list-item
-          >
+          <pad-list-item>Portable: you can hand someone this one file.</pad-list-item>
+          <pad-list-item>App: when trusted and run, it starts a tiny localhost program for
+            interaction.</pad-list-item>
+          <pad-list-item>Document: when opened normally, it is still readable HTML.</pad-list-item>
+          <pad-list-item>This PAD edits list blocks in the browser and saves the changed HTML
+            back into itself.</pad-list-item>
           <pad-list-item></pad-list-item>
         </pad-list>
       </pad-panel>
@@ -51,27 +41,17 @@
       <pad-panel>
         <pad-text kind="heading" static="">If You Are Nervous</pad-text>
         <pad-list aria-label="Trust checklist" role="list">
-          <pad-list-item
-            >Good instinct: do not run files from strangers. Read first, then
-            decide.</pad-list-item
-          >
-          <pad-list-item
-            >This exact runtime is pinned to the list-v0 Git tag:
-            https://github.com/subtleGradient/pad/tree/list-v0</pad-list-item
-          >
-          <pad-list-item
-            >The runner is plain Bun code in pad.shebang.tsx. It serves localhost
+          <pad-list-item>Good instinct: do not run files from strangers. Read first, then
+            decide.</pad-list-item>
+          <pad-list-item>This exact runtime is pinned to the list-v0 Git tag:
+            https://github.com/subtleGradient/pad/tree/list-v0</pad-list-item>
+          <pad-list-item>The runner is plain Bun code in pad.shebang.tsx. It serves localhost
             only, uses a random URL token, and writes this file when the browser
-            sends an autosave message.</pad-list-item
-          >
-          <pad-list-item
-            >The browser behavior is in pad.browser.js. It makes PAD elements
-            editable only while the local WebSocket is healthy.</pad-list-item
-          >
-          <pad-list-item
-            >The visual rules are in pad.css. There is no hidden app shell, no
-            account, and no cloud database.</pad-list-item
-          >
+            sends an autosave message.</pad-list-item>
+          <pad-list-item>The browser behavior is in pad.browser.js. It makes PAD elements
+            editable only while the local WebSocket is healthy.</pad-list-item>
+          <pad-list-item>The visual rules are in pad.css. There is no hidden app shell, no
+            account, and no cloud database.</pad-list-item>
           <pad-list-item></pad-list-item>
         </pad-list>
       </pad-panel>
@@ -79,21 +59,13 @@
       <pad-panel>
         <pad-text kind="heading" static="">How To Run It</pad-text>
         <pad-list aria-label="Run steps" role="list">
-          <pad-list-item
-            >Save this file somewhere you are comfortable editing files.</pad-list-item
-          >
-          <pad-list-item
-            >If needed, make it executable with: chmod +x list-v0.pad.htm</pad-list-item
-          >
+          <pad-list-item>Save this file somewhere you are comfortable editing files.</pad-list-item>
+          <pad-list-item>If needed, make it executable with: chmod +x list-v0.pad.htm</pad-list-item>
           <pad-list-item>Run it with: ./list-v0.pad.htm</pad-list-item>
-          <pad-list-item
-            >Your browser should open a localhost URL. The status pill should say
-            the page is editable and autosaves to the source file.</pad-list-item
-          >
-          <pad-list-item
-            >If you open the file directly in a browser instead, it stays read-only
-            and tells you why.</pad-list-item
-          >
+          <pad-list-item>Your browser should open a localhost URL. The status pill should say
+            the page is editable and autosaves to the source file.</pad-list-item>
+          <pad-list-item>If you open the file directly in a browser instead, it stays read-only
+            and tells you why.</pad-list-item>
           <pad-list-item></pad-list-item>
         </pad-list>
       </pad-panel>
@@ -102,16 +74,10 @@
         <pad-text kind="heading" static="">Try The List</pad-text>
         <pad-list aria-label="Practice list" role="list">
           <pad-list-item>Click this item and type over it.</pad-list-item>
-          <pad-list-item
-            >Press Tab to move to the blank item at the bottom.</pad-list-item
-          >
-          <pad-list-item
-            >Type into the blank item. A fresh blank item appears below it.</pad-list-item
-          >
-          <pad-list-item
-            >Clear a trailing item with Backspace. Focus moves back so you can
-            keep deleting quickly.</pad-list-item
-          >
+          <pad-list-item>Press Tab to move to the blank item at the bottom.</pad-list-item>
+          <pad-list-item>Type into the blank item. A fresh blank item appears below it.</pad-list-item>
+          <pad-list-item>Clear a trailing item with Backspace. Focus moves back so you can
+            keep deleting quickly.</pad-list-item>
           <pad-list-item></pad-list-item>
         </pad-list>
       </pad-panel>
@@ -119,23 +85,15 @@
       <pad-panel>
         <pad-text kind="heading" static="">What To Notice</pad-text>
         <pad-list aria-label="What to notice" role="list">
-          <pad-list-item
-            >The empty item is not a button. It is just the next editable block
-            waiting for text.</pad-list-item
-          >
-          <pad-list-item
-            >There is always exactly one empty item at the bottom of each
-            list.</pad-list-item
-          >
-          <pad-list-item
-            >When the WebSocket disconnects, the page becomes read-only
-            immediately and explains what happened.</pad-list-item
-          >
-          <pad-list-item
-            >After a save, inspect this file again. Your edits are now part of the
-            HTML source.</pad-list-item
-          >
-          <pad-list-item></pad-list-item>
+          <pad-list-item>The empty item is not a button. It is just the next editable block
+            waiting for text.</pad-list-item>
+          <pad-list-item>There is always exactly one empty item at the bottom of each
+            list.</pad-list-item>
+          <pad-list-item>When the WebSocket disconnects, the page becomes read-only
+            immediately and explains what happened.</pad-list-item>
+          <pad-list-item>After a save, inspect this file again. Your edits are now part of the
+            HTML source.</pad-list-item>
+          <pad-list-item><br></pad-list-item>
         </pad-list>
       </pad-panel>
     </pad-grid>
