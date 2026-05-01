@@ -17,20 +17,43 @@
 <pad-document>
   <pad-stack gap="loose">
     <pad-stack gap="tight">
-      <pad-text kind="title" static="">PAD<br />List</pad-text>
+      <pad-text kind="title" static="">PAD</pad-text>
       <pad-text static=""
-        >This is one HTML file that can be read like a normal page or run as a
-        tiny local program. The program opens this page on 127.0.0.1, makes the
-        list blocks editable, and autosaves edits back into this same file.</pad-text
+        >PAD means Portable App Documents: ordinary-looking files that carry a
+        tiny local app with them. Open a PAD to read it. Run a PAD to use it.
+        This one teaches the idea by turning itself into an editable autosaving
+        list.</pad-text
       >
     </pad-stack>
 
     <pad-grid>
       <pad-panel>
+        <pad-text kind="heading" static="">What A PAD Is</pad-text>
+        <pad-list aria-label="Portable App Documents explanation" role="list">
+          <pad-list-item
+            >Portable: you can hand someone this one file.</pad-list-item
+          >
+          <pad-list-item
+            >App: when trusted and run, it starts a tiny localhost program for
+            interaction.</pad-list-item
+          >
+          <pad-list-item
+            >Document: when opened normally, it is still readable HTML.</pad-list-item
+          >
+          <pad-list-item
+            >This PAD edits list blocks in the browser and saves the changed HTML
+            back into itself.</pad-list-item
+          >
+          <pad-list-item></pad-list-item>
+        </pad-list>
+      </pad-panel>
+
+      <pad-panel>
         <pad-text kind="heading" static="">If You Are Nervous</pad-text>
         <pad-list aria-label="Trust checklist" role="list">
           <pad-list-item
-            >Do not run files from strangers. Read first, then decide.</pad-list-item
+            >Good instinct: do not run files from strangers. Read first, then
+            decide.</pad-list-item
           >
           <pad-list-item
             >The source branch is visible at

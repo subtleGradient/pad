@@ -557,6 +557,8 @@ describe("PAD entry documents", () => {
     expect(source.startsWith(`${publicShebang}\n`)).toBe(true)
     expect(source).toContain(publicCss)
     expect(source).toContain(publicJs)
+    expect(source).toContain("PAD means Portable App Documents")
+    expect(source).toContain("What A PAD Is")
     expect(source).toContain("https://github.com/subtleGradient/pad/tree/pad-oc")
     expect(source).toContain("How To Run It")
     expect(source).toContain("Try The List")
@@ -577,6 +579,8 @@ describe("PAD entry documents", () => {
     expect(source).toContain(
       '<script type="module" src="./pad.browser.js"></script>',
     )
+    expect(source).toContain("PAD means Portable App Documents")
+    expect(source).toContain("What A PAD Is")
     expect(source).toContain("https://github.com/subtleGradient/pad/tree/pad-oc")
     expect(source).toContain("How To Run It")
     expect(source).toContain("Try The List")
