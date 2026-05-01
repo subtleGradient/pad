@@ -32,8 +32,8 @@ const DIFF_PAD_ELEMENTS = [
   "spec-razor",
   "spec-thread",
   "spec-golf",
-  "thread-left",
-  "thread-right",
+  "thread-heads",
+  "thread-tails",
   "thread-band",
   "golf-axis",
   "real-pointer",
@@ -161,12 +161,12 @@ function specRazorHtml() {
 
 function specThreadHtml() {
   return `<spec-thread>
-  <thread-left name="too-little">
+  <thread-heads name="too-little">
     <pad-text>The undershoot failure mode...</pad-text>
-  </thread-left>
-  <thread-right name="too-much">
+  </thread-heads>
+  <thread-tails name="too-much">
     <pad-text>The overshoot failure mode...</pad-text>
-  </thread-right>
+  </thread-tails>
   <thread-band min="-1" max="1">
     <pad-text>The acceptable threaded shape...</pad-text>
   </thread-band>

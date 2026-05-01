@@ -20,12 +20,12 @@
       </spec-razor>
 
       <spec-thread id="thread_a4104483d38f485d85e5f5b57065034c">
-        <thread-left name="too-thin">
+        <thread-heads name="too-thin">
           <pad-text>PAD is only plain prose with no durable semantic structure for agents or control loops.</pad-text>
-        </thread-left>
-        <thread-right name="too-heavy">
+        </thread-heads>
+        <thread-tails name="too-heavy">
           <pad-text>PAD becomes an app framework with routing, storage, schema attributes, build steps, and admin UI.</pad-text>
-        </thread-right>
+        </thread-tails>
         <thread-band min="-1" max="1">
           <pad-text>Executable HTML stays simple while custom elements add enough semantic structure for humans, agents, and generated snapshots.</pad-text>
         </thread-band>
@@ -75,12 +75,12 @@
       </spec-razor>
 
       <spec-thread id="thread_40c966a85e964aaba87807f216307348">
-        <thread-left name="scattered">
+        <thread-heads name="scattered">
           <pad-text>Wishes, observations, files, gaps, and work for one story are scattered across unrelated global sections.</pad-text>
-        </thread-left>
-        <thread-right name="blob">
+        </thread-heads>
+        <thread-tails name="blob">
           <pad-text>Everything is crammed into one undifferentiated story body with no lifecycle facets.</pad-text>
-        </thread-right>
+        </thread-tails>
         <thread-band min="-1" max="1">
           <pad-text>Each story contains local `story-spec`, `story-real`, `story-gaps`, and `story-next` facets.</pad-text>
         </thread-band>
@@ -152,12 +152,12 @@
       </spec-razor>
 
       <spec-thread>
-        <thread-left name="source-only">
+        <thread-heads name="source-only">
           <pad-text>Authors must edit raw HTML every time they want a new story, gap, observation, or work item.</pad-text>
-        </thread-left>
-        <thread-right name="app-shell">
+        </thread-heads>
+        <thread-tails name="app-shell">
           <pad-text>PAD becomes a modal-heavy CMS with saved UI chrome, database-like forms, and controls that obscure the document.</pad-text>
-        </thread-right>
+        </thread-tails>
         <thread-band min="-1" max="1">
           <pad-text>Runtime-only controls add real story/item elements, while existing `pad-text` editing remains the update mechanism and autosave remains the persistence mechanism.</pad-text>
         </thread-band>
@@ -209,12 +209,12 @@
       </spec-razor>
 
       <spec-thread id="thread_28b27a68b81044ddbc1f4c717ac5d25e">
-        <thread-left name="vibes-only">
+        <thread-heads name="vibes-only">
           <pad-text>Specs are only prose, so the loop cannot show numeric progress or directional overshoot.</pad-text>
-        </thread-left>
-        <thread-right name="opaque-math">
+        </thread-heads>
+        <thread-tails name="opaque-math">
           <pad-text>Specs become embeddings or scores that are impossible for the human to audit quickly.</pad-text>
-        </thread-right>
+        </thread-tails>
         <thread-band min="-1" max="1">
           <pad-text>Specs define named axes in prose, and gap snapshots expose legible vectors with distance, target, and confidence.</pad-text>
         </thread-band>
@@ -250,12 +250,12 @@
 
     <story-spec>
       <spec-thread id="thread_9484820a960c46c2891e6695cf62e8a6">
-        <thread-left name="stale">
+        <thread-heads name="stale">
           <pad-text>Specs and gaps go stale; no pressure is regenerated.</pad-text>
-        </thread-left>
-        <thread-right name="treadmill">
+        </thread-heads>
+        <thread-tails name="treadmill">
           <pad-text>Automation creates endless churn and agents work without human-shaped intent.</pad-text>
-        </thread-right>
+        </thread-tails>
         <thread-band min="-1" max="1">
           <pad-text>Cron refreshes observations, gaps, and proposed work while approval gates execution.</pad-text>
         </thread-band>
@@ -299,12 +299,12 @@
       </spec-razor>
 
       <spec-thread id="thread_9eee5505fd8445bfa633461e65ca5d53">
-        <thread-left name="raw-llm-glue">
+        <thread-heads name="raw-llm-glue">
           <pad-text>Regeneration scripts call model providers directly, parse loose prose, and bypass the editor/session context that OpenCode already owns.</pad-text>
-        </thread-left>
-        <thread-right name="agent-platform-sprawl">
+        </thread-heads>
+        <thread-tails name="agent-platform-sprawl">
           <pad-text>PAD grows its own agent platform with duplicated sessions, provider config, event streams, file search, and permission semantics.</pad-text>
-        </thread-right>
+        </thread-tails>
         <thread-band min="-1" max="1">
           <pad-text>Diff-pad automation treats OpenCode as the control plane: create/connect a client, use sessions for prompts, request structured output for generated snapshots, subscribe to events, list agents, and inspect files through SDK APIs.</pad-text>
         </thread-band>

@@ -33,8 +33,8 @@ spec-judgement,
 spec-razor,
 spec-thread,
 spec-golf,
-thread-left,
-thread-right,
+thread-heads,
+thread-tails,
 thread-band,
 golf-axis,
 real-pointer,
@@ -197,16 +197,16 @@ work-judgement {
   border-left-color: #2f6db3;
 }
 
-thread-left,
-thread-right,
+thread-heads,
+thread-tails,
 thread-band {
   border-radius: 0.5rem;
   padding: 0.6rem 0.7rem;
   background: rgba(21, 21, 21, 0.055);
 }
 
-thread-left::before,
-thread-right::before,
+thread-heads::before,
+thread-tails::before,
 thread-band::before,
 gap-item::before,
 work-item::before,
@@ -220,12 +220,12 @@ proof-check::before {
   text-transform: uppercase;
 }
 
-thread-left::before {
-  content: "Too far left: " attr(name);
+thread-heads::before {
+  content: "Heads: " attr(name);
 }
 
-thread-right::before {
-  content: "Too far right: " attr(name);
+thread-tails::before {
+  content: "Tails: " attr(name);
 }
 
 thread-band::before {
@@ -468,8 +468,8 @@ pad-status {
   story-real::before,
   story-gaps::before,
   story-next::before,
-  thread-left::before,
-  thread-right::before,
+  thread-heads::before,
+  thread-tails::before,
   thread-band::before,
   gap-item::before,
   work-item::before,
@@ -492,8 +492,8 @@ pad-status {
     background: rgba(243, 234, 215, 0.055);
   }
 
-  thread-left,
-  thread-right,
+  thread-heads,
+  thread-tails,
   thread-band,
   real-file,
   golf-axis,
