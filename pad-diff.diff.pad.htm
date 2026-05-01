@@ -143,6 +143,63 @@
     </story-next>
   </pad-story>
 
+  <pad-story>
+    <pad-text kind="heading">Direct manipulation CRUD</pad-text>
+
+    <story-spec>
+      <spec-razor weight="high">
+        <pad-text>Humans can create, duplicate, move, and delete stories and story-local items without hand-writing element boilerplate.</pad-text>
+      </spec-razor>
+
+      <spec-thread>
+        <thread-left name="source-only">
+          <pad-text>Authors must edit raw HTML every time they want a new story, gap, observation, or work item.</pad-text>
+        </thread-left>
+        <thread-right name="app-shell">
+          <pad-text>PAD becomes a modal-heavy CMS with saved UI chrome, database-like forms, and controls that obscure the document.</pad-text>
+        </thread-right>
+        <thread-band min="-1" max="1">
+          <pad-text>Runtime-only controls add real story/item elements, while existing `pad-text` editing remains the update mechanism and autosave remains the persistence mechanism.</pad-text>
+        </thread-band>
+      </spec-thread>
+    </story-spec>
+
+    <story-real>
+      <real-observation>
+        <pad-text>The browser runtime now renders a sticky Add story affordance, story controls for add/copy/move/delete, facet controls for adding local item types, and item controls for copy/move/delete.</pad-text>
+      </real-observation>
+
+      <real-observation>
+        <pad-text>All CRUD chrome is marked `data-pad-runtime`, so it is stripped from saved source while the created semantic elements remain.</pad-text>
+      </real-observation>
+
+      <real-judgement>
+        <pad-text>The UI follows the document aesthetic: one primary Add story action, muted secondary local actions, muted danger actions, and mobile-safe touch targets.</pad-text>
+      </real-judgement>
+    </story-real>
+
+    <story-gaps>
+      <gap-item kind="growth" state="open">
+        <gap-vector>
+          <gap-axis name="thread-position" value="0" target-min="-1" target-max="1"></gap-axis>
+          <gap-axis name="distance" value="0" target="0"></gap-axis>
+          <gap-axis name="confidence" value="0.8" target="1"></gap-axis>
+        </gap-vector>
+        <pad-text>The first CRUD slice is inside the acceptable band, but it still needs real use before adding richer forms or regeneration-aware actions.</pad-text>
+      </gap-item>
+    </story-gaps>
+
+    <story-next>
+      <work-item state="approved">
+        <pad-text>Add runtime CRUD controls for stories, facets, and story-local items without saving the controls into source.</pad-text>
+      </work-item>
+
+      <work-item state="proposed">
+        <pad-text>After tasting this in the browser, decide whether add buttons should be more contextual, such as appearing inside each empty facet before item chrome.</pad-text>
+      </work-item>
+    </story-next>
+  </pad-story>
+
   <pad-story id="story_f825048301ba42d384aab50f5fa8b5a9">
     <pad-text kind="heading">Legible measured specs</pad-text>
 

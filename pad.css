@@ -304,6 +304,96 @@ proof-link::before {
   font-weight: 800;
 }
 
+[data-pad-crud] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+
+[data-pad-crud-kind="toolbar"] {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 9;
+  justify-content: flex-end;
+  border: 1px solid rgba(21, 21, 21, 0.12);
+  border-radius: 999px;
+  padding: 0.35rem;
+  background: rgba(245, 241, 232, 0.82);
+  backdrop-filter: blur(14px);
+}
+
+[data-pad-crud-kind="story"] {
+  grid-column: 1 / -1;
+}
+
+[data-pad-crud-kind="facet"] {
+  margin-bottom: 0.1rem;
+}
+
+[data-pad-crud-kind="item"] {
+  justify-content: flex-end;
+  padding-top: 0.15rem;
+}
+
+button[data-pad-crud-button] {
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.45rem 0.75rem;
+  background: rgba(21, 21, 21, 0.075);
+  color: rgba(21, 21, 21, 0.78);
+  font:
+    700 0.88rem/1 ui-sans-serif,
+    system-ui,
+    sans-serif;
+  cursor: pointer;
+}
+
+button[data-pad-crud-primary] {
+  background: #151515;
+  color: #f5f1e8;
+}
+
+button[data-pad-crud-danger] {
+  background: rgba(196, 95, 52, 0.12);
+  color: #8f3d1d;
+}
+
+button[data-pad-crud-button]:hover:not(:disabled) {
+  background: rgba(21, 21, 21, 0.13);
+}
+
+button[data-pad-crud-primary]:hover:not(:disabled) {
+  background: #000;
+}
+
+button[data-pad-crud-danger]:hover:not(:disabled) {
+  background: rgba(196, 95, 52, 0.2);
+}
+
+button[data-pad-crud-button]:focus-visible {
+  outline: 2px solid rgba(47, 109, 179, 0.75);
+  outline-offset: 2px;
+}
+
+button[data-pad-crud-button]:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+@media (pointer: fine) {
+  button[data-pad-crud-button] {
+    min-height: 2rem;
+    padding: 0.32rem 0.6rem;
+    font-size: 0.72rem;
+  }
+}
+
 @media (min-width: 58rem) {
   pad-story {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -418,5 +508,37 @@ pad-status {
   gap-axis[target]::after,
   gap-axis[target-min]::after {
     color: rgba(243, 234, 215, 0.54);
+  }
+
+  [data-pad-crud-kind="toolbar"] {
+    border-color: rgba(243, 234, 215, 0.13);
+    background: rgba(17, 17, 15, 0.78);
+  }
+
+  button[data-pad-crud-button] {
+    background: rgba(243, 234, 215, 0.08);
+    color: rgba(243, 234, 215, 0.78);
+  }
+
+  button[data-pad-crud-primary] {
+    background: #f3ead7;
+    color: #11110f;
+  }
+
+  button[data-pad-crud-danger] {
+    background: rgba(196, 95, 52, 0.18);
+    color: #f1a680;
+  }
+
+  button[data-pad-crud-button]:hover:not(:disabled) {
+    background: rgba(243, 234, 215, 0.14);
+  }
+
+  button[data-pad-crud-primary]:hover:not(:disabled) {
+    background: #fff7e6;
+  }
+
+  button[data-pad-crud-danger]:hover:not(:disabled) {
+    background: rgba(196, 95, 52, 0.28);
   }
 }

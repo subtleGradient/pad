@@ -427,6 +427,7 @@ describe("PAD entry documents", () => {
     expect(source).toContain("@opencode-ai/sdk")
     expect(source).toContain("https://opencode.ai/docs/sdk.md")
     expect(source).toContain("structured JSON schema output")
+    expect(source).toContain("Direct manipulation CRUD")
     expect(source).not.toContain("schema=")
   })
 })
@@ -456,6 +457,18 @@ describe("ClientState", () => {
 })
 
 describe("browser runtime", () => {
+  test("contains runtime-only CRUD affordances for diff pad stories", async () => {
+    const browserSource = await Bun.file("pad.browser.js").text()
+    const cssSource = await Bun.file("pad.css").text()
+
+    expect(browserSource).toContain("dataset.padRuntime")
+    expect(browserSource).toContain("Add story")
+    expect(browserSource).toContain('"Work", workItemHtml')
+    expect(browserSource).toContain("RUNTIME_CRUD_SELECTOR")
+    expect(cssSource).toContain("[data-pad-crud-kind=\"toolbar\"]")
+    expect(cssSource).toContain("button[data-pad-crud-primary]")
+  })
+
   test("registers diff pad elements and assigns missing opaque ids", async () => {
     const source = await Bun.file("pad.browser.js").text()
     const defined: string[] = []
