@@ -24,12 +24,21 @@
       <pad-expect kind="wish" matcher="core.file-behavior" weight="high">
         The implementation exposes the smallest playable toy game: a player can see a score and press one button to increase it.
 
-        <pad-snapshot kind="observation" rev="WORKTREE" format="json">
-          { "exists": false, "summary": "examples/toy001/toy001.tsx does not exist yet." }
+        <pad-snapshot kind="observation" rev="WORKTREE">
+          {
+            exists: false,
+            summary: 'examples/toy001/toy001.tsx does not exist yet.',
+          }
         </pad-snapshot>
 
-        <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="2">
-          { "distance": 2, "missing": ["implementation file", "visible increment loop"] }
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="2">
+          {
+            distance: 2,
+            missing: [
+              'implementation file',
+              'visible increment loop',
+            ],
+          }
         </pad-snapshot>
 
         <pad-work state="proposed">
@@ -40,16 +49,22 @@
       <pad-expect kind="nightmare" edge="heads" matcher="core.not-missing-ui" weight="high">
         There is no playable UI at all.
 
-        <pad-snapshot kind="observation" rev="WORKTREE" format="json">
-          { "state": "present", "reason": "The implementation file is missing." }
+        <pad-snapshot kind="observation" rev="WORKTREE">
+          {
+            state: 'present',
+            reason: 'The implementation file is missing.',
+          }
         </pad-snapshot>
       </pad-expect>
 
       <pad-expect kind="nightmare" edge="tails" matcher="core.not-overbuilt" weight="medium">
         The toy is overbuilt with routing, persistence, global app state, or ceremony before the toy needs it.
 
-        <pad-snapshot kind="observation" rev="WORKTREE" format="json">
-          { "state": "absent", "reason": "No implementation exists yet, so overshoot has not happened." }
+        <pad-snapshot kind="observation" rev="WORKTREE">
+          {
+            state: 'absent',
+            reason: 'No implementation exists yet, so overshoot has not happened.',
+          }
         </pad-snapshot>
       </pad-expect>
     </pad-scope>
@@ -60,12 +75,22 @@
       <pad-expect kind="wish" matcher="core.test-behavior" weight="high">
         The test proves the initial score and the one-button score increase.
 
-        <pad-snapshot kind="observation" rev="WORKTREE" format="json">
-          { "exists": false, "summary": "examples/toy001/toy001.test.tsx does not exist yet." }
+        <pad-snapshot kind="observation" rev="WORKTREE">
+          {
+            exists: false,
+            summary: 'examples/toy001/toy001.test.tsx does not exist yet.',
+          }
         </pad-snapshot>
 
-        <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="2">
-          { "distance": 2, "missing": ["test file", "initial score proof", "increment proof"] }
+        <pad-snapshot kind="gap" rev="WORKTREE" distance="2">
+          {
+            distance: 2,
+            missing: [
+              'test file',
+              'initial score proof',
+              'increment proof',
+            ],
+          }
         </pad-snapshot>
 
         <pad-work state="proposed">
@@ -76,8 +101,11 @@
       <pad-expect kind="nightmare" edge="heads" matcher="core.not-unproved" weight="high">
         The implementation exists but the behavior is only trusted by vibes.
 
-        <pad-snapshot kind="observation" rev="WORKTREE" format="json">
-          { "state": "not-yet-applicable", "reason": "Neither implementation nor test exists yet." }
+        <pad-snapshot kind="observation" rev="WORKTREE">
+          {
+            state: 'not-yet-applicable',
+            reason: 'Neither implementation nor test exists yet.',
+          }
         </pad-snapshot>
       </pad-expect>
 

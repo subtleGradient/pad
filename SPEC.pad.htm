@@ -35,12 +35,21 @@
     <pad-expect kind="wish" matcher="core.scope-can-nest" weight="critical">
       Any scope can contain any number of child scopes, and focusing one scope should make its ancestors understandable while making siblings safe to ignore.
 
-      <pad-snapshot kind="observation" rev="WORKTREE" format="text">
-        The old specific grammar can describe stories and facets, but it does not yet make arbitrary recursive focus the central primitive.
+      <pad-snapshot kind="observation" rev="WORKTREE">
+        {
+          summary: 'The old specific grammar can describe stories and facets, but it does not yet make arbitrary recursive focus the central primitive.',
+        }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="2">
-        { "distance": 2, "missing": ["pad-scope", "focus mode"], "risk": "The author keeps seeing too much of the document at once." }
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="2">
+        {
+          distance: 2,
+          missing: [
+            'pad-scope',
+            'focus mode',
+          ],
+          risk: 'The author keeps seeing too much of the document at once.',
+        }
       </pad-snapshot>
 
       <pad-work state="approved">
@@ -57,12 +66,26 @@
     <pad-expect kind="wish" matcher="core.grammar-law" weight="critical">
       The light DOM should stay declarative and small: singleton scalar facts live in attributes; repeatable structured facts live in child elements; runtime controls live in shadow DOM.
 
-      <pad-snapshot kind="observation" rev="WORKTREE" format="text">
-        The current docs still carry older tags such as pad-story, story-spec, story-real, story-gaps, story-next, gap-item, gap-axis, and repeated pad-text children.
+      <pad-snapshot kind="observation" rev="WORKTREE">
+        {
+          summary: 'The current docs still carry older tags such as pad-story, story-spec, story-real, story-gaps, story-next, gap-item, gap-axis, and repeated pad-text children.',
+        }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="3">
-        { "distance": 3, "replaceWith": ["pad-scope", "pad-ref", "pad-note", "pad-expect", "pad-snapshot", "pad-work", "pad-import"], "keepLegacyWorking": true }
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="3">
+        {
+          distance: 3,
+          replaceWith: [
+            'pad-scope',
+            'pad-ref',
+            'pad-note',
+            'pad-expect',
+            'pad-snapshot',
+            'pad-work',
+            'pad-import',
+          ],
+          keepLegacyWorking: true,
+        }
       </pad-snapshot>
 
       <pad-work state="approved">
@@ -81,12 +104,18 @@
 
       <pad-ref id="ref_spec" kind="file" path="SPEC.pad.htm" role="current spec document"></pad-ref>
 
-      <pad-snapshot kind="observation" rev="WORKTREE" format="text">
-        The toy diff pad now uses file-ref in several places, which proves the need, but the generic pad-ref/refs model is not yet the standard.
+      <pad-snapshot kind="observation" rev="WORKTREE">
+        {
+          summary: 'The toy diff pad now uses file-ref in several places, which proves the need, but the generic pad-ref/refs model is not yet the standard.',
+        }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="1">
-        { "distance": 1, "from": "file-ref", "to": "pad-ref kind=file plus refs" }
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+        {
+          distance: 1,
+          from: 'file-ref',
+          to: 'pad-ref kind=file plus refs',
+        }
       </pad-snapshot>
     </pad-expect>
   </pad-scope>
@@ -99,12 +128,24 @@
     <pad-expect kind="wish" matcher="core.expect-snapshot-loop" weight="critical">
       Every expectation can contain observation snapshots and gap snapshots, using one universal inline snapshot mechanism instead of bespoke gap grammar.
 
-      <pad-snapshot kind="observation" rev="WORKTREE" format="text">
-        We have gap-item and gap-vector today, but the better mental model is toMatchInlineSnapshot for reality and gaps.
+      <pad-snapshot kind="observation" rev="WORKTREE">
+        {
+          summary: 'We have gap-item and gap-vector today, but the better mental model is toMatchInlineSnapshot for reality and gaps.',
+        }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="2">
-        { "distance": 2, "removePressure": ["gap-item as separate concept", "gap-axis as special vector grammar"], "addPressure": ["pad-snapshot kind=observation", "pad-snapshot kind=gap"] }
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="2">
+        {
+          distance: 2,
+          removePressure: [
+            'gap-item as separate concept',
+            'gap-axis as special vector grammar',
+          ],
+          addPressure: [
+            'pad-snapshot kind=observation',
+            'pad-snapshot kind=gap',
+          ],
+        }
       </pad-snapshot>
 
       <pad-work state="approved">
@@ -121,12 +162,27 @@
     <pad-expect kind="wish" matcher="thingGolf.thing-badness" target-max="4" weight="high">
       Expect packs can be imported and shared across docs. They observe reality, normalize it, score it, and emit observation/gap snapshots through the same pad-snapshot mechanism.
 
-      <pad-snapshot kind="observation" rev="WORKTREE" format="json">
-        { "safety": 0, "burden": 3, "chaos": 2, "betrayal": 0, "control": 1 }
+      <pad-snapshot kind="observation" rev="WORKTREE">
+        {
+          safety: 0,
+          burden: 3,
+          chaos: 2,
+          betrayal: 0,
+          control: 1,
+        }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="2">
-        { "overTarget": ["burden", "chaos"], "workHints": ["Prefer fewer generic elements", "Do not build agent dispatch before the document grammar feels good"] }
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="2">
+        {
+          overTarget: [
+            'burden',
+            'chaos',
+          ],
+          workHints: [
+            'Prefer fewer generic elements',
+            'Do not build agent dispatch before the document grammar feels good',
+          ],
+        }
       </pad-snapshot>
     </pad-expect>
   </pad-scope>
@@ -139,12 +195,17 @@
     <pad-expect kind="wish" matcher="core.shadow-affordances" weight="high">
       Each generic element exposes obvious controls for the job it owns: pad-scope adds subscopes, notes, refs, expectations, and focus; pad-ref edits resource attributes; pad-expect edits matcher/kind/weight; pad-snapshot edits rev/format/kind; pad-work edits state.
 
-      <pad-snapshot kind="observation" rev="WORKTREE" format="text">
-        The current runtime uses external CRUD chrome. Useful, but it is not yet the clean component-owned affordance model.
+      <pad-snapshot kind="observation" rev="WORKTREE">
+        {
+          summary: 'The current runtime uses external CRUD chrome. Useful, but it is not yet the clean component-owned affordance model.',
+        }
       </pad-snapshot>
 
-      <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="2">
-        { "distance": 2, "next": "generic elements first, shadow controls second" }
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="2">
+        {
+          distance: 2,
+          next: 'generic elements first, shadow controls second',
+        }
       </pad-snapshot>
     </pad-expect>
   </pad-scope>
@@ -175,8 +236,11 @@
     <pad-expect kind="wish" matcher="core.toy-doc-uses-generic-scope" refs="ref_toy_pad" weight="high">
       toy001 should use pad-scope, pad-ref, pad-note, pad-expect, pad-snapshot, and pad-work so the system is built by using itself.
 
-      <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="1">
-        { "distance": 1, "reason": "toy001 still uses the older story-spec/story-real/story-gaps/story-next shape" }
+      <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+        {
+          distance: 1,
+          reason: 'toy001 still uses the older story-spec/story-real/story-gaps/story-next shape',
+        }
       </pad-snapshot>
 
       <pad-work state="approved">

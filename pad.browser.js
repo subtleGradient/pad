@@ -172,13 +172,25 @@ function padNoteHtml() {
 function padExpectHtml() {
   return `<pad-expect kind="wish" matcher="core.todo" weight="medium">
   Describe the expectation...
-  <pad-snapshot kind="observation" rev="WORKTREE" format="text">No observation captured yet.</pad-snapshot>
-  <pad-snapshot kind="gap" rev="WORKTREE" format="json" distance="1">{ "distance": 1 }</pad-snapshot>
+  <pad-snapshot kind="observation" rev="WORKTREE">
+  {
+    summary: 'No observation captured yet.',
+  }
+  </pad-snapshot>
+  <pad-snapshot kind="gap" rev="WORKTREE" distance="1">
+  {
+    distance: 1,
+  }
+  </pad-snapshot>
 </pad-expect>`
 }
 
 function padSnapshotHtml() {
-  return `<pad-snapshot kind="observation" rev="WORKTREE" format="text">Observation snapshot...</pad-snapshot>`
+  return `<pad-snapshot kind="observation" rev="WORKTREE">
+  {
+    summary: 'Observation snapshot...',
+  }
+</pad-snapshot>`
 }
 
 function padWorkHtml() {
@@ -348,11 +360,6 @@ function makeGenericPadElement(name, assignsId) {
           "result",
         ])
         appendAttributeControl(chrome, this, "rev", "rev")
-        appendAttributeControl(chrome, this, "format", "format", [
-          "text",
-          "json",
-          "html",
-        ])
         appendAttributeControl(chrome, this, "distance", "distance")
       }
 
