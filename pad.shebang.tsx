@@ -312,6 +312,7 @@ const ROOT_BROWSER_ASSETS = new Set([
   "pad.css",
 ])
 const PAD_BROWSER_MODULES = [
+  "browser/codemirror.js",
   "browser/chat-model.js",
   "browser/chat.js",
   "browser/dom.js",

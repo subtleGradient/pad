@@ -11,6 +11,150 @@ const chromePath = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 const hasChrome = await Bun.file(chromePath).exists()
 const browserTest = hasChrome ? test : test.skip
 
+const fakeCodeMirrorBasicModule = `
+export const basicSetup = [{ type: "basicSetup" }]
+`
+
+const fakeCodeMirrorStateModule = `
+function docFromText(text) {
+  const value = String(text ?? "")
+  return {
+    length: value.length,
+    toString() {
+      return value
+    },
+  }
+}
+
+export class EditorState {
+  constructor(doc, extensions = []) {
+    this.doc = docFromText(doc)
+    this.extensions = extensions
+  }
+
+  static create(options) {
+    return new EditorState(options?.doc ?? "", options?.extensions ?? [])
+  }
+}
+
+export class Compartment {
+  of(extension) {
+    return { type: "compartment", extension }
+  }
+
+  reconfigure(extension) {
+    return { type: "reconfigure", extension }
+  }
+}
+`
+
+const fakeCodeMirrorViewModule = `
+function flatten(extensions, result = []) {
+  for (const extension of extensions ?? []) {
+    if (Array.isArray(extension)) {
+      flatten(extension, result)
+    } else if (extension?.type === "compartment") {
+      result.push(extension.extension)
+    } else if (extension) {
+      result.push(extension)
+    }
+  }
+  return result
+}
+
+export class EditorView {
+  static lineWrapping = { type: "lineWrapping" }
+  static editable = {
+    of(editable) {
+      return { type: "editable", editable }
+    },
+  }
+  static updateListener = {
+    of(listener) {
+      return { type: "updateListener", listener }
+    },
+  }
+
+  constructor(options) {
+    this.state = options.state
+    if (
+      options.root &&
+      !options.root.querySelector("style[data-fake-codemirror-style]")
+    ) {
+      const style = document.createElement("style")
+      style.dataset.fakeCodemirrorStyle = ""
+      style.textContent = ".cm-editor { display: block; }"
+      options.root.append(style)
+    }
+    this.dom = document.createElement("div")
+    this.dom.className = "cm-editor"
+    this.contentDOM = document.createElement("div")
+    this.contentDOM.className = "cm-content"
+    this.contentDOM.setAttribute("role", "textbox")
+    this.contentDOM.textContent = this.state.doc.toString()
+    this.dom.append(this.contentDOM)
+    options.parent.append(this.dom)
+    this.syncExtensions()
+    this.contentDOM.addEventListener("focus", () => {
+      this.dom.classList.add("cm-focused")
+    })
+    this.contentDOM.addEventListener("blur", () => {
+      this.dom.classList.remove("cm-focused")
+    })
+    this.contentDOM.addEventListener("input", () => {
+      this.state = this.state.constructor.create({
+        doc: this.contentDOM.innerText,
+        extensions: this.state.extensions,
+      })
+      for (const listener of this.updateListeners) {
+        listener({ docChanged: true, state: this.state })
+      }
+    })
+  }
+
+  syncExtensions() {
+    const extensions = flatten(this.state.extensions)
+    const editable = extensions.find((extension) => extension.type === "editable")
+    this.contentDOM.contentEditable = editable?.editable === false ? "false" : "true"
+    this.updateListeners = extensions
+      .filter((extension) => extension.type === "updateListener")
+      .map((extension) => extension.listener)
+  }
+
+  dispatch(spec) {
+    if (spec?.changes) {
+      this.contentDOM.textContent = spec.changes.insert
+      this.state = this.state.constructor.create({
+        doc: spec.changes.insert,
+        extensions: this.state.extensions,
+      })
+    }
+    if (spec?.effects?.type === "reconfigure") {
+      this.state.extensions = this.state.extensions.map((extension) =>
+        extension?.type === "compartment"
+          ? { ...extension, extension: spec.effects.extension }
+          : extension,
+      )
+      this.syncExtensions()
+    }
+  }
+
+  focus() {
+    this.contentDOM.focus()
+  }
+
+  destroy() {
+    this.dom.remove()
+  }
+}
+`
+
+const fakeCodeMirrorMarkdownModule = `
+export function markdown() {
+  return { type: "markdown" }
+}
+`
+
 browserTest("pad-chat uses shadow list UI and saves semantic markdown source", async () => {
   const server = Bun.serve({
     hostname: "127.0.0.1",
@@ -24,6 +168,10 @@ browserTest("pad-chat uses shadow list UI and saves semantic markdown source", a
 <script>
 window.PAD_MARKDOWN_MARKED_URL = "/missing-marked.js"
 window.PAD_MARKDOWN_DOMPURIFY_URL = "/missing-dompurify.js"
+window.PAD_CODEMIRROR_MODULE_URL = "/fake-codemirror-basic.js"
+window.PAD_CODEMIRROR_STATE_MODULE_URL = "/fake-codemirror-state.js"
+window.PAD_CODEMIRROR_VIEW_MODULE_URL = "/fake-codemirror-view.js"
+window.PAD_CODEMIRROR_MARKDOWN_MODULE_URL = "/fake-codemirror-markdown.js"
 window.__padSends = []
 class FakeWebSocket {
   static OPEN = 1
@@ -84,6 +232,26 @@ window.WebSocket = FakeWebSocket
           headers: { "content-type": "text/javascript; charset=utf-8" },
         })
       }
+      if (url.pathname === "/fake-codemirror-basic.js") {
+        return new Response(fakeCodeMirrorBasicModule, {
+          headers: { "content-type": "text/javascript; charset=utf-8" },
+        })
+      }
+      if (url.pathname === "/fake-codemirror-state.js") {
+        return new Response(fakeCodeMirrorStateModule, {
+          headers: { "content-type": "text/javascript; charset=utf-8" },
+        })
+      }
+      if (url.pathname === "/fake-codemirror-view.js") {
+        return new Response(fakeCodeMirrorViewModule, {
+          headers: { "content-type": "text/javascript; charset=utf-8" },
+        })
+      }
+      if (url.pathname === "/fake-codemirror-markdown.js") {
+        return new Response(fakeCodeMirrorMarkdownModule, {
+          headers: { "content-type": "text/javascript; charset=utf-8" },
+        })
+      }
       return new Response("not found", { status: 404 })
     },
   })
@@ -111,13 +279,41 @@ window.WebSocket = FakeWebSocket
       firstSelect.value = "assistant"
       firstSelect.dispatchEvent(new Event("change", { bubbles: true }))
 
+      const initialPreview = root.querySelector("[data-pad-markdown-preview]")
+      const initialEditor = root.querySelector("[data-pad-message-editor]")
+      if (
+        !(initialPreview instanceof HTMLElement) ||
+        !(initialEditor instanceof HTMLElement)
+      ) {
+        throw new Error("initial chat surfaces missing")
+      }
+      const initialPreviewDisplay = getComputedStyle(initialPreview).display
+      const initialEditorDisplay = getComputedStyle(initialEditor).display
+
       const editors = root.querySelectorAll("[data-pad-message-editor]")
+      const previews = root.querySelectorAll("[data-pad-markdown-preview]")
+      const blankPreview = previews[1]
       const blankEditor = editors[1]
-      if (!(blankEditor instanceof HTMLElement)) {
+      if (
+        !(blankPreview instanceof HTMLElement) ||
+        !(blankEditor instanceof HTMLElement)
+      ) {
         throw new Error("blank message editor missing")
       }
-      blankEditor.textContent = "New *message*"
-      blankEditor.dispatchEvent(
+      async function waitForCodeMirrorContent(editor: Element) {
+        for (let attempts = 0; attempts < 25; attempts += 1) {
+          const element = editor.shadowRoot?.querySelector(".cm-content")
+          if (element instanceof HTMLElement) return element
+          await new Promise((resolve) => setTimeout(resolve, 10))
+        }
+        throw new Error("CodeMirror content did not appear.")
+      }
+
+      blankPreview.click()
+      const codeMirrorContent = await waitForCodeMirrorContent(blankEditor)
+      codeMirrorContent.focus()
+      codeMirrorContent.textContent = "New *message*"
+      codeMirrorContent.dispatchEvent(
         new InputEvent("input", {
           bubbles: true,
           composed: true,
@@ -127,6 +323,20 @@ window.WebSocket = FakeWebSocket
       )
 
       await new Promise((resolve) => setTimeout(resolve, 260))
+      const focusedEditor = root.activeElement
+      const focusedItem = focusedEditor?.closest("pad-list-item")
+      const focusedMessageEditor = focusedItem?.querySelector(
+        "[data-pad-message-editor]",
+      )
+      const messageEditors = Array.from(
+        root.querySelectorAll("[data-pad-message-editor]"),
+      )
+      const codeMirrorEditor = messageEditors.find((editor) =>
+        editor.shadowRoot?.querySelector(".cm-editor"),
+      )
+      const focusedPreview = (
+        codeMirrorEditor ?? focusedMessageEditor
+      )?.closest("pad-list-item")?.querySelector("[data-pad-markdown-preview]")
 
       const bodySends = window.__padSends
         .map((text: string) => JSON.parse(text) as { type?: string; html?: string })
@@ -140,6 +350,28 @@ window.WebSocket = FakeWebSocket
       return {
         messages,
         itemCount: root.querySelectorAll("pad-list-item").length,
+        codeMirrorCount: messageEditors.filter((editor) =>
+          editor.shadowRoot?.querySelector(".cm-editor"),
+        ).length,
+        codeMirrorStyleInShadow:
+          blankEditor.shadowRoot?.querySelector(
+            "style[data-fake-codemirror-style]",
+          ) !== null,
+        focusedEditorUsesCodeMirror: codeMirrorEditor === blankEditor,
+        codeMirrorItemEditing: codeMirrorEditor
+          ?.closest("pad-list-item")
+          ?.hasAttribute("data-pad-editing"),
+        activeElementName: root.activeElement?.localName ?? null,
+        initialPreviewDisplay,
+        initialEditorDisplay,
+        focusedPreviewDisplay:
+          focusedPreview instanceof HTMLElement
+            ? getComputedStyle(focusedPreview).display
+            : null,
+        focusedText:
+          codeMirrorEditor instanceof HTMLElement && "value" in codeMirrorEditor
+            ? String(codeMirrorEditor.value)
+            : null,
         previewHtml:
           root.querySelector("[data-pad-markdown-preview]")?.innerHTML ?? "",
         bodyHtml: bodySends.at(-1)?.html ?? "",
@@ -152,6 +384,12 @@ window.WebSocket = FakeWebSocket
       { role: "user", text: "" },
     ])
     expect(result.itemCount).toBe(3)
+    expect(result.codeMirrorCount).toBe(1)
+    expect(result.codeMirrorStyleInShadow).toBe(true)
+    expect(result.focusedEditorUsesCodeMirror).toBe(true)
+    expect(result.initialPreviewDisplay).not.toBe("none")
+    expect(result.initialEditorDisplay).toBe("none")
+    expect(result.focusedText).toBe("New *message*")
     expect(result.previewHtml).toContain("<strong>Hello</strong>")
     expect(result.bodyHtml).toContain("<pad-chat")
     expect(result.bodyHtml).toContain('role="assistant"')
