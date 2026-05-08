@@ -850,6 +850,12 @@ describe("browser runtime", () => {
     expect(source).toContain('import "./browser/pad-main.js"')
   })
 
+  test("Canvas tldraw runtime follows the system color scheme by default", async () => {
+    const source = await Bun.file("canvas.browser.js").text()
+
+    expect(source).toContain("inferDarkMode: true")
+  })
+
   test("list normalization keeps one trailing blank item", async () => {
     const { normalizeTrailingEmptyItems } = await import("./browser/list.js")
     const items = ["Alpha", "", ""]

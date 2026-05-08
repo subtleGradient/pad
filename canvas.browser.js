@@ -286,7 +286,7 @@ function JsonCanvasTldrawApp({ host }) {
     React.createElement(
       "main",
       { className: "json-canvas-tldraw-stage", "data-json-canvas-node-count": nodesOf(documentModel).length },
-      React.createElement(Tldraw, { onMount: handleMount }),
+      React.createElement(Tldraw, { inferDarkMode: true, onMount: handleMount }),
     ),
     React.createElement("json-canvas-status", null, status),
   )
