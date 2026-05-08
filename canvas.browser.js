@@ -146,14 +146,21 @@ function JsonCanvasTldrawApp({ host }) {
 
   const hydrateEditor = useCallback((editor, nextDocument, shouldFit = true) => {
     hydratingRef.current = true
-    const currentShapes = editor.getCurrentPageShapes()
-    if (currentShapes.length > 0) {
-      editor.deleteShapes(currentShapes.map((shape) => shape.id))
+    const projection = jsonCanvasToTldraw(nextDocument)
+    const projectIntoEditor = () => {
+      const currentShapes = editor.getCurrentPageShapes()
+      if (currentShapes.length > 0) {
+        editor.deleteShapes(currentShapes.map((shape) => shape.id))
+      }
+      for (const shape of projection.shapes) editor.createShape(shape)
+      if (projection.bindings.length > 0) editor.createBindings(projection.bindings)
     }
 
-    const projection = jsonCanvasToTldraw(nextDocument)
-    for (const shape of projection.shapes) editor.createShape(shape)
-    if (projection.bindings.length > 0) editor.createBindings(projection.bindings)
+    if (typeof editor.store?.mergeRemoteChanges === "function") {
+      editor.store.mergeRemoteChanges(projectIntoEditor)
+    } else {
+      projectIntoEditor()
+    }
 
     window.setTimeout(() => {
       hydratingRef.current = false

@@ -1,0 +1,227 @@
+{
+	"app": "pad-jsoncanvas-stress-example",
+	"version": 1,
+	"purpose": "Stress fixture and living documentation for pad's tldraw-backed JSON Canvas editor.",
+	"padExample": {
+		"openWith": "bunx --bun -p https://github.com/subtleGradient/pad/archive/refs/heads/main.tar.gz pad ./examples/jsoncanvas-stress.canvas",
+		"covers": [
+			"text nodes",
+			"file nodes",
+			"link nodes",
+			"group nodes",
+			"preset colors",
+			"custom unknown fields",
+			"edge labels",
+			"missing-edge-endpoint preservation",
+			"future-node preservation"
+		]
+	},
+	"nodes": [
+		{
+			"id": "group-docs",
+			"type": "group",
+			"x": -80,
+			"y": -120,
+			"width": 1060,
+			"height": 620,
+			"color": "4",
+			"label": "Documented JSON Canvas surface",
+			"background": "examples/background-placeholder.png",
+			"backgroundStyle": "cover",
+			"padUnknownGroupField": {
+				"shouldSurvive": true,
+				"note": "This group field is not interpreted by pad."
+			}
+		},
+		{
+			"id": "text-overview",
+			"type": "text",
+			"x": 0,
+			"y": 0,
+			"width": 360,
+			"height": 180,
+			"color": "1",
+			"text": "PAD JSON Canvas stress fixture\n\nThis file is plain JSON Canvas. Open it with the README bunx command, move cards, add nodes, draw arrows, and confirm this file stays valid JSON.",
+			"padUnknownNodeField": "text node unknown fields should be preserved"
+		},
+		{
+			"id": "text-contract",
+			"type": "text",
+			"x": 440,
+			"y": 0,
+			"width": 430,
+			"height": 180,
+			"color": "2",
+			"text": "Persistence contract\n\nJSON Canvas is the durable source of truth. tldraw shapes are a projection for editing, not a second file format.",
+			"reviewChecklist": [
+				"save with tabs",
+				"preserve null",
+				"preserve unknown root/node/edge fields"
+			]
+		},
+		{
+			"id": "file-readme",
+			"type": "file",
+			"x": 0,
+			"y": 260,
+			"width": 360,
+			"height": 170,
+			"color": "3",
+			"file": "README.md",
+			"subpath": "#json-canvas",
+			"labelMode": "always"
+		},
+		{
+			"id": "file-proposal",
+			"type": "file",
+			"x": 440,
+			"y": 260,
+			"width": 430,
+			"height": 170,
+			"color": "5",
+			"file": "proposals/canvas-pad-atomic-dom-svg.proposal.md",
+			"subpath": "#implementation-status",
+			"extraMetadata": {
+				"kind": "proposal reference",
+				"nullableExample": null
+			}
+		},
+		{
+			"id": "link-jsoncanvas",
+			"type": "link",
+			"x": 1040,
+			"y": -20,
+			"width": 460,
+			"height": 230,
+			"color": "6",
+			"url": "https://jsoncanvas.org/",
+			"title": "JSON Canvas spec",
+			"lastChecked": "2026-05-08"
+		},
+		{
+			"id": "link-tldraw",
+			"type": "link",
+			"x": 1040,
+			"y": 290,
+			"width": 460,
+			"height": 230,
+			"color": "#0f766e",
+			"url": "https://tldraw.dev/",
+			"title": "tldraw editor runtime",
+			"customColorShouldSurvive": true
+		},
+		{
+			"id": "group-future",
+			"type": "group",
+			"x": -80,
+			"y": 590,
+			"width": 1580,
+			"height": 310,
+			"color": "2",
+			"label": "Preservation zone: unsupported records and unresolved edges"
+		},
+		{
+			"id": "text-future-note",
+			"type": "text",
+			"x": 0,
+			"y": 690,
+			"width": 620,
+			"height": 120,
+			"color": "4",
+			"text": "The future-node and edge-missing-target records below are intentionally not rendered by today's editor. They should remain in this file after load/save."
+		},
+		{
+			"id": "future-node-v1",
+			"type": "database",
+			"x": 720,
+			"y": 690,
+			"width": 320,
+			"height": 120,
+			"query": "status = open",
+			"futureRenderer": {
+				"name": "database-card",
+				"version": 1
+			}
+		}
+	],
+	"edges": [
+		{
+			"id": "edge-overview-contract",
+			"fromNode": "text-overview",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "text-contract",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"color": "1",
+			"label": "defines",
+			"padUnknownEdgeField": "edge unknown fields should be preserved"
+		},
+		{
+			"id": "edge-contract-readme",
+			"fromNode": "text-contract",
+			"fromSide": "bottom",
+			"fromEnd": "none",
+			"toNode": "file-readme",
+			"toSide": "top",
+			"toEnd": "arrow",
+			"color": "3",
+			"label": "documented in"
+		},
+		{
+			"id": "edge-readme-proposal",
+			"fromNode": "file-readme",
+			"fromSide": "right",
+			"fromEnd": "arrow",
+			"toNode": "file-proposal",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"color": "5",
+			"label": "implementation notes"
+		},
+		{
+			"id": "edge-spec-runtime",
+			"fromNode": "link-jsoncanvas",
+			"fromSide": "bottom",
+			"fromEnd": "none",
+			"toNode": "link-tldraw",
+			"toSide": "top",
+			"toEnd": "arrow",
+			"color": "6",
+			"label": "edited through"
+		},
+		{
+			"id": "edge-contract-spec",
+			"fromNode": "text-contract",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "link-jsoncanvas",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"color": "2",
+			"label": "format"
+		},
+		{
+			"id": "edge-future-preservation",
+			"fromNode": "text-future-note",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "future-node-v1",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"color": "4",
+			"label": "unsupported today"
+		},
+		{
+			"id": "edge-missing-target",
+			"fromNode": "text-overview",
+			"fromSide": "bottom",
+			"fromEnd": "none",
+			"toNode": "missing-node-kept-for-roundtrip",
+			"toSide": "top",
+			"toEnd": "arrow",
+			"color": "2",
+			"label": "intentionally unresolved"
+		}
+	]
+}

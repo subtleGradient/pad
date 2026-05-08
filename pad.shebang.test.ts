@@ -782,6 +782,50 @@ describe("JSON Canvas tldraw adapter", () => {
       payload: true,
     })
   })
+
+  test("example stress canvas projects to tldraw and preserves documentation records", async () => {
+    const source = await Bun.file("examples/jsoncanvas-stress.canvas").text()
+    const parsed = parseJsonCanvasSource(source)
+    const projection = jsonCanvasToTldraw(parsed.document)
+    const projected = projectTldrawToJsonCanvas(
+      parsed.document,
+      projection.shapes,
+      projection.bindings,
+    )
+
+    expect(parsed.error).toBeUndefined()
+    expect(projection.shapes.filter((shape) => shape.type === "geo")).toHaveLength(9)
+    expect(projection.shapes.filter((shape) => shape.type === "arrow")).toHaveLength(5)
+    expect(projection.bindings).toHaveLength(10)
+    expect(projected.nodes).toHaveLength(10)
+    expect(projected.edges).toHaveLength(7)
+    expect(projected.nodes).toContainEqual(
+      expect.objectContaining({
+        id: "future-node-v1",
+        type: "database",
+        futureRenderer: {
+          name: "database-card",
+          version: 1,
+        },
+      }),
+    )
+    expect(projected.edges).toContainEqual(
+      expect.objectContaining({
+        id: "edge-missing-target",
+        toNode: "missing-node-kept-for-roundtrip",
+      }),
+    )
+    expect(projected.nodes).toContainEqual(
+      expect.objectContaining({
+        id: "file-readme",
+        file: "README.md",
+        subpath: "#json-canvas",
+      }),
+    )
+    expect(serializeJsonCanvasDocument(projected)).toContain(
+      '"pad-jsoncanvas-stress-example"',
+    )
+  })
 })
 
 describe("ClientState", () => {

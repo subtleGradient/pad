@@ -329,8 +329,8 @@ function makeNodeFromShape(shape, baseNode, usedNodeIds) {
   }
 
   if (nodeType === "text") nextNode.text = text
-  if (nodeType === "file") nextNode.file = text || nextNode.file || ""
-  if (nodeType === "link") nextNode.url = text || nextNode.url || ""
+  if (nodeType === "file" && !isRecord(baseNode)) nextNode.file = text || ""
+  if (nodeType === "link" && !isRecord(baseNode)) nextNode.url = text || ""
   if (nodeType === "group") nextNode.label = text
 
   return nextNode

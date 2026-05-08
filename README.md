@@ -36,6 +36,20 @@ Local checkout usage:
 bun ./pad.shebang.tsx ./path/to/file.canvas
 ```
 
+Try the checked-in stress/documentation canvas:
+
+```sh
+bun ./pad.shebang.tsx ./examples/jsoncanvas-stress.canvas
+```
+
+Or directly from GitHub:
+
+```sh
+bunx --bun -p https://github.com/subtleGradient/pad/archive/refs/heads/main.tar.gz pad ./examples/jsoncanvas-stress.canvas
+```
+
+The example at [examples/jsoncanvas-stress.canvas](examples/jsoncanvas-stress.canvas) includes every currently supported JSON Canvas node type, labeled edges, preset colors, a custom color value, unknown fields, and future records that should survive load/save even when they are not rendered yet.
+
 The browser loads pinned React and tldraw ESM modules for the editor surface. The file server and persistence path run locally against the file you pass on the command line.
 
 ## PAD HTML
