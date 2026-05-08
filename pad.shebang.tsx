@@ -151,8 +151,19 @@ export class ClientState {
   }
 }
 
+export type PadDocumentKind = "pad" | "canvas"
+
+export type JsonObject = Record<string, unknown>
+
+export function documentKindForPath(path: string): PadDocumentKind | undefined {
+  if (path.endsWith(".pad.htm")) return "pad"
+  if (path.endsWith(".canvas")) return "canvas"
+  return undefined
+}
+
 export class AppState {
   readonly fileName: string
+  readonly kind: PadDocumentKind
   readonly clients = new Set<ClientState>()
   server: PadServer | undefined
   hasHadClient = false
@@ -171,6 +182,7 @@ export class AppState {
     readonly token: string,
   ) {
     this.fileName = nodePath.basename(padPath)
+    this.kind = documentKindForPath(padPath) ?? "pad"
     this.source = source
   }
 
@@ -205,6 +217,12 @@ const HOST = "127.0.0.1"
 const FIRST_CLIENT_TIMEOUT_MS = 60_000
 const IDLE_SHUTDOWN_MS = 250
 const HOT_RELOAD_DELAY_MS = 50
+const ROOT_BROWSER_ASSETS = new Set([
+  "canvas.browser.js",
+  "canvas.css",
+  "pad.browser.js",
+  "pad.css",
+])
 
 function die(message: string): never {
   console.error(message)
@@ -222,6 +240,12 @@ export function contentType(pathname: string) {
     return "text/html; charset=utf-8"
   }
   return "text/plain; charset=utf-8"
+}
+
+function packageAssetPath(pathname: string) {
+  const name = pathname.replace(/^\/+/, "")
+  if (!ROOT_BROWSER_ASSETS.has(name)) return undefined
+  return nodePath.resolve(packageRoot(), name)
 }
 
 export function stripShebang(source: string) {
@@ -245,6 +269,96 @@ export function replaceBody(source: string, bodyHtml: string) {
   }
 
   return `${source.slice(0, splitAt).trimEnd()}\n\n${bodyHtml.trim()}\n`
+}
+
+function isJsonObject(value: unknown): value is JsonObject {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function withoutUndefined(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value
+      .filter((item) => item !== undefined)
+      .map((item) => withoutUndefined(item))
+  }
+
+  if (!isJsonObject(value)) return value
+
+  const result: JsonObject = {}
+  for (const [key, item] of Object.entries(value)) {
+    if (item !== undefined) result[key] = withoutUndefined(item)
+  }
+  return result
+}
+
+function roundedNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.round(value)
+    : value
+}
+
+function normalizeCanvasRecordGeometry(record: unknown) {
+  if (!isJsonObject(record)) return record
+  return {
+    ...record,
+    x: roundedNumber(record.x),
+    y: roundedNumber(record.y),
+    width: roundedNumber(record.width),
+    height: roundedNumber(record.height),
+  }
+}
+
+export function normalizeJsonCanvasDocument(value: unknown): JsonObject {
+  const root = isJsonObject(value) ? { ...value } : {}
+  root.nodes = Array.isArray(root.nodes)
+    ? root.nodes.map((node) => normalizeCanvasRecordGeometry(node))
+    : []
+  root.edges = Array.isArray(root.edges) ? [...root.edges] : []
+  return root
+}
+
+export function parseJsonCanvasSource(source: string): {
+  document: JsonObject
+  error?: string
+} {
+  try {
+    return { document: normalizeJsonCanvasDocument(JSON.parse(source)) }
+  } catch (error) {
+    return {
+      document: { nodes: [], edges: [] },
+      error: error instanceof Error ? error.message : String(error),
+    }
+  }
+}
+
+export function serializeJsonCanvasDocument(value: unknown) {
+  return `${JSON.stringify(
+    withoutUndefined(normalizeJsonCanvasDocument(value)),
+    null,
+    "\t",
+  )}\n`
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+}
+
+export function canvasHtml(fileName: string) {
+  const escapedFileName = escapeHtml(fileName)
+  return `<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>${escapedFileName}</title>
+<link rel="stylesheet" href="/canvas.css">
+<script type="module" src="/canvas.browser.js"></script>
+
+<json-canvas-editor file-name="${escapedFileName}"></json-canvas-editor>
+`
 }
 
 export class PadApplication {
@@ -312,8 +426,8 @@ export class PadApplication {
       return new Response(null, { status: 204 })
     }
 
-    if (url.pathname === "/pad.browser.js" || url.pathname === "/pad.css") {
-      const assetPath = nodePath.resolve(packageRoot(), url.pathname.slice(1))
+    const assetPath = packageAssetPath(url.pathname)
+    if (assetPath) {
       return new Response(Bun.file(assetPath), {
         headers: {
           "cache-control": "no-store",
@@ -325,6 +439,15 @@ export class PadApplication {
     if (!this.authorized(url)) return new Response("Forbidden", { status: 403 })
 
     await this.loadSourceFromDisk()
+
+    if (this.state.kind === "canvas") {
+      return new Response(canvasHtml(this.state.fileName), {
+        headers: {
+          "cache-control": "no-store",
+          "content-type": "text/html; charset=utf-8",
+        },
+      })
+    }
 
     return new Response(stripShebang(this.state.source), {
       headers: {
@@ -340,16 +463,47 @@ export class PadApplication {
     this.state.addClient(client)
     if (this.state.firstClientTimer) clearTimeout(this.state.firstClientTimer)
     if (this.state.idleTimer) clearTimeout(this.state.idleTimer)
+    if (this.state.kind === "canvas") {
+      const parsed = parseJsonCanvasSource(this.state.source)
+      client.send({
+        type: "ready",
+        kind: "canvas",
+        fileName: this.state.fileName,
+        document: parsed.document,
+        parseError: parsed.error,
+      })
+      return
+    }
     client.send({ type: "ready", fileName: this.state.fileName })
   }
 
   private async message(ws: PadSocket, raw: string | Buffer) {
     const { client } = ws.data
-    let message: { type?: string; html?: unknown }
+    let message: { type?: string; html?: unknown; document?: unknown }
     try {
       message = JSON.parse(String(raw))
     } catch {
       client.send({ type: "error", message: "Malformed JSON" })
+      return
+    }
+
+    if (this.state.kind === "canvas") {
+      if (message.type !== "canvas") {
+        client.send({
+          type: "error",
+          message: `Unknown message type for canvas: ${message.type}`,
+        })
+        return
+      }
+
+      try {
+        await this.saveCanvasDocument(message.document)
+      } catch (error) {
+        client.send({
+          type: "error",
+          message: error instanceof Error ? error.message : String(error),
+        })
+      }
       return
     }
 
@@ -425,15 +579,33 @@ export class PadApplication {
     })
   }
 
+  private async saveCanvasDocument(document: unknown) {
+    this.state.source = serializeJsonCanvasDocument(document)
+    await this.dependencies.files.writeText(this.state.padPath, this.state.source)
+    this.state.saveCount += 1
+    const savedAt = this.dependencies.clock.now().toISOString()
+    this.dependencies.logger.info(
+      `[save ${this.state.saveCount}] ${this.state.fileName}`,
+    )
+    this.state.broadcast({
+      type: "saved",
+      savedAt,
+      saveCount: this.state.saveCount,
+    })
+  }
+
   private async loadSourceFromDisk() {
     this.state.source = await this.dependencies.files.readText(this.state.padPath)
   }
 
   private watchReloadFiles() {
+    const browserAssets =
+      this.state.kind === "canvas"
+        ? ["canvas.browser.js", "canvas.css"]
+        : ["pad.browser.js", "pad.css"]
     const paths = [
       this.state.padPath,
-      nodePath.resolve(packageRoot(), "pad.browser.js"),
-      nodePath.resolve(packageRoot(), "pad.css"),
+      ...browserAssets.map((asset) => nodePath.resolve(packageRoot(), asset)),
     ]
 
     for (const path of paths) {
@@ -487,10 +659,12 @@ export async function run(
   dependencies = createDefaultPadDependencies(),
 ) {
   const padArg = args.find((arg) => !arg.startsWith("-"))
-  if (!padArg) die("Usage: pad ./file.pad.htm")
+  if (!padArg) die("Usage: pad ./file.pad.htm | ./file.canvas")
 
   const padPath = nodePath.resolve(padArg)
-  if (!padPath.endsWith(".pad.htm")) die("PAD files must end with .pad.htm")
+  if (!documentKindForPath(padPath)) {
+    die("PAD files must end with .pad.htm or .canvas")
+  }
 
   const app = await PadApplication.create(padPath, dependencies)
   await app.start()

@@ -6,8 +6,13 @@ import {
   ClientState,
   PadApplication,
   bodySplitIndex,
+  canvasHtml,
   contentType,
+  documentKindForPath,
+  normalizeJsonCanvasDocument,
+  parseJsonCanvasSource,
   replaceBody,
+  serializeJsonCanvasDocument,
   stripShebang,
   type PadDependencies,
   type WebSocketData,
@@ -23,6 +28,7 @@ const replacementBody = `<pad-document>
   <pad-text>Changed body</pad-text>
 </pad-document>`
 const unitPadPath = "/tmp/unit.pad.htm"
+const unitCanvasPath = "/tmp/unit.canvas"
 const unitPadSource = `#!/usr/bin/env -S bun ./pad.shebang.tsx
 <!doctype html>
 <meta charset="utf-8">
@@ -31,6 +37,23 @@ const unitPadSource = `#!/usr/bin/env -S bun ./pad.shebang.tsx
 <pad-document>
   <pad-text>Before</pad-text>
 </pad-document>
+`
+const unitCanvasSource = `{
+	"app": "kept",
+	"nodes": [
+		{
+			"id": "n1",
+			"type": "text",
+			"x": 1.2,
+			"y": 2.8,
+			"width": 250,
+			"height": 60,
+			"text": "Before",
+			"unknown": true
+		}
+	],
+	"edges": []
+}
 `
 
 type ServeOptions = Parameters<PadDependencies["server"]["serve"]>[0]
@@ -80,11 +103,13 @@ async function createPadHarness({
   ids = [],
   dates = [],
   source = unitPadSource,
+  path = unitPadPath,
   upgradeResult = true,
 }: {
   ids?: string[]
   dates?: Date[]
   source?: string
+  path?: string
   upgradeResult?: boolean
 } = {}) {
   let currentSource = source
@@ -164,7 +189,7 @@ async function createPadHarness({
     },
   }
 
-  const app = await PadApplication.create(unitPadPath, dependencies)
+  const app = await PadApplication.create(path, dependencies)
   await app.start()
 
   if (app.state.firstClientTimer) {
@@ -292,6 +317,42 @@ async function waitForSaved(url: string, bodyHtml: string) {
   }
 }
 
+async function waitForCanvasSaved(url: string, document: unknown) {
+  const ws = new WebSocket(
+    url.replace("http://", "ws://").replace("/?", "/ws?"),
+  )
+  try {
+    await new Promise<true>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error("Timed out waiting for Canvas save confirmation."))
+      }, 5_000)
+
+      ws.addEventListener("open", () => {
+        ws.send(JSON.stringify({ type: "canvas", document }))
+      })
+
+      ws.addEventListener("message", (event) => {
+        const message = JSON.parse(String(event.data))
+        if (message.type === "saved") {
+          clearTimeout(timer)
+          resolve(true)
+        }
+        if (message.type === "error") {
+          clearTimeout(timer)
+          reject(new Error(message.message))
+        }
+      })
+
+      ws.addEventListener("error", () => {
+        clearTimeout(timer)
+        reject(new Error("Canvas WebSocket error."))
+      })
+    })
+  } finally {
+    ws.close()
+  }
+}
+
 describe("stripShebang", () => {
   test("removes only the executable first line", () => {
     const source = `${publicShebang}\n<!doctype html>\n<pad-document></pad-document>\n`
@@ -391,6 +452,71 @@ describe("contentType", () => {
     expect(contentType("pad.browser.js")).toBe("text/javascript; charset=utf-8")
     expect(contentType("SPEC.pad.htm")).toBe("text/html; charset=utf-8")
     expect(contentType("note.txt")).toBe("text/plain; charset=utf-8")
+  })
+})
+
+describe("JSON Canvas document support", () => {
+  test("recognizes PAD and JSON Canvas document kinds", () => {
+    expect(documentKindForPath("note.pad.htm")).toBe("pad")
+    expect(documentKindForPath("map.canvas")).toBe("canvas")
+    expect(documentKindForPath("map.html")).toBeUndefined()
+  })
+
+  test("normalizes missing arrays while preserving root fields", () => {
+    expect(normalizeJsonCanvasDocument({ app: "x", nodes: "bad" })).toEqual({
+      app: "x",
+      nodes: [],
+      edges: [],
+    })
+  })
+
+  test("parses invalid canvas source into an empty document plus error", () => {
+    const parsed = parseJsonCanvasSource("{ nope")
+
+    expect(parsed.document).toEqual({ nodes: [], edges: [] })
+    expect(parsed.error).toBeTruthy()
+  })
+
+  test("serializes canvas JSON with tabs, rounded geometry, nulls, and unknown fields", () => {
+    const serialized = serializeJsonCanvasDocument({
+      app: "kept",
+      omitted: undefined,
+      nodes: [
+        {
+          id: "n1",
+          type: "text",
+          x: 1.4,
+          y: 2.6,
+          width: 249.5,
+          height: 60.1,
+          text: null,
+          extra: "kept",
+          omitted: undefined,
+        },
+        { id: "future", type: "future-node", future: true },
+      ],
+      edges: [{ id: "e1", fromNode: "missing", toNode: "n1", extra: null }],
+    })
+
+    expect(serialized).toContain('\n\t"app": "kept"')
+    expect(serialized).toContain('\n\t\t\t"x": 1')
+    expect(serialized).toContain('\n\t\t\t"y": 3')
+    expect(serialized).toContain('\n\t\t\t"width": 250')
+    expect(serialized).toContain('\n\t\t\t"height": 60')
+    expect(serialized).toContain('\n\t\t\t"text": null')
+    expect(serialized).toContain('"future-node"')
+    expect(serialized).not.toContain("omitted")
+    expect(serialized.endsWith("\n")).toBe(true)
+  })
+
+  test("generates a canvas browser shell without embedding source JSON", () => {
+    const html = canvasHtml("diagram.canvas")
+
+    expect(html).toContain("<json-canvas-editor")
+    expect(html).toContain('href="/canvas.css"')
+    expect(html).toContain('src="/canvas.browser.js"')
+    expect(html).not.toContain("#!")
+    expect(html).not.toContain('"nodes"')
   })
 })
 
@@ -615,6 +741,14 @@ describe("PadApplication unit runtime", () => {
       makeRequest("/pad.browser.js"),
       harness.fakeServer,
     )
+    const canvasCss = await harness.fetch(
+      makeRequest("/canvas.css"),
+      harness.fakeServer,
+    )
+    const canvasJs = await harness.fetch(
+      makeRequest("/canvas.browser.js"),
+      harness.fakeServer,
+    )
 
     expect(forbiddenPad?.status).toBe(403)
     expect(forbiddenWs?.status).toBe(403)
@@ -628,6 +762,115 @@ describe("PadApplication unit runtime", () => {
     expect(js?.headers.get("content-type")).toBe(
       "text/javascript; charset=utf-8",
     )
+    expect(canvasCss?.status).toBe(200)
+    expect(canvasCss?.headers.get("content-type")).toBe("text/css; charset=utf-8")
+    expect(canvasJs?.status).toBe(200)
+    expect(canvasJs?.headers.get("content-type")).toBe(
+      "text/javascript; charset=utf-8",
+    )
+  })
+
+  test("serves a canvas shell and sends parsed JSON Canvas over WebSocket", async () => {
+    const harness = await createPadHarness({
+      path: unitCanvasPath,
+      source: unitCanvasSource,
+    })
+    const response = await harness.fetch(
+      makeRequest("/?t=apptoken"),
+      harness.fakeServer,
+    )
+    const client = new ClientState("client-1", new Date("2026-04-30T12:00:00Z"))
+    const { socket, sent } = makeSocket(client)
+
+    harness.websocket.open(socket)
+
+    expect(response?.status).toBe(200)
+    expect(await response?.text()).toContain("<json-canvas-editor")
+    expect(JSON.parse(sent[0] ?? "{}")).toEqual({
+      type: "ready",
+      kind: "canvas",
+      fileName: "unit.canvas",
+      document: {
+        app: "kept",
+        nodes: [
+          {
+            id: "n1",
+            type: "text",
+            x: 1,
+            y: 3,
+            width: 250,
+            height: 60,
+            text: "Before",
+            unknown: true,
+          },
+        ],
+        edges: [],
+      },
+    })
+  })
+
+  test("saves canvas document messages as canonical JSON without requiring a shebang", async () => {
+    const savedAt = new Date("2026-04-30T12:45:00.000Z")
+    const harness = await createPadHarness({
+      path: unitCanvasPath,
+      source: unitCanvasSource,
+      dates: [savedAt],
+    })
+    const client = new ClientState("client-1", new Date("2026-04-30T12:00:00Z"))
+    const { socket, sent } = makeSocket(client)
+
+    harness.websocket.open(socket)
+    await harness.websocket.message(
+      socket,
+      JSON.stringify({
+        type: "canvas",
+        document: {
+          app: "kept",
+          nodes: [
+            {
+              id: "n1",
+              type: "text",
+              x: 9.8,
+              y: 10.2,
+              width: 255,
+              height: 80,
+              text: "After",
+              unknown: true,
+            },
+          ],
+          edges: [],
+        },
+      }),
+    )
+
+    expect(harness.writes).toEqual([
+      {
+        path: unitCanvasPath,
+        text: `{
+\t"app": "kept",
+\t"nodes": [
+\t\t{
+\t\t\t"id": "n1",
+\t\t\t"type": "text",
+\t\t\t"x": 10,
+\t\t\t"y": 10,
+\t\t\t"width": 255,
+\t\t\t"height": 80,
+\t\t\t"text": "After",
+\t\t\t"unknown": true
+\t\t}
+\t],
+\t"edges": []
+}
+`,
+      },
+    ])
+    expect(JSON.parse(sent.at(-1) ?? "{}")).toEqual({
+      type: "saved",
+      savedAt: savedAt.toISOString(),
+      saveCount: 1,
+    })
+    expect(harness.writes[0]?.text.startsWith("#!")).toBe(false)
   })
 
   test("serves the latest PAD source from disk on browser refresh", async () => {
@@ -785,6 +1028,61 @@ ${initialBody}
       const saved = await Bun.file(padPath).text()
       expect(saved).toContain(changedBody)
       expect(saved).not.toContain("Before save")
+
+      const exitCode = await Promise.race([
+        proc.exited,
+        Bun.sleep(5_000).then(() => undefined),
+      ])
+      expect(exitCode).toBe(0)
+    } finally {
+      proc.kill()
+      await rm(tempRoot, { recursive: true, force: true })
+    }
+  })
+
+  test("serves a Canvas file, saves WebSocket document edits, and stops after disconnect", async () => {
+    const tempRoot = await mkdtemp(join(tmpdir(), "pad-canvas-test-"))
+    const canvasPath = join(tempRoot, "sample.canvas")
+    await Bun.write(canvasPath, unitCanvasSource)
+
+    const proc = Bun.spawn(["bun", "./pad.shebang.tsx", canvasPath], {
+      env: { ...process.env, PAD_NO_OPEN: "1" },
+      stderr: "pipe",
+      stdout: "pipe",
+    })
+    const output = { stdout: "", stderr: "" }
+
+    try {
+      const url = await waitForServerUrl(proc, output)
+      const response = await fetch(url)
+      const served = await response.text()
+
+      expect(response.ok).toBe(true)
+      expect(served).toContain("<json-canvas-editor")
+      expect(served).not.toContain(unitCanvasSource)
+
+      await waitForCanvasSaved(url, {
+        app: "kept",
+        nodes: [
+          {
+            id: "n1",
+            type: "text",
+            x: 12.7,
+            y: 1.2,
+            width: 250,
+            height: 60,
+            text: "Saved through real server",
+            unknown: true,
+          },
+        ],
+        edges: [],
+      })
+
+      const saved = await Bun.file(canvasPath).text()
+      expect(saved.startsWith("#!")).toBe(false)
+      expect(saved).toContain('\n\t"app": "kept"')
+      expect(saved).toContain('"x": 13')
+      expect(saved).toContain("Saved through real server")
 
       const exitCode = await Promise.race([
         proc.exited,
