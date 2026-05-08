@@ -220,6 +220,7 @@ const HOT_RELOAD_DELAY_MS = 50
 const ROOT_BROWSER_ASSETS = new Set([
   "canvas.browser.js",
   "canvas.css",
+  "canvas.tldraw.adapter.js",
   "pad.browser.js",
   "pad.css",
 ])
@@ -231,6 +232,8 @@ const WEB_NATIVE_WATCH_ASSETS = [
   "shadcn/styles/base-nova.css",
   "shadcn/themes/neutral.css",
 ]
+const REACT_VERSION = "19.2.1"
+const TLDRAW_VERSION = "4.5.4"
 const PAD_BROWSER_MODULES = [
   "browser/dom.js",
   "browser/editing.js",
@@ -285,6 +288,21 @@ export function webNativeImportMapHtml() {
   }
 }
 </script>`
+}
+
+export function canvasTldrawRuntimeHtml() {
+  return `<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@${REACT_VERSION}",
+    "react/jsx-runtime": "https://esm.sh/react@${REACT_VERSION}/jsx-runtime",
+    "react-dom": "https://esm.sh/react-dom@${REACT_VERSION}",
+    "react-dom/client": "https://esm.sh/react-dom@${REACT_VERSION}/client",
+    "tldraw": "https://esm.sh/tldraw@${TLDRAW_VERSION}?external=react,react-dom"
+  }
+}
+</script>
+<link rel="stylesheet" href="https://esm.sh/tldraw@${TLDRAW_VERSION}/tldraw.css">`
 }
 
 export function webNativeStylesheetLinksHtml() {
@@ -464,6 +482,7 @@ export function canvasHtml(fileName: string) {
 <meta name="color-scheme" content="light dark">
 <title>${escapedFileName}</title>
 ${webNativeImportMapHtml()}
+${canvasTldrawRuntimeHtml()}
 ${webNativeStylesheetLinksHtml()}
 <link rel="stylesheet" href="/canvas.css">
 <script type="module">
@@ -726,7 +745,7 @@ export class PadApplication {
   private async watchReloadFiles() {
     const browserAssets =
       this.state.kind === "canvas"
-        ? ["canvas.browser.js", "canvas.css"]
+        ? ["canvas.browser.js", "canvas.css", "canvas.tldraw.adapter.js"]
         : ["pad.browser.js", "pad.css", ...PAD_BROWSER_MODULES]
     const paths: { path: string; optional: boolean }[] = [
       { path: this.state.padPath, optional: false },

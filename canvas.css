@@ -4,10 +4,8 @@
   --canvas-ink: #171717;
   --canvas-muted: rgba(23, 23, 23, 0.62);
   --canvas-line: rgba(23, 23, 23, 0.16);
-  --canvas-accent: #0f766e;
-  --canvas-card: rgba(255, 255, 255, 0.92);
-  --canvas-group: rgba(15, 118, 110, 0.08);
-  --canvas-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+  --canvas-panel: rgba(255, 255, 255, 0.92);
+  --canvas-shadow: 0 10px 30px rgba(15, 23, 42, 0.14);
   background: var(--canvas-bg);
   color: var(--canvas-ink);
   font-family:
@@ -26,7 +24,7 @@
 html,
 body,
 json-canvas-editor,
-.json-canvas-shell {
+.json-canvas-tldraw-shell {
   width: 100%;
   height: 100%;
   margin: 0;
@@ -38,291 +36,84 @@ body {
   color: var(--canvas-ink);
 }
 
-button,
-input,
-textarea,
-shadcn-button {
+button {
   font: inherit;
 }
 
-.json-canvas-shell {
-  display: grid;
-  grid-template-rows: auto 1fr;
+.json-canvas-tldraw-shell {
+  position: relative;
+  background: var(--canvas-bg);
 }
 
-.json-canvas-topbar {
-  position: relative;
-  z-index: 5;
+.json-canvas-tldraw-bar {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  right: 0.5rem;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 0.35rem;
   min-width: 0;
   overflow-x: auto;
-  border-bottom: 1px solid var(--canvas-line);
-  padding: 0.5rem;
-  background: color-mix(in srgb, var(--canvas-bg), white 45%);
+  border: 1px solid var(--canvas-line);
+  border-radius: 0.5rem;
+  padding: 0.35rem;
+  background: var(--canvas-panel);
+  box-shadow: var(--canvas-shadow);
+  backdrop-filter: blur(12px);
 }
 
-.json-canvas-title {
+.json-canvas-tldraw-title {
   min-width: 0;
   max-width: min(28rem, 38vw);
   overflow: hidden;
+  padding: 0 0.35rem;
   font-size: 0.9rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.json-canvas-spacer {
+.json-canvas-tldraw-spacer {
   flex: 1;
 }
 
-.json-canvas-topbar shadcn-button {
+.json-canvas-tldraw-bar button {
   flex: none;
-}
-
-.json-canvas-topbar button {
-  min-width: 2.25rem;
+  min-width: 2.5rem;
   height: 2rem;
   border: 1px solid var(--canvas-line);
   border-radius: 0.35rem;
   padding: 0 0.65rem;
-  background: var(--canvas-card);
+  background: var(--canvas-bg);
   color: var(--canvas-ink);
   cursor: pointer;
 }
 
-.json-canvas-topbar button:hover {
-  border-color: color-mix(in srgb, var(--canvas-accent), transparent 35%);
+.json-canvas-tldraw-bar button:hover {
+  border-color: color-mix(in srgb, #0f766e, transparent 35%);
 }
 
-.json-canvas-surface {
-  position: relative;
-  overflow: hidden;
-  outline: none;
-  background-color: var(--canvas-bg);
-  background-image: radial-gradient(var(--canvas-line) 1px, transparent 1px);
-  background-position: var(--canvas-grid-x, 0) var(--canvas-grid-y, 0);
-  background-size: var(--canvas-grid-size, 20px) var(--canvas-grid-size, 20px);
-  touch-action: none;
-}
-
-.json-canvas-world {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 1px;
-  height: 1px;
-  transform-origin: 0 0;
-}
-
-.json-canvas-edges,
-.json-canvas-nodes {
-  position: absolute;
-  left: 0;
-  top: 0;
-  overflow: visible;
-}
-
-.json-canvas-edge {
-  fill: none;
-  stroke: var(--canvas-edge-color, var(--canvas-muted));
-  stroke-linecap: round;
-  stroke-width: 2;
-  pointer-events: none;
-}
-
-.json-canvas-edge.is-selected {
-  stroke: var(--canvas-accent);
-  stroke-width: 3;
-}
-
-.json-canvas-edge-hit {
-  fill: none;
-  stroke: transparent;
-  stroke-linecap: round;
-  stroke-width: 18;
-  cursor: pointer;
-  pointer-events: stroke;
-}
-
-.json-canvas-edge-label-box {
-  overflow: visible;
-  pointer-events: auto;
-}
-
-.json-canvas-edge-label-control {
-  width: 100%;
-  height: 1.9rem;
-  border: 1px solid var(--canvas-line);
-  border-radius: 999px;
-  padding: 0 0.65rem;
-  background: color-mix(in srgb, var(--canvas-bg), white 55%);
-  color: var(--canvas-ink);
-  font: inherit;
-  font-size: 12px;
-  text-align: center;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
-}
-
-.json-canvas-edge-label-box:not(.is-selected) .json-canvas-edge-label-control {
-  border-color: transparent;
-  background: color-mix(in srgb, var(--canvas-bg), transparent 10%);
-  color: var(--canvas-muted);
-}
-
-.json-canvas-edge-label-control:focus {
-  border-color: var(--canvas-accent);
-  outline: none;
-}
-
-.json-canvas-node {
-  position: absolute;
-  display: grid;
-  min-width: 50px;
-  min-height: 50px;
-  border: 1px solid color-mix(in srgb, var(--canvas-node-color, var(--canvas-line)), var(--canvas-line) 60%);
-  border-radius: 0.5rem;
-  background: var(--canvas-card);
-  box-shadow: var(--canvas-shadow);
-  color: var(--canvas-ink);
-}
-
-.json-canvas-node.is-selected {
-  outline: 2px solid var(--canvas-accent);
-  outline-offset: 2px;
-}
-
-.json-canvas-node.is-edge-source {
-  outline: 2px dashed var(--canvas-accent);
-  outline-offset: 5px;
-}
-
-.json-canvas-node-group {
-  align-content: start;
-  border-style: dashed;
-  background: var(--canvas-group);
-  box-shadow: none;
-}
-
-.json-canvas-node textarea {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  resize: none;
-  border: 0;
-  border-radius: inherit;
-  padding: 0.75rem;
-  background: transparent;
-  color: inherit;
-  outline: none;
-  line-height: 1.35;
-}
-
-.json-canvas-node input {
-  width: calc(100% - 1rem);
-  margin: 0.5rem;
-  border: 0;
-  border-bottom: 1px solid var(--canvas-line);
-  background: transparent;
-  color: inherit;
-  outline: none;
-  font-weight: 700;
-}
-
-.json-canvas-card-label {
-  display: grid;
-  align-content: center;
-  gap: 0.45rem;
-  min-width: 0;
-  padding: 1rem;
-}
-
-.json-canvas-card-label span,
-.json-canvas-node a {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  color: var(--canvas-muted);
-}
-
-.json-canvas-node a {
-  align-self: end;
-  padding: 0 1rem 1rem;
-}
-
-.json-canvas-resize {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 1rem;
-  height: 1rem;
-  border: 0;
-  background: linear-gradient(135deg, transparent 50%, var(--canvas-muted) 50%);
-  cursor: nwse-resize;
-  opacity: 0;
-}
-
-.json-canvas-node.is-selected .json-canvas-resize,
-.json-canvas-node:hover .json-canvas-resize {
-  opacity: 1;
-}
-
-.json-canvas-empty {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  max-width: min(24rem, calc(100vw - 2rem));
-  transform: translate(-50%, -50%);
-  color: var(--canvas-muted);
-  font-size: 0.95rem;
-  pointer-events: none;
-  text-align: center;
+.json-canvas-tldraw-stage {
+  position: fixed;
+  inset: 0;
 }
 
 json-canvas-status {
   position: fixed;
   right: 0.75rem;
   bottom: 0.75rem;
-  z-index: 10;
+  z-index: 20;
   max-width: min(28rem, calc(100vw - 1.5rem));
   border: 1px solid var(--canvas-line);
   border-radius: 999px;
   padding: 0.45rem 0.7rem;
-  background: color-mix(in srgb, var(--canvas-bg), transparent 8%);
+  background: color-mix(in srgb, var(--canvas-panel), transparent 8%);
   color: var(--canvas-muted);
   font-size: 0.78rem;
   line-height: 1.2;
   backdrop-filter: blur(12px);
   pointer-events: none;
-}
-
-.canvas-color-1 {
-  --canvas-node-color: #dc2626;
-  --canvas-edge-color: #dc2626;
-}
-
-.canvas-color-2 {
-  --canvas-node-color: #d97706;
-  --canvas-edge-color: #d97706;
-}
-
-.canvas-color-3 {
-  --canvas-node-color: #16a34a;
-  --canvas-edge-color: #16a34a;
-}
-
-.canvas-color-4 {
-  --canvas-node-color: #0284c7;
-  --canvas-edge-color: #0284c7;
-}
-
-.canvas-color-5 {
-  --canvas-node-color: #7c3aed;
-  --canvas-edge-color: #7c3aed;
-}
-
-.canvas-color-6 {
-  --canvas-node-color: #db2777;
-  --canvas-edge-color: #db2777;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -331,13 +122,7 @@ json-canvas-status {
     --canvas-ink: #f2f1ed;
     --canvas-muted: rgba(242, 241, 237, 0.64);
     --canvas-line: rgba(242, 241, 237, 0.16);
-    --canvas-accent: #2dd4bf;
-    --canvas-card: rgba(29, 31, 33, 0.94);
-    --canvas-group: rgba(45, 212, 191, 0.1);
+    --canvas-panel: rgba(29, 31, 33, 0.94);
     --canvas-shadow: 0 10px 34px rgba(0, 0, 0, 0.24);
-  }
-
-  .json-canvas-topbar {
-    background: color-mix(in srgb, var(--canvas-bg), black 12%);
   }
 }

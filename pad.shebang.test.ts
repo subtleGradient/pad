@@ -7,6 +7,7 @@ import {
   PadApplication,
   bodySplitIndex,
   canvasHtml,
+  canvasTldrawRuntimeHtml,
   contentType,
   documentKindForPath,
   normalizeJsonCanvasDocument,
@@ -20,6 +21,11 @@ import {
   type PadDependencies,
   type WebSocketData,
 } from "./pad.shebang.tsx"
+import {
+  jsonCanvasToTldraw,
+  projectTldrawToJsonCanvas,
+  textFromRichText,
+} from "./canvas.tldraw.adapter.js"
 
 const BRANCH = "v0-dev"
 
@@ -647,6 +653,8 @@ describe("JSON Canvas document support", () => {
     const html = canvasHtml("diagram.canvas")
 
     expect(html).toContain("<json-canvas-editor")
+    expect(html).toContain('"tldraw": "https://esm.sh/tldraw@4.5.4?external=react,react-dom"')
+    expect(html).toContain('href="https://esm.sh/tldraw@4.5.4/tldraw.css"')
     expect(html).toContain('"web-native/": "/web-native/"')
     expect(html).toContain('href="/web-native/shadcn/themes/neutral.css"')
     expect(html).toContain('import "web-native/shadcn/define.js"')
@@ -654,6 +662,125 @@ describe("JSON Canvas document support", () => {
     expect(html).toContain('src="/canvas.browser.js"')
     expect(html).not.toContain("#!")
     expect(html).not.toContain('"nodes"')
+  })
+
+  test("generates tldraw browser runtime imports for Canvas pages", () => {
+    expect(canvasTldrawRuntimeHtml()).toContain('"react": "https://esm.sh/react@19.2.1"')
+    expect(canvasTldrawRuntimeHtml()).toContain('"tldraw": "https://esm.sh/tldraw@4.5.4?external=react,react-dom"')
+  })
+})
+
+describe("JSON Canvas tldraw adapter", () => {
+  test("projects JSON Canvas nodes and edges into tldraw shapes and native arrow bindings", () => {
+    const projection = jsonCanvasToTldraw({
+      nodes: [
+        { id: "a", type: "text", x: 0, y: 0, width: 250, height: 80, text: "Alpha" },
+        { id: "b", type: "file", x: 300, y: 0, width: 400, height: 260, file: "Note.md" },
+      ],
+      edges: [
+        {
+          id: "edge-a",
+          fromNode: "a",
+          toNode: "b",
+          fromSide: "right",
+          toSide: "left",
+          label: "Explains",
+        },
+      ],
+    })
+
+    expect(projection.shapes.map((shape) => shape.type)).toEqual(["geo", "geo", "arrow"])
+    expect(projection.bindings).toHaveLength(2)
+    expect(projection.bindings.map((binding) => binding.props.terminal).sort()).toEqual([
+      "end",
+      "start",
+    ])
+    expect(textFromRichText(projection.shapes[0]?.props.richText)).toBe("Alpha")
+    expect(textFromRichText(projection.shapes[1]?.props.richText)).toBe("Note.md")
+    expect(textFromRichText(projection.shapes[2]?.props.richText)).toBe("Explains")
+  })
+
+  test("projects edited tldraw shapes back to JSON Canvas while preserving unknown records", () => {
+    const baseDocument = {
+      app: "kept",
+      nodes: [
+        {
+          id: "a",
+          type: "text",
+          x: 0,
+          y: 0,
+          width: 250,
+          height: 80,
+          text: "Alpha",
+          unknown: true,
+        },
+        { id: "future", type: "future", payload: true },
+      ],
+      edges: [
+        { id: "edge-a", fromNode: "a", toNode: "b", label: "Old", unknownEdge: true },
+        { id: "future-edge", fromNode: "missing", toNode: "future", payload: true },
+      ],
+    }
+    const projection = jsonCanvasToTldraw({
+      ...baseDocument,
+      nodes: [
+        baseDocument.nodes[0],
+        { id: "b", type: "group", x: 300, y: 0, width: 400, height: 260, label: "Group" },
+        baseDocument.nodes[1],
+      ],
+    })
+    const shapes = projection.shapes.map((shape) => {
+      const meta = shape.meta?.jsonCanvas as
+        | { nodeId?: string; edgeId?: string }
+        | undefined
+      if (meta?.nodeId === "a") {
+        return {
+          ...shape,
+          x: 11.4,
+          y: 21.6,
+          props: { ...shape.props, richText: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Edited" }] }] } },
+        }
+      }
+      if (meta?.edgeId === "edge-a") {
+        return {
+          ...shape,
+          props: { ...shape.props, richText: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "New label" }] }] } },
+        }
+      }
+      return shape
+    })
+
+    const projected = projectTldrawToJsonCanvas(baseDocument, shapes, projection.bindings)
+
+    expect(projected.app).toBe("kept")
+    expect(projected.nodes[0]).toEqual({
+      id: "a",
+      type: "text",
+      x: 11,
+      y: 22,
+      width: 250,
+      height: 80,
+      text: "Edited",
+      unknown: true,
+    })
+    expect(projected.nodes).toContainEqual({ id: "future", type: "future", payload: true })
+    expect(projected.edges).toContainEqual({
+      id: "edge-a",
+      fromNode: "a",
+      fromSide: "right",
+      fromEnd: "none",
+      toNode: "b",
+      toSide: "left",
+      toEnd: "arrow",
+      label: "New label",
+      unknownEdge: true,
+    })
+    expect(projected.edges).toContainEqual({
+      id: "future-edge",
+      fromNode: "missing",
+      toNode: "future",
+      payload: true,
+    })
   })
 })
 
@@ -853,6 +980,10 @@ describe("PadApplication unit runtime", () => {
       makeRequest("/canvas.browser.js"),
       harness.fakeServer,
     )
+    const canvasAdapter = await harness.fetch(
+      makeRequest("/canvas.tldraw.adapter.js"),
+      harness.fakeServer,
+    )
 
     expect(forbiddenPad?.status).toBe(403)
     expect(forbiddenWs?.status).toBe(403)
@@ -886,6 +1017,10 @@ describe("PadApplication unit runtime", () => {
     expect(canvasCss?.headers.get("content-type")).toBe("text/css; charset=utf-8")
     expect(canvasJs?.status).toBe(200)
     expect(canvasJs?.headers.get("content-type")).toBe(
+      "text/javascript; charset=utf-8",
+    )
+    expect(canvasAdapter?.status).toBe(200)
+    expect(canvasAdapter?.headers.get("content-type")).toBe(
       "text/javascript; charset=utf-8",
     )
   })
@@ -1009,7 +1144,7 @@ describe("PadApplication unit runtime", () => {
 `,
       },
     ])
-    expect(harness.app.state.source).toBe(harness.writes[0]?.text)
+    expect(harness.app.state.source).toBe(harness.writes[0]?.text ?? "")
   })
 
   test("serves the latest PAD source from disk on browser refresh", async () => {
