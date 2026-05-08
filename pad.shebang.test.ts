@@ -107,12 +107,14 @@ async function createPadHarness({
   dates = [],
   source = unitPadSource,
   path = unitPadPath,
+  readError,
   upgradeResult = true,
 }: {
   ids?: string[]
   dates?: Date[]
   source?: string
   path?: string
+  readError?: unknown
   upgradeResult?: boolean
 } = {}) {
   let currentSource = source
@@ -141,6 +143,7 @@ async function createPadHarness({
   const dependencies: PadDependencies = {
     files: {
       async readText() {
+        if (readError) throw readError
         return currentSource
       },
       async writeText(path, text) {
@@ -988,6 +991,25 @@ describe("PadApplication unit runtime", () => {
       saveCount: 1,
     })
     expect(harness.writes[0]?.text.startsWith("#!")).toBe(false)
+  })
+
+  test("creates a missing Canvas file with an empty JSON Canvas document", async () => {
+    const harness = await createPadHarness({
+      path: unitCanvasPath,
+      readError: new Error("ENOENT"),
+    })
+
+    expect(harness.writes).toEqual([
+      {
+        path: unitCanvasPath,
+        text: `{
+\t"nodes": [],
+\t"edges": []
+}
+`,
+      },
+    ])
+    expect(harness.app.state.source).toBe(harness.writes[0]?.text)
   })
 
   test("serves the latest PAD source from disk on browser refresh", async () => {

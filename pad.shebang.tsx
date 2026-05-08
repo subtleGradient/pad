@@ -482,7 +482,14 @@ export class PadApplication {
   ) {}
 
   static async create(padPath: string, dependencies: PadDependencies) {
-    const source = await dependencies.files.readText(padPath)
+    let source: string
+    try {
+      source = await dependencies.files.readText(padPath)
+    } catch (error) {
+      if (documentKindForPath(padPath) !== "canvas") throw error
+      source = serializeJsonCanvasDocument({ nodes: [], edges: [] })
+      await dependencies.files.writeText(padPath, source)
+    }
     const token = dependencies.ids.nextId().replaceAll("-", "")
     return new PadApplication(new AppState(padPath, source, token), dependencies)
   }
