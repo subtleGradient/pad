@@ -223,6 +223,14 @@ const ROOT_BROWSER_ASSETS = new Set([
   "pad.browser.js",
   "pad.css",
 ])
+const PAD_BROWSER_MODULES = [
+  "browser/dom.js",
+  "browser/editing.js",
+  "browser/elements.js",
+  "browser/list.js",
+  "browser/pad-main.js",
+  "browser/runtime.js",
+]
 
 function die(message: string): never {
   console.error(message)
@@ -245,6 +253,12 @@ export function contentType(pathname: string) {
 function packageAssetPath(pathname: string) {
   const name = pathname.replace(/^\/+/, "")
   if (!ROOT_BROWSER_ASSETS.has(name)) return undefined
+  return nodePath.resolve(packageRoot(), name)
+}
+
+function packageBrowserModulePath(pathname: string) {
+  const name = pathname.replace(/^\/+/, "")
+  if (!PAD_BROWSER_MODULES.includes(name)) return undefined
   return nodePath.resolve(packageRoot(), name)
 }
 
@@ -426,7 +440,8 @@ export class PadApplication {
       return new Response(null, { status: 204 })
     }
 
-    const assetPath = packageAssetPath(url.pathname)
+    const assetPath =
+      packageAssetPath(url.pathname) ?? packageBrowserModulePath(url.pathname)
     if (assetPath) {
       return new Response(Bun.file(assetPath), {
         headers: {
@@ -602,7 +617,7 @@ export class PadApplication {
     const browserAssets =
       this.state.kind === "canvas"
         ? ["canvas.browser.js", "canvas.css"]
-        : ["pad.browser.js", "pad.css"]
+        : ["pad.browser.js", "pad.css", ...PAD_BROWSER_MODULES]
     const paths = [
       this.state.padPath,
       ...browserAssets.map((asset) => nodePath.resolve(packageRoot(), asset)),

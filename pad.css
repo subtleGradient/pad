@@ -10,7 +10,7 @@
 }
 
 body {
-  width: min(44rem, calc(100vw - 2rem));
+  width: min(64rem, calc(100vw - 2rem));
   min-height: 100vh;
   margin: 0 auto;
   padding: clamp(3rem, 8vw, 6rem) 0;
@@ -21,6 +21,19 @@ body {
 }
 
 pad-document,
+pad-stack,
+pad-grid,
+pad-panel,
+pad-scope,
+pad-ref,
+pad-note,
+pad-expect,
+pad-snapshot,
+pad-work,
+pad-import,
+pad-metric,
+pad-list,
+pad-list-item,
 pad-text,
 pad-status {
   display: block;
@@ -31,9 +44,66 @@ pad-document {
   gap: 1rem;
 }
 
-pad-text {
-  max-width: 42rem;
+pad-stack {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+pad-stack[gap="tight"] {
+  gap: 0.5rem;
+}
+
+pad-stack[gap="loose"] {
+  gap: 1.5rem;
+}
+
+pad-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: 1rem;
+  align-items: start;
+  min-width: 0;
+}
+
+pad-panel {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  border: 1px solid rgba(21, 21, 21, 0.12);
+  border-radius: 0.8rem;
+  padding: 1rem;
+}
+
+pad-list {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+pad-list-item {
+  min-width: 0;
+  min-height: 2.75rem;
+  border: 1px solid rgba(21, 21, 21, 0.13);
+  border-radius: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  background: rgba(255, 255, 255, 0.34);
+  overflow-wrap: anywhere;
   text-wrap: pretty;
+}
+
+pad-text {
+  min-width: 0;
+  max-width: 42rem;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+pad-text[kind="heading"] {
+  font:
+    700 clamp(1.2rem, 3vw, 1.6rem) / 1.05 ui-sans-serif,
+    system-ui,
+    sans-serif;
 }
 
 pad-text[kind="title"] {
@@ -45,14 +115,211 @@ pad-text[kind="title"] {
   letter-spacing: -0.07em;
 }
 
-pad-text[contenteditable="true"] {
+body:has(> pad-scope) {
+  width: min(92rem, calc(100vw - 1rem));
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    sans-serif;
+  font-size: 1rem;
+}
+
+pad-scope {
+  display: grid;
+  gap: 0.9rem;
+  min-width: 0;
+  border: 1px solid rgba(21, 21, 21, 0.14);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  background: rgba(255, 255, 252, 0.72);
+}
+
+pad-scope pad-scope {
+  background: rgba(244, 247, 244, 0.82);
+}
+
+pad-scope::before {
+  content: attr(kind) " / " attr(name);
+  justify-self: start;
+  border-radius: 0.25rem;
+  padding: 0.18rem 0.42rem;
+  background: rgba(21, 21, 21, 0.06);
+  color: rgba(21, 21, 21, 0.62);
+  font:
+    800 0.72rem/1.1 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+pad-note,
+pad-expect,
+pad-snapshot,
+pad-work,
+pad-import {
+  display: grid;
+  gap: 0.55rem;
+  min-width: 0;
+  border-left: 0.28rem solid rgba(21, 21, 21, 0.24);
+  border-radius: 0.38rem;
+  padding: 0.7rem 0.75rem;
+  background: rgba(255, 255, 255, 0.64);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+pad-note {
+  border-left-color: #8b6f47;
+}
+
+pad-expect {
+  border-left-color: #755fd3;
+}
+
+pad-expect[kind="nightmare"],
+pad-snapshot[kind="gap"] {
+  border-left-color: #c45f34;
+}
+
+pad-snapshot {
+  border-left-color: #34856f;
+  font:
+    0.86em/1.5 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+}
+
+pad-work {
+  border-left-color: #2f6db3;
+}
+
+pad-note[kind="title"] {
+  display: block;
+  border-left: 0;
+  padding: 0;
+  background: transparent;
+  font:
+    800 clamp(2.6rem, 10vw, 5.5rem) / 0.9 ui-sans-serif,
+    system-ui,
+    sans-serif;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+pad-note::before,
+pad-expect::before,
+pad-snapshot::before,
+pad-work::before,
+pad-import::before {
+  color: rgba(21, 21, 21, 0.58);
+  font:
+    700 0.68rem/1.1 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: normal;
+}
+
+pad-note::before {
+  content: "Note " attr(kind);
+}
+
+pad-note[kind="title"]::before {
+  content: none;
+}
+
+pad-expect::before {
+  content: "Expect " attr(kind) " / " attr(matcher);
+}
+
+pad-snapshot::before {
+  content: "Snapshot " attr(kind) " / " attr(rev);
+}
+
+pad-work::before {
+  content: "Work " attr(state);
+}
+
+pad-import::before {
+  content: "Import " attr(as) " <- " attr(src);
+}
+
+pad-ref,
+pad-metric {
+  min-width: 0;
+  border-radius: 0.35rem;
+  padding: 0.5rem 0.6rem;
+  background: rgba(21, 21, 21, 0.06);
+  overflow-wrap: anywhere;
+  font:
+    0.84rem/1.45 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+}
+
+pad-ref::before {
+  content: attr(kind) " ";
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+pad-text[contenteditable],
+pad-list-item[contenteditable],
+pad-note[contenteditable],
+pad-expect[contenteditable],
+pad-snapshot[contenteditable],
+pad-work[contenteditable] {
   border-radius: 0.35rem;
   outline: 0 solid transparent;
 }
 
-pad-text[contenteditable="true"]:focus {
+pad-text[contenteditable="true"]:focus,
+pad-list-item[contenteditable="true"]:focus,
+pad-note[contenteditable="true"]:focus,
+pad-expect[contenteditable="true"]:focus,
+pad-snapshot[contenteditable="true"]:focus,
+pad-work[contenteditable="true"]:focus {
   outline: 2px solid rgba(21, 21, 21, 0.28);
   outline-offset: 0.3rem;
+}
+
+pad-list-item[data-pad-empty]::before {
+  content: "New item...";
+  color: rgba(21, 21, 21, 0.38);
+  font-style: italic;
+}
+
+body[data-pad-readonly]::before {
+  content: attr(data-pad-readonly-reason);
+  position: fixed;
+  top: 0.75rem;
+  left: 50%;
+  z-index: 20;
+  width: max-content;
+  max-width: min(38rem, calc(100vw - 1.5rem));
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 0.55rem 0.8rem;
+  background: rgba(90, 18, 18, 0.94);
+  color: #fff7ed;
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.18);
+  font:
+    0.84rem/1.2 ui-sans-serif,
+    system-ui,
+    sans-serif;
+  text-align: center;
+  pointer-events: none;
 }
 
 pad-status {
@@ -81,8 +348,54 @@ pad-status {
     color: #f3ead7;
   }
 
-  pad-text[contenteditable="true"]:focus {
+  pad-text[contenteditable="true"]:focus,
+  pad-list-item[contenteditable="true"]:focus,
+  pad-note[contenteditable="true"]:focus,
+  pad-expect[contenteditable="true"]:focus,
+  pad-snapshot[contenteditable="true"]:focus,
+  pad-work[contenteditable="true"]:focus {
     outline-color: rgba(243, 234, 215, 0.3);
+  }
+
+  pad-panel,
+  pad-list-item {
+    border-color: rgba(243, 234, 215, 0.14);
+  }
+
+  pad-list-item,
+  pad-note,
+  pad-expect,
+  pad-snapshot,
+  pad-work,
+  pad-import {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  pad-scope {
+    border-color: rgba(243, 234, 215, 0.14);
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  pad-scope pad-scope {
+    background: rgba(255, 255, 255, 0.045);
+  }
+
+  pad-scope::before,
+  pad-note::before,
+  pad-expect::before,
+  pad-snapshot::before,
+  pad-work::before,
+  pad-import::before {
+    color: rgba(243, 234, 215, 0.58);
+  }
+
+  pad-ref,
+  pad-metric {
+    background: rgba(243, 234, 215, 0.08);
+  }
+
+  pad-list-item[data-pad-empty]::before {
+    color: rgba(243, 234, 215, 0.42);
   }
 
   pad-status {

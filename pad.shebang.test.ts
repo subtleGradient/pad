@@ -536,78 +536,33 @@ describe("ClientState", () => {
 })
 
 describe("browser runtime", () => {
-  test("reloads the page when the server broadcasts a reload message", async () => {
+  test("root browser asset delegates to modular PAD browser runtime", async () => {
     const source = await Bun.file("pad.browser.js").text()
-    const sockets: { listeners: Record<string, (event: { data: string }) => void> }[] =
-      []
-    const status = {
-      dataset: {} as Record<string, string>,
-      textContent: "",
-      set message(value: string) {
-        this.textContent = value
+
+    expect(source).toContain('import "./browser/pad-main.js"')
+  })
+
+  test("list normalization keeps one trailing blank item", async () => {
+    const { normalizeTrailingEmptyItems } = await import("./browser/list.js")
+    const items = ["Alpha", "", ""]
+    const removed: string[] = []
+
+    const result = normalizeTrailingEmptyItems({
+      items,
+      isEmpty: (item: string) => item === "",
+      appendBlank: () => {
+        items.push("")
+        return ""
       },
-    }
-    let reloads = 0
-
-    class FakeHTMLElement {}
-    class FakeWebSocket {
-      static OPEN = 1
-      readyState = FakeWebSocket.OPEN
-      listeners: Record<string, (event: { data: string }) => void> = {}
-
-      constructor() {
-        sockets.push(this)
-      }
-
-      addEventListener(type: string, listener: (event: { data: string }) => void) {
-        this.listeners[type] = listener
-      }
-
-      send() {}
-    }
-
-    const runBrowserRuntime = new Function(
-      "customElements",
-      "HTMLElement",
-      "document",
-      "WebSocket",
-      "location",
-      "window",
-      source,
-    )
-    runBrowserRuntime(
-      { get: () => undefined, define: () => {} },
-      FakeHTMLElement,
-      {
-        readyState: "complete",
-        querySelector: () => status,
-        createElement: () => status,
-        body: {
-          append() {},
-          addEventListener() {},
-        },
+      removeItem: (item: string) => {
+        removed.push(item)
       },
-      FakeWebSocket,
-      {
-        protocol: "http:",
-        host: "127.0.0.1:4321",
-        search: "?t=apptoken",
-        reload() {
-          reloads += 1
-        },
-      },
-      {
-        clearTimeout,
-        setTimeout,
-        addEventListener() {},
-      },
-    )
-
-    sockets[0]?.listeners.message?.({
-      data: JSON.stringify({ type: "reload", paths: ["pad.css"] }),
     })
 
-    expect(reloads).toBe(1)
+    expect(result.changed).toBe(true)
+    expect(result.appendedItem).toBeNull()
+    expect(result.removedItems).toEqual([""])
+    expect(removed).toEqual([""])
   })
 })
 
@@ -741,6 +696,10 @@ describe("PadApplication unit runtime", () => {
       makeRequest("/pad.browser.js"),
       harness.fakeServer,
     )
+    const browserModule = await harness.fetch(
+      makeRequest("/browser/pad-main.js"),
+      harness.fakeServer,
+    )
     const canvasCss = await harness.fetch(
       makeRequest("/canvas.css"),
       harness.fakeServer,
@@ -760,6 +719,10 @@ describe("PadApplication unit runtime", () => {
     expect(css?.headers.get("content-type")).toBe("text/css; charset=utf-8")
     expect(js?.status).toBe(200)
     expect(js?.headers.get("content-type")).toBe(
+      "text/javascript; charset=utf-8",
+    )
+    expect(browserModule?.status).toBe(200)
+    expect(browserModule?.headers.get("content-type")).toBe(
       "text/javascript; charset=utf-8",
     )
     expect(canvasCss?.status).toBe(200)
@@ -926,6 +889,7 @@ describe("PadApplication unit runtime", () => {
         expect.stringContaining("unit.pad.htm"),
         expect.stringContaining("pad.browser.js"),
         expect.stringContaining("pad.css"),
+        expect.stringContaining("browser/runtime.js"),
       ]),
     )
   })
