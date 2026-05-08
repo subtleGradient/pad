@@ -6,7 +6,7 @@ Baseline: `/Users/tom/Developer/obsidian/canvas.spec.md`
 
 ## Decision
 
-Build the PAD `.canvas` editor as a local Bun runner with atomic custom elements, DOM cards, and an SVG edge layer. Keep JSON Canvas as the only durable format. Treat tldraw as a viable optional adapter once the JSON Canvas persistence boundary is stable.
+Build the PAD `.canvas` editor as a local Bun runner with atomic custom elements, DOM cards, and an SVG edge layer. Keep JSON Canvas as the only durable format. Generic reusable browser components belong in `/Users/tom/Developer/web-native` and are loaded by PAD through a `web-native/` import map; PAD owns only the document-specific composition plus Bun persistence/WebSocket runtime. Treat tldraw as a viable optional adapter once the JSON Canvas persistence boundary is stable.
 
 The shipped first slice should support:
 
@@ -18,6 +18,7 @@ The shipped first slice should support:
 - DOM editing for text/group labels.
 - SVG cubic Bezier edge rendering with arrowheads and labels.
 - Pan, zoom, fit, create, move, resize, delete, and autosave.
+- Toolbar/control composition through generic `web-native` custom elements when they are available.
 
 ## Branch Mining
 
@@ -80,13 +81,14 @@ file.canvas
   -> Bun runner
   -> JSON Canvas parser / serializer
   -> browser WebSocket session
+  -> web-native import map for generic controls
   -> <json-canvas-editor>
   -> <json-canvas-node> DOM cards
   -> SVG edge layer
   -> autosave JSON Canvas
 ```
 
-The browser runtime owns view state only. The server owns file IO and canonical serialization.
+The browser runtime owns view state only. The server owns file IO, import-map asset serving/fallback, and canonical serialization.
 
 Core invariants:
 

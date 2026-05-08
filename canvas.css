@@ -40,7 +40,8 @@ body {
 
 button,
 input,
-textarea {
+textarea,
+shadcn-button {
   font: inherit;
 }
 
@@ -72,6 +73,10 @@ textarea {
 
 .json-canvas-spacer {
   flex: 1;
+}
+
+.json-canvas-topbar shadcn-button {
+  flex: none;
 }
 
 .json-canvas-topbar button {

@@ -163,16 +163,16 @@ class JsonCanvasEditor extends HTMLElement {
       <div class="json-canvas-shell">
         <div class="json-canvas-topbar" data-canvas-runtime>
           <strong class="json-canvas-title"></strong>
-          <button type="button" data-action="text">Text</button>
-          <button type="button" data-action="file">File</button>
-          <button type="button" data-action="link">Link</button>
-          <button type="button" data-action="group">Group</button>
+          <shadcn-button size="sm" variant="outline" data-action="text">Text</shadcn-button>
+          <shadcn-button size="sm" variant="outline" data-action="file">File</shadcn-button>
+          <shadcn-button size="sm" variant="outline" data-action="link">Link</shadcn-button>
+          <shadcn-button size="sm" variant="outline" data-action="group">Group</shadcn-button>
           <span class="json-canvas-spacer"></span>
-          <button type="button" data-action="zoom-out" title="Zoom out">-</button>
-          <button type="button" data-action="zoom-reset" title="Reset zoom">100%</button>
-          <button type="button" data-action="zoom-fit" title="Zoom to fit">Fit</button>
-          <button type="button" data-action="zoom-in" title="Zoom in">+</button>
-          <button type="button" data-action="save">Save</button>
+          <shadcn-button size="sm" variant="ghost" data-action="zoom-out" title="Zoom out">-</shadcn-button>
+          <shadcn-button size="sm" variant="ghost" data-action="zoom-reset" title="Reset zoom">100%</shadcn-button>
+          <shadcn-button size="sm" variant="ghost" data-action="zoom-fit" title="Zoom to fit">Fit</shadcn-button>
+          <shadcn-button size="sm" variant="ghost" data-action="zoom-in" title="Zoom in">+</shadcn-button>
+          <shadcn-button size="sm" data-action="save">Save</shadcn-button>
         </div>
         <div class="json-canvas-surface" tabindex="0">
           <div class="json-canvas-world">
@@ -406,7 +406,9 @@ class JsonCanvasEditor extends HTMLElement {
   }
 
   handleToolbarClick(event) {
-    const button = event.target.closest("button[data-action]")
+    const target = event.target instanceof Element ? event.target : null
+    const button = target?.closest("[data-action]")
+    if (button && !this.contains(button)) return
     if (!button) return
     const action = button.dataset.action
     if (["text", "file", "link", "group"].includes(action)) this.addNode(action)

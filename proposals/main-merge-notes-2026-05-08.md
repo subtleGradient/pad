@@ -10,6 +10,7 @@ Selective side-branch material merged into `main`:
 
 - From `pad-oc`: modular browser runtime shape, editable-state gating, list normalization primitives, and PAD layout elements.
 - From `pad-diff`: generic PAD semantic element surface and low-distraction styling patterns for scopes, notes, expectations, snapshots, work blocks, refs, and metrics.
+- From `/Users/tom/Developer/web-native`: keep ownership boundaries clean by loading generic web components through a `web-native/` import map. `pad` should serve or redirect those browser files, while `web-native` owns the reusable custom elements.
 
 ## Deliberately Skipped
 
@@ -20,6 +21,7 @@ Selective side-branch material merged into `main`:
 
 ## Follow-Up
 
+- Move reusable editable text/list/layout and JSON Canvas primitives into `/Users/tom/Developer/web-native` using its `src/<component>/{index,define,test,demo}` convention; then have PAD-specific elements compose those components instead of owning generic behavior.
 - Consider a separate branch for OpenCode chat once `PadDocumentKind = "pad" | "canvas" | "chat"` is designed cleanly.
 - If generic PAD scopes become central, port the richer `pad-diff` runtime controls in a focused pass with tests.
 - Add browser-level tests only when the dependency/runtime choice is intentional.

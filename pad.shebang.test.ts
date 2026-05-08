@@ -14,6 +14,9 @@ import {
   replaceBody,
   serializeJsonCanvasDocument,
   stripShebang,
+  webNativeAssetRelativePath,
+  webNativeCdnUrl,
+  webNativeImportMapHtml,
   type PadDependencies,
   type WebSocketData,
 } from "./pad.shebang.tsx"
@@ -426,6 +429,7 @@ describe("PAD entry documents", () => {
     const source = await Bun.file("SPEC.pad.htm").text()
 
     expect(source.startsWith(`${publicShebang}\n`)).toBe(true)
+    expect(source).toContain('"web-native/": "/web-native/"')
     expect(source).toContain(publicCss)
     expect(source).toContain(publicJs)
     expect(source).not.toContain("@main")
@@ -438,6 +442,7 @@ describe("PAD entry documents", () => {
     expect(source.startsWith("#!/usr/bin/env -S bun ./pad.shebang.tsx\n")).toBe(
       true,
     )
+    expect(source).toContain('"web-native/": "/web-native/"')
     expect(source).toContain('href="./pad.css"')
     expect(source).toContain(
       '<script type="module" src="./pad.browser.js"></script>',
@@ -452,6 +457,27 @@ describe("contentType", () => {
     expect(contentType("pad.browser.js")).toBe("text/javascript; charset=utf-8")
     expect(contentType("SPEC.pad.htm")).toBe("text/html; charset=utf-8")
     expect(contentType("note.txt")).toBe("text/plain; charset=utf-8")
+  })
+})
+
+describe("web-native imports", () => {
+  test("generates an import map for browser-native generic components", () => {
+    expect(webNativeImportMapHtml()).toContain('"web-native/": "/web-native/"')
+  })
+
+  test("resolves safe web-native asset paths and rejects traversal", () => {
+    expect(webNativeAssetRelativePath("/web-native/shadcn/define.js")).toBe(
+      "shadcn/define.js",
+    )
+    expect(
+      webNativeAssetRelativePath("/web-native/%2e%2e/pad.shebang.tsx"),
+    ).toBeUndefined()
+  })
+
+  test("builds jsDelivr fallback URLs for web-native assets", () => {
+    expect(webNativeCdnUrl("shadcn/define.js")).toBe(
+      "https://cdn.jsdelivr.net/gh/subtleGradient/web-native@web-native-shadcn-components/src/shadcn/define.js",
+    )
   })
 })
 
@@ -513,6 +539,9 @@ describe("JSON Canvas document support", () => {
     const html = canvasHtml("diagram.canvas")
 
     expect(html).toContain("<json-canvas-editor")
+    expect(html).toContain('"web-native/": "/web-native/"')
+    expect(html).toContain('href="/web-native/shadcn/themes/neutral.css"')
+    expect(html).toContain('import "web-native/shadcn/define.js"')
     expect(html).toContain('href="/canvas.css"')
     expect(html).toContain('src="/canvas.browser.js"')
     expect(html).not.toContain("#!")
@@ -700,6 +729,14 @@ describe("PadApplication unit runtime", () => {
       makeRequest("/browser/pad-main.js"),
       harness.fakeServer,
     )
+    const webNativeModule = await harness.fetch(
+      makeRequest("/web-native/shadcn/define.js"),
+      harness.fakeServer,
+    )
+    const forbiddenTraversal = await harness.fetch(
+      makeRequest("/web-native/%2e%2e/pad.shebang.tsx"),
+      harness.fakeServer,
+    )
     const canvasCss = await harness.fetch(
       makeRequest("/canvas.css"),
       harness.fakeServer,
@@ -725,6 +762,18 @@ describe("PadApplication unit runtime", () => {
     expect(browserModule?.headers.get("content-type")).toBe(
       "text/javascript; charset=utf-8",
     )
+    if (!webNativeModule) throw new Error("Expected web-native asset response.")
+    expect([200, 302]).toContain(webNativeModule.status)
+    if (webNativeModule.status === 200) {
+      expect(webNativeModule.headers.get("content-type")).toBe(
+        "text/javascript; charset=utf-8",
+      )
+    } else {
+      expect(webNativeModule.headers.get("location")).toBe(
+        webNativeCdnUrl("shadcn/define.js"),
+      )
+    }
+    expect(forbiddenTraversal?.status).toBe(403)
     expect(canvasCss?.status).toBe(200)
     expect(canvasCss?.headers.get("content-type")).toBe("text/css; charset=utf-8")
     expect(canvasJs?.status).toBe(200)

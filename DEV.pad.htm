@@ -5,7 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="color-scheme" content="light dark" />
 <title>DEV.pad.htm</title>
+<script type="importmap">
+{
+  "imports": {
+    "web-native/": "/web-native/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/web-native/shadcn/themes/neutral.css" />
+<link rel="stylesheet" href="/web-native/shadcn/styles/base-nova.css" />
 <link rel="stylesheet" href="./pad.css" />
+<script type="module">
+  import "web-native/shadcn/define.js"
+</script>
 <script type="module" src="./pad.browser.js"></script>
 
 <pad-document>

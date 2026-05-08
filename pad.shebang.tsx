@@ -223,6 +223,14 @@ const ROOT_BROWSER_ASSETS = new Set([
   "pad.browser.js",
   "pad.css",
 ])
+const WEB_NATIVE_BROWSER_PREFIX = "/web-native/"
+const WEB_NATIVE_CDN_BASE =
+  "https://cdn.jsdelivr.net/gh/subtleGradient/web-native@web-native-shadcn-components/src/"
+const WEB_NATIVE_WATCH_ASSETS = [
+  "shadcn/define.js",
+  "shadcn/styles/base-nova.css",
+  "shadcn/themes/neutral.css",
+]
 const PAD_BROWSER_MODULES = [
   "browser/dom.js",
   "browser/editing.js",
@@ -239,6 +247,13 @@ function die(message: string): never {
 
 function packageRoot() {
   return nodePath.dirname(nodeUrl.fileURLToPath(import.meta.url))
+}
+
+function webNativeSourceRoot() {
+  return nodePath.resolve(
+    process.env.PAD_WEB_NATIVE_ROOT ??
+      nodePath.resolve(packageRoot(), "../web-native/src"),
+  )
 }
 
 export function contentType(pathname: string) {
@@ -260,6 +275,86 @@ function packageBrowserModulePath(pathname: string) {
   const name = pathname.replace(/^\/+/, "")
   if (!PAD_BROWSER_MODULES.includes(name)) return undefined
   return nodePath.resolve(packageRoot(), name)
+}
+
+export function webNativeImportMapHtml() {
+  return `<script type="importmap">
+{
+  "imports": {
+    "web-native/": "${WEB_NATIVE_BROWSER_PREFIX}"
+  }
+}
+</script>`
+}
+
+export function webNativeStylesheetLinksHtml() {
+  return `<link rel="stylesheet" href="${WEB_NATIVE_BROWSER_PREFIX}shadcn/themes/neutral.css">
+<link rel="stylesheet" href="${WEB_NATIVE_BROWSER_PREFIX}shadcn/styles/base-nova.css">`
+}
+
+export function webNativeAssetRelativePath(pathname: string) {
+  if (!pathname.startsWith(WEB_NATIVE_BROWSER_PREFIX)) return undefined
+
+  let decoded: string
+  try {
+    decoded = decodeURIComponent(pathname)
+  } catch {
+    return undefined
+  }
+
+  if (!decoded.startsWith(WEB_NATIVE_BROWSER_PREFIX)) return undefined
+  const relativePath = nodePath.posix.normalize(
+    decoded.slice(WEB_NATIVE_BROWSER_PREFIX.length),
+  )
+
+  if (
+    !relativePath ||
+    relativePath === "." ||
+    relativePath === ".." ||
+    relativePath.startsWith("../") ||
+    nodePath.posix.isAbsolute(relativePath) ||
+    relativePath.includes("\0")
+  ) {
+    return undefined
+  }
+
+  return relativePath
+}
+
+function encodePathSegments(path: string) {
+  return path.split("/").map(encodeURIComponent).join("/")
+}
+
+export function webNativeCdnUrl(relativePath: string) {
+  return `${WEB_NATIVE_CDN_BASE}${encodePathSegments(relativePath)}`
+}
+
+function webNativeLocalAssetPath(relativePath: string) {
+  const root = webNativeSourceRoot()
+  const assetPath = nodePath.resolve(root, relativePath)
+  const insideRoot =
+    assetPath === root || assetPath.startsWith(`${root}${nodePath.sep}`)
+  return insideRoot ? assetPath : undefined
+}
+
+async function webNativeAssetResponse(pathname: string) {
+  const relativePath = webNativeAssetRelativePath(pathname)
+  if (!relativePath) return undefined
+
+  const localPath = webNativeLocalAssetPath(relativePath)
+  if (localPath) {
+    const file = Bun.file(localPath)
+    if (await file.exists()) {
+      return new Response(file, {
+        headers: {
+          "cache-control": "no-store",
+          "content-type": contentType(localPath),
+        },
+      })
+    }
+  }
+
+  return Response.redirect(webNativeCdnUrl(relativePath), 302)
 }
 
 export function stripShebang(source: string) {
@@ -368,7 +463,12 @@ export function canvasHtml(fileName: string) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>${escapedFileName}</title>
+${webNativeImportMapHtml()}
+${webNativeStylesheetLinksHtml()}
 <link rel="stylesheet" href="/canvas.css">
+<script type="module">
+  import "web-native/shadcn/define.js"
+</script>
 <script type="module" src="/canvas.browser.js"></script>
 
 <json-canvas-editor file-name="${escapedFileName}"></json-canvas-editor>
@@ -411,7 +511,7 @@ export class PadApplication {
     process.on("SIGINT", () => this.stop("Stopping PAD server."))
     process.on("SIGTERM", () => this.stop("Stopping PAD server."))
 
-    this.watchReloadFiles()
+    await this.watchReloadFiles()
 
     this.dependencies.logger.info(`${this.state.fileName}: ${localUrl}`)
     await this.dependencies.browser.open(localUrl)
@@ -439,6 +539,9 @@ export class PadApplication {
     if (url.pathname === "/favicon.ico") {
       return new Response(null, { status: 204 })
     }
+
+    const webNativeAsset = await webNativeAssetResponse(url.pathname)
+    if (webNativeAsset) return webNativeAsset
 
     const assetPath =
       packageAssetPath(url.pathname) ?? packageBrowserModulePath(url.pathname)
@@ -613,18 +716,25 @@ export class PadApplication {
     this.state.source = await this.dependencies.files.readText(this.state.padPath)
   }
 
-  private watchReloadFiles() {
+  private async watchReloadFiles() {
     const browserAssets =
       this.state.kind === "canvas"
         ? ["canvas.browser.js", "canvas.css"]
         : ["pad.browser.js", "pad.css", ...PAD_BROWSER_MODULES]
-    const paths = [
-      this.state.padPath,
-      ...browserAssets.map((asset) => nodePath.resolve(packageRoot(), asset)),
+    const paths: { path: string; optional: boolean }[] = [
+      { path: this.state.padPath, optional: false },
+      ...browserAssets.map((asset) => ({
+        path: nodePath.resolve(packageRoot(), asset),
+        optional: false,
+      })),
+      ...WEB_NATIVE_WATCH_ASSETS.map(webNativeLocalAssetPath)
+        .filter((path): path is string => Boolean(path))
+        .map((path) => ({ path, optional: true })),
     ]
 
-    for (const path of paths) {
+    for (const { path, optional } of paths) {
       try {
+        if (optional && !(await Bun.file(path).exists())) continue
         const handle = this.dependencies.watcher.watch(path, () => {
           this.queueReload(path)
         })
