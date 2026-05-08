@@ -3,11 +3,20 @@
 const SAVE_DELAY_MS = 220
 const MIN_ZOOM = -4
 const MAX_ZOOM = 1
+const MIN_NODE_SIZE = 50
 const DEFAULT_SIZE = {
   text: [250, 120],
   file: [400, 260],
   link: [420, 240],
   group: [520, 320],
+}
+const PRESET_COLORS = {
+  1: "#dc2626",
+  2: "#d97706",
+  3: "#16a34a",
+  4: "#0284c7",
+  5: "#7c3aed",
+  6: "#db2777",
 }
 const SIDES = new Set(["top", "right", "bottom", "left"])
 
@@ -42,6 +51,15 @@ function supportedNode(node) {
   )
 }
 
+function supportedEdge(edge) {
+  return (
+    isRecord(edge) &&
+    typeof edge.id === "string" &&
+    typeof edge.fromNode === "string" &&
+    typeof edge.toNode === "string"
+  )
+}
+
 function numberOr(value, fallback) {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback
 }
@@ -51,8 +69,8 @@ function nodeRect(node) {
   return {
     x: Math.round(numberOr(node.x, 0)),
     y: Math.round(numberOr(node.y, 0)),
-    width: Math.max(50, Math.round(numberOr(node.width, defaultWidth))),
-    height: Math.max(50, Math.round(numberOr(node.height, defaultHeight))),
+    width: Math.max(MIN_NODE_SIZE, Math.round(numberOr(node.width, defaultWidth))),
+    height: Math.max(MIN_NODE_SIZE, Math.round(numberOr(node.height, defaultHeight))),
   }
 }
 
@@ -72,6 +90,18 @@ function customColorValue(value) {
   if (typeof value !== "string" || value === "" || /^[1-6]$/.test(value)) return ""
   if (/[\n\r;]/.test(value)) return ""
   return value
+}
+
+function canvasColorValue(value) {
+  if (typeof value !== "string") return ""
+  return PRESET_COLORS[value] ?? customColorValue(value)
+}
+
+function cssStyleText(properties) {
+  return Object.entries(properties)
+    .filter(([, value]) => value)
+    .map(([name, value]) => `${name}:${value}`)
+    .join(";")
 }
 
 function makeId(prefix) {
@@ -152,7 +182,9 @@ class JsonCanvasEditor extends HTMLElement {
     this.documentModel = { nodes: [], edges: [] }
     this.nodeById = new Map()
     this.viewport = { x: 0, y: 0, zoom: 0 }
+    this.selectedKind = undefined
     this.selectedId = undefined
+    this.pendingEdgeFromNodeId = undefined
     this.drag = undefined
     this.socket = undefined
     this.saveTimer = undefined
@@ -167,7 +199,10 @@ class JsonCanvasEditor extends HTMLElement {
           <shadcn-button size="sm" variant="outline" data-action="file">File</shadcn-button>
           <shadcn-button size="sm" variant="outline" data-action="link">Link</shadcn-button>
           <shadcn-button size="sm" variant="outline" data-action="group">Group</shadcn-button>
+          <shadcn-button size="sm" variant="outline" data-action="edge">Edge</shadcn-button>
           <span class="json-canvas-spacer"></span>
+          <shadcn-button size="sm" variant="ghost" data-action="edge-label" title="Edit edge label">Label</shadcn-button>
+          <shadcn-button size="sm" variant="ghost" data-action="delete" title="Delete selection">Delete</shadcn-button>
           <shadcn-button size="sm" variant="ghost" data-action="zoom-out" title="Zoom out">-</shadcn-button>
           <shadcn-button size="sm" variant="ghost" data-action="zoom-reset" title="Reset zoom">100%</shadcn-button>
           <shadcn-button size="sm" variant="ghost" data-action="zoom-fit" title="Zoom to fit">Fit</shadcn-button>
@@ -201,6 +236,23 @@ class JsonCanvasEditor extends HTMLElement {
     this.surface.addEventListener("keydown", (event) => this.handleKeyDown(event))
     this.connect()
     this.render()
+  }
+
+  clearSelection() {
+    this.selectedKind = undefined
+    this.selectedId = undefined
+    this.pendingEdgeFromNodeId = undefined
+  }
+
+  selectNode(nodeId) {
+    this.selectedKind = "node"
+    this.selectedId = nodeId
+  }
+
+  selectEdge(edgeId) {
+    this.selectedKind = "edge"
+    this.selectedId = edgeId
+    this.pendingEdgeFromNodeId = undefined
   }
 
   setStatus(text) {
@@ -310,14 +362,15 @@ class JsonCanvasEditor extends HTMLElement {
       "json-canvas-node",
       `json-canvas-node-${node.type}`,
       colorClass(node.color),
-      this.selectedId === node.id ? "is-selected" : "",
+      this.selectedKind === "node" && this.selectedId === node.id ? "is-selected" : "",
+      this.pendingEdgeFromNodeId === node.id ? "is-edge-source" : "",
     ].filter(Boolean).join(" ")
-    element.style.cssText = [
-      `left:${rect.x}px`,
-      `top:${rect.y}px`,
-      `width:${rect.width}px`,
-      `height:${rect.height}px`,
-    ].filter(Boolean).join(";")
+    element.style.cssText = cssStyleText({
+      left: `${rect.x}px`,
+      top: `${rect.y}px`,
+      width: `${rect.width}px`,
+      height: `${rect.height}px`,
+    })
     const customColor = customColorValue(node.color)
     if (customColor) element.style.setProperty("--canvas-node-color", customColor)
 
@@ -374,35 +427,88 @@ class JsonCanvasEditor extends HTMLElement {
   renderEdges() {
     this.edgeLayer.replaceChildren()
     const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs")
-    defs.innerHTML = `
-      <marker id="json-canvas-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-        <path d="M 0 0 L 10 5 L 0 10 z"></path>
-      </marker>
-    `
     this.edgeLayer.append(defs)
 
+    let edgeIndex = 0
     for (const edge of edgesOf(this.documentModel)) {
-      if (!isRecord(edge)) continue
+      if (!supportedEdge(edge)) continue
       const fromNode = this.nodeById.get(edge.fromNode)
       const toNode = this.nodeById.get(edge.toNode)
       if (!fromNode || !toNode) continue
-      const pathInfo = bezierPath(fromNode, toNode, edge)
-      const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
-      path.setAttribute("d", pathInfo.d)
-      path.setAttribute("class", "json-canvas-edge")
-      if (edge.toEnd !== "none") path.setAttribute("marker-end", "url(#json-canvas-arrow)")
-      if (edge.fromEnd === "arrow") path.setAttribute("marker-start", "url(#json-canvas-arrow)")
-      this.edgeLayer.append(path)
+      const markerId = `json-canvas-arrow-${edgeIndex++}`
+      const markerColor = canvasColorValue(edge.color) || "var(--canvas-muted)"
+      const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker")
+      marker.setAttribute("id", markerId)
+      marker.setAttribute("viewBox", "0 0 10 10")
+      marker.setAttribute("refX", "9")
+      marker.setAttribute("refY", "5")
+      marker.setAttribute("markerWidth", "8")
+      marker.setAttribute("markerHeight", "8")
+      marker.setAttribute("orient", "auto-start-reverse")
+      const markerPath = document.createElementNS("http://www.w3.org/2000/svg", "path")
+      markerPath.setAttribute("d", "M 0 0 L 10 5 L 0 10 z")
+      markerPath.setAttribute("fill", markerColor)
+      marker.append(markerPath)
+      defs.append(marker)
 
-      if (typeof edge.label === "string" && edge.label.trim()) {
-        const text = document.createElementNS("http://www.w3.org/2000/svg", "text")
-        text.setAttribute("x", String(pathInfo.label.x))
-        text.setAttribute("y", String(pathInfo.label.y))
-        text.setAttribute("class", "json-canvas-edge-label")
-        text.textContent = edge.label
-        this.edgeLayer.append(text)
+      const pathInfo = bezierPath(fromNode, toNode, edge)
+      const isSelected = this.selectedKind === "edge" && this.selectedId === edge.id
+      const edgeColor = customColorValue(edge.color)
+      const edgeClasses = [
+        "json-canvas-edge",
+        colorClass(edge.color),
+        isSelected ? "is-selected" : "",
+      ].filter(Boolean).join(" ")
+      const path = this.createSvgPath(pathInfo.d, edge.id, edgeClasses)
+      if (edgeColor) path.style.setProperty("--canvas-edge-color", edgeColor)
+      if (edge.toEnd !== "none") path.setAttribute("marker-end", `url(#${markerId})`)
+      if (edge.fromEnd === "arrow") path.setAttribute("marker-start", `url(#${markerId})`)
+      const hitPath = this.createSvgPath(pathInfo.d, edge.id, "json-canvas-edge-hit")
+      this.edgeLayer.append(path)
+      this.edgeLayer.append(hitPath)
+
+      const shouldShowLabel = isSelected || (typeof edge.label === "string" && edge.label.trim())
+      if (shouldShowLabel) {
+        this.edgeLayer.append(this.createEdgeLabelElement(edge, pathInfo.label, isSelected))
       }
     }
+  }
+
+  createSvgPath(d, edgeId, className) {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
+    path.setAttribute("d", d)
+    path.setAttribute("class", className)
+    path.dataset.edgeId = edgeId
+    return path
+  }
+
+  createEdgeLabelElement(edge, point, isSelected) {
+    const width = 168
+    const height = 34
+    const label = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject")
+    label.setAttribute("x", String(point.x - width / 2))
+    label.setAttribute("y", String(point.y - height / 2))
+    label.setAttribute("width", String(width))
+    label.setAttribute("height", String(height))
+    label.setAttribute("class", [
+      "json-canvas-edge-label-box",
+      isSelected ? "is-selected" : "",
+    ].filter(Boolean).join(" "))
+    label.dataset.edgeId = edge.id
+
+    const input = document.createElement("input")
+    input.className = "json-canvas-edge-label-control"
+    input.value = typeof edge.label === "string" ? edge.label : ""
+    input.placeholder = "Label"
+    input.addEventListener("input", () => {
+      edge.label = input.value
+      this.queueSave()
+    })
+    input.addEventListener("focus", () => {
+      this.selectEdge(edge.id)
+    })
+    label.append(input)
+    return label
   }
 
   handleToolbarClick(event) {
@@ -412,6 +518,9 @@ class JsonCanvasEditor extends HTMLElement {
     if (!button) return
     const action = button.dataset.action
     if (["text", "file", "link", "group"].includes(action)) this.addNode(action)
+    if (action === "edge") this.startEdgeCommand()
+    if (action === "edge-label") this.editSelectedEdgeLabel()
+    if (action === "delete") this.removeSelected()
     if (action === "zoom-in") this.setZoom(this.viewport.zoom + 0.25)
     if (action === "zoom-out") this.setZoom(this.viewport.zoom - 0.25)
     if (action === "zoom-reset") this.setViewport({ ...this.viewport, zoom: 0 })
@@ -420,32 +529,66 @@ class JsonCanvasEditor extends HTMLElement {
   }
 
   handleDoubleClick(event) {
-    if (event.target.closest("json-canvas-node")) return
+    const target = event.target instanceof Element ? event.target : null
+    const edgeTarget = target?.closest("[data-edge-id]")
+    if (edgeTarget) {
+      this.editEdgeLabel(edgeTarget.dataset.edgeId)
+      return
+    }
+    if (target?.closest("json-canvas-node")) return
     const point = screenToCanvas(event.clientX, event.clientY, this.surface, this.viewport)
     this.addNode("text", point)
   }
 
   handlePointerDown(event) {
-    const resizeHandle = event.target.closest("[data-resize-handle]")
-    const nodeElement = event.target.closest("json-canvas-node")
+    const target = event.target instanceof Element ? event.target : null
+    const edgeTarget = target?.closest("[data-edge-id]")
+    const resizeHandle = target?.closest("[data-resize-handle]")
+    const nodeElement = target?.closest("json-canvas-node")
+
+    if (edgeTarget && !nodeElement) {
+      const edgeId = edgeTarget.dataset.edgeId
+      if (!edgeId) return
+      this.selectEdge(edgeId)
+      if (target?.matches("input")) {
+        return
+      }
+      event.preventDefault()
+      this.render()
+      return
+    }
 
     if (resizeHandle && nodeElement) {
       this.startResize(event, nodeElement.dataset.nodeId)
       return
     }
 
-    if (nodeElement && !event.target.matches("textarea,input,a")) {
+    if (this.pendingEdgeFromNodeId && nodeElement) {
+      this.finishEdgeCreation(nodeElement.dataset.nodeId)
+      event.preventDefault()
+      return
+    }
+
+    if (nodeElement && target?.matches("textarea,input,a")) {
+      this.selectNode(nodeElement.dataset.nodeId)
+      return
+    }
+
+    if (nodeElement) {
       this.startMove(event, nodeElement.dataset.nodeId)
       return
     }
 
-    if (!nodeElement) this.startPan(event)
+    if (!nodeElement) {
+      this.clearSelection()
+      this.startPan(event)
+    }
   }
 
   startMove(event, nodeId) {
     const node = this.nodeById.get(nodeId)
     if (!node) return
-    this.selectedId = nodeId
+    this.selectNode(nodeId)
     this.surface.focus({ preventScroll: true })
     const start = screenToCanvas(event.clientX, event.clientY, this.surface, this.viewport)
     const rect = nodeRect(node)
@@ -457,7 +600,7 @@ class JsonCanvasEditor extends HTMLElement {
   startResize(event, nodeId) {
     const node = this.nodeById.get(nodeId)
     if (!node) return
-    this.selectedId = nodeId
+    this.selectNode(nodeId)
     const start = screenToCanvas(event.clientX, event.clientY, this.surface, this.viewport)
     const rect = nodeRect(node)
     this.drag = { type: "resize", nodeId, start, rect }
@@ -466,7 +609,6 @@ class JsonCanvasEditor extends HTMLElement {
   }
 
   startPan(event) {
-    this.selectedId = undefined
     const start = { x: event.clientX, y: event.clientY }
     this.drag = { type: "pan", start, viewport: { ...this.viewport } }
     this.bindDrag(event)
@@ -513,8 +655,8 @@ class JsonCanvasEditor extends HTMLElement {
       node.x = this.drag.rect.x + dx
       node.y = this.drag.rect.y + dy
     } else {
-      node.width = Math.max(50, this.drag.rect.width + dx)
-      node.height = Math.max(50, this.drag.rect.height + dy)
+      node.width = Math.max(MIN_NODE_SIZE, this.drag.rect.width + dx)
+      node.height = Math.max(MIN_NODE_SIZE, this.drag.rect.height + dy)
     }
 
     this.render()
@@ -554,8 +696,20 @@ class JsonCanvasEditor extends HTMLElement {
       event.preventDefault()
     }
     if (event.key === "Escape") {
-      this.selectedId = undefined
+      this.clearSelection()
       this.render()
+    }
+    if (event.key === "e" && this.selectedKind === "node") {
+      this.startEdgeCommand()
+      event.preventDefault()
+    }
+    if (event.key === "Enter" && this.selectedKind === "edge") {
+      this.editSelectedEdgeLabel()
+      event.preventDefault()
+    }
+    if (event.key.startsWith("Arrow") && this.selectedKind === "node") {
+      this.nudgeSelectedNode(event.key, event.shiftKey ? 100 : 20)
+      event.preventDefault()
     }
   }
 
@@ -587,21 +741,105 @@ class JsonCanvasEditor extends HTMLElement {
     if (type === "link") node.url = prompt("URL") ?? "https://example.com"
     if (type === "group") node.label = "Group"
     nodesOf(this.documentModel).push(node)
-    this.selectedId = node.id
+    this.selectNode(node.id)
+    this.render()
+    this.queueSave()
+  }
+
+  startEdgeCommand() {
+    if (this.selectedKind !== "node" || !this.selectedId) {
+      this.setStatus("Select a card before creating an edge.")
+      return
+    }
+    this.pendingEdgeFromNodeId = this.selectedId
+    this.setStatus("Select another card to connect.")
+    this.render()
+  }
+
+  finishEdgeCreation(toNodeId) {
+    const fromNodeId = this.pendingEdgeFromNodeId
+    this.pendingEdgeFromNodeId = undefined
+    const fromNode = this.nodeById.get(fromNodeId)
+    const toNode = this.nodeById.get(toNodeId)
+    if (!fromNode || !toNode || fromNode.id === toNode.id) {
+      this.setStatus("Edge creation cancelled.")
+      this.render()
+      return
+    }
+
+    const sides = inferSides(fromNode, toNode)
+    const edge = {
+      id: makeId("edge"),
+      fromNode: fromNode.id,
+      fromSide: sides.fromSide,
+      fromEnd: "none",
+      toNode: toNode.id,
+      toSide: sides.toSide,
+      toEnd: "arrow",
+      label: "",
+    }
+    edgesOf(this.documentModel).push(edge)
+    this.selectEdge(edge.id)
+    this.setStatus("Edge created.")
+    this.render()
+    this.queueSave()
+  }
+
+  edgeById(edgeId) {
+    if (!edgeId) return undefined
+    return edgesOf(this.documentModel).find((edge) => supportedEdge(edge) && edge.id === edgeId)
+  }
+
+  editSelectedEdgeLabel() {
+    if (this.selectedKind !== "edge") {
+      this.setStatus("Select an edge before editing its label.")
+      return
+    }
+    this.editEdgeLabel(this.selectedId)
+  }
+
+  editEdgeLabel(edgeId) {
+    const edge = this.edgeById(edgeId)
+    if (!edge) return
+    const nextLabel = prompt("Edge label", typeof edge.label === "string" ? edge.label : "")
+    if (nextLabel === null) return
+    edge.label = nextLabel
+    this.selectEdge(edge.id)
+    this.render()
+    this.queueSave()
+  }
+
+  nudgeSelectedNode(key, distance) {
+    const node = this.nodeById.get(this.selectedId)
+    if (!node) return
+    if (key === "ArrowLeft") node.x = nodeRect(node).x - distance
+    if (key === "ArrowRight") node.x = nodeRect(node).x + distance
+    if (key === "ArrowUp") node.y = nodeRect(node).y - distance
+    if (key === "ArrowDown") node.y = nodeRect(node).y + distance
     this.render()
     this.queueSave()
   }
 
   removeSelected() {
-    const nodeId = this.selectedId
-    if (!nodeId) return
+    const selectedId = this.selectedId
+    if (!selectedId) return
+    if (this.selectedKind === "edge") {
+      this.documentModel.edges = edgesOf(this.documentModel).filter(
+        (edge) => !(supportedEdge(edge) && edge.id === selectedId),
+      )
+      this.clearSelection()
+      this.render()
+      this.queueSave()
+      return
+    }
+    const nodeId = selectedId
     this.documentModel.nodes = nodesOf(this.documentModel).filter(
       (node) => !(isRecord(node) && node.id === nodeId),
     )
     this.documentModel.edges = edgesOf(this.documentModel).filter(
       (edge) => !(isRecord(edge) && (edge.fromNode === nodeId || edge.toNode === nodeId)),
     )
-    this.selectedId = undefined
+    this.clearSelection()
     this.render()
     this.queueSave()
   }

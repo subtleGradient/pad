@@ -57,6 +57,7 @@ shadcn-button {
   align-items: center;
   gap: 0.35rem;
   min-width: 0;
+  overflow-x: auto;
   border-bottom: 1px solid var(--canvas-line);
   padding: 0.5rem;
   background: color-mix(in srgb, var(--canvas-bg), white 45%);
@@ -124,23 +125,54 @@ shadcn-button {
 
 .json-canvas-edge {
   fill: none;
-  stroke: var(--canvas-muted);
+  stroke: var(--canvas-edge-color, var(--canvas-muted));
   stroke-linecap: round;
   stroke-width: 2;
+  pointer-events: none;
 }
 
-.json-canvas-edges marker path {
-  fill: var(--canvas-muted);
+.json-canvas-edge.is-selected {
+  stroke: var(--canvas-accent);
+  stroke-width: 3;
 }
 
-.json-canvas-edge-label {
-  paint-order: stroke;
-  fill: var(--canvas-ink);
-  stroke: var(--canvas-bg);
-  stroke-linejoin: round;
-  stroke-width: 5px;
-  font-size: 13px;
-  text-anchor: middle;
+.json-canvas-edge-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-linecap: round;
+  stroke-width: 18;
+  cursor: pointer;
+  pointer-events: stroke;
+}
+
+.json-canvas-edge-label-box {
+  overflow: visible;
+  pointer-events: auto;
+}
+
+.json-canvas-edge-label-control {
+  width: 100%;
+  height: 1.9rem;
+  border: 1px solid var(--canvas-line);
+  border-radius: 999px;
+  padding: 0 0.65rem;
+  background: color-mix(in srgb, var(--canvas-bg), white 55%);
+  color: var(--canvas-ink);
+  font: inherit;
+  font-size: 12px;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+
+.json-canvas-edge-label-box:not(.is-selected) .json-canvas-edge-label-control {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--canvas-bg), transparent 10%);
+  color: var(--canvas-muted);
+}
+
+.json-canvas-edge-label-control:focus {
+  border-color: var(--canvas-accent);
+  outline: none;
 }
 
 .json-canvas-node {
@@ -158,6 +190,11 @@ shadcn-button {
 .json-canvas-node.is-selected {
   outline: 2px solid var(--canvas-accent);
   outline-offset: 2px;
+}
+
+.json-canvas-node.is-edge-source {
+  outline: 2px dashed var(--canvas-accent);
+  outline-offset: 5px;
 }
 
 .json-canvas-node-group {
@@ -260,26 +297,32 @@ json-canvas-status {
 
 .canvas-color-1 {
   --canvas-node-color: #dc2626;
+  --canvas-edge-color: #dc2626;
 }
 
 .canvas-color-2 {
   --canvas-node-color: #d97706;
+  --canvas-edge-color: #d97706;
 }
 
 .canvas-color-3 {
   --canvas-node-color: #16a34a;
+  --canvas-edge-color: #16a34a;
 }
 
 .canvas-color-4 {
   --canvas-node-color: #0284c7;
+  --canvas-edge-color: #0284c7;
 }
 
 .canvas-color-5 {
   --canvas-node-color: #7c3aed;
+  --canvas-edge-color: #7c3aed;
 }
 
 .canvas-color-6 {
   --canvas-node-color: #db2777;
+  --canvas-edge-color: #db2777;
 }
 
 @media (prefers-color-scheme: dark) {

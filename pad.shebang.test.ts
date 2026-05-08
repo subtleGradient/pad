@@ -535,6 +535,111 @@ describe("JSON Canvas document support", () => {
     expect(serialized.endsWith("\n")).toBe(true)
   })
 
+  test("round-trips rich JSON Canvas fixtures without flattening known or future records", () => {
+    const fixture = {
+      app: "jsoncanvas",
+      pluginState: { keep: true },
+      nodes: [
+        {
+          id: "text-1",
+          type: "text",
+          x: 0.2,
+          y: 1.8,
+          width: 249.6,
+          height: 60.2,
+          color: "1",
+          text: "Hello [[Note]]",
+          nodeExtra: { survives: true },
+        },
+        {
+          id: "file-1",
+          type: "file",
+          x: 320,
+          y: 0,
+          width: 400,
+          height: 400,
+          file: "Folder/Note.md",
+          subpath: "#Heading",
+        },
+        {
+          id: "link-1",
+          type: "link",
+          x: 0,
+          y: 480,
+          width: 640,
+          height: 360,
+          url: "https://example.com",
+        },
+        {
+          id: "group-1",
+          type: "group",
+          x: -40,
+          y: -40,
+          width: 900,
+          height: 600,
+          label: "Scope",
+          background: "Images/background.png",
+          backgroundStyle: "cover",
+        },
+        {
+          id: "future-1",
+          type: "future",
+          x: 12.6,
+          y: 18.4,
+          future: ["kept"],
+        },
+      ],
+      edges: [
+        {
+          id: "edge-1",
+          fromNode: "text-1",
+          fromSide: "right",
+          fromEnd: "none",
+          toNode: "file-1",
+          toSide: "left",
+          toEnd: "arrow",
+          color: "2",
+          label: "Explains",
+          edgeExtra: null,
+        },
+        {
+          id: "future-edge",
+          fromNode: "missing",
+          toNode: "text-1",
+          customFutureField: true,
+        },
+      ],
+    }
+
+    const parsed = parseJsonCanvasSource(JSON.stringify(fixture))
+    const serialized = serializeJsonCanvasDocument(parsed.document)
+
+    expect(JSON.parse(serialized)).toEqual({
+      app: "jsoncanvas",
+      pluginState: { keep: true },
+      nodes: [
+        {
+          ...fixture.nodes[0],
+          x: 0,
+          y: 2,
+          width: 250,
+          height: 60,
+        },
+        fixture.nodes[1],
+        fixture.nodes[2],
+        fixture.nodes[3],
+        {
+          ...fixture.nodes[4],
+          x: 13,
+          y: 18,
+        },
+      ],
+      edges: fixture.edges,
+    })
+    expect(serialized).toContain('\n\t\t\t"label": "Explains"')
+    expect(serialized.endsWith("\n")).toBe(true)
+  })
+
   test("generates a canvas browser shell without embedding source JSON", () => {
     const html = canvasHtml("diagram.canvas")
 

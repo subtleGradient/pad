@@ -20,6 +20,28 @@ The shipped first slice should support:
 - Pan, zoom, fit, create, move, resize, delete, and autosave.
 - Toolbar/control composition through generic `web-native` custom elements when they are available.
 
+## Implementation Status
+
+Landed in PAD:
+
+- `.canvas` is a first-class `pad` document kind behind the existing package bin.
+- The local Bun runner opens `.canvas` files in a browser without modifying the JSON file with a shebang.
+- JSON Canvas load/save is canonical tab-indented JSON with root, node, and edge unknown-field preservation.
+- Text, file, link, and group nodes render as DOM custom elements.
+- Text cards and group labels are editable directly in the canvas.
+- Nodes support create, select, move, resize, delete, autosave, and keyboard nudging.
+- SVG edges render with inferred sides, arrowheads, labels, edge colors, selection hit paths, delete support, and editable labels.
+- The Edge tool creates a directed edge from the selected card to the next selected card.
+- Canvas HTML loads generic controls through the `web-native/` import map with local sibling-source serving and jsDelivr fallback.
+- Golden coverage now includes rich JSON Canvas fixtures with text/file/link/group nodes, future node records, labeled edges, and unresolved future edges.
+
+Remaining later slices:
+
+- Edge endpoint drag/reconnection.
+- File/link/group property menus.
+- Clipboard fragments, undo/redo snapshots, and multi-selection.
+- Host adapters for Markdown rendering, file previews, search, backlinks, rename propagation, embedding, and export.
+
 ## Branch Mining
 
 `pad-oc` is useful for its direction, not for a wholesale merge. It adds a modular browser runtime, document-kind thinking, editable-state gating, and custom-element composition. It also pulls in OpenCode/chat concerns and `@opencode-ai/sdk`, which are unrelated to `.canvas` and make the single-command canvas package heavier.
