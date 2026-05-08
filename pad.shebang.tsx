@@ -788,15 +788,29 @@ export class PadApplication {
     this.state.reloadPaths.clear()
     if (this.state.stopping || paths.length === 0) return
 
-    let shouldReload = paths.some((path) => path !== this.state.padPath)
+    const nonSourceChanged = paths.some((path) => path !== this.state.padPath)
+    let sourceChanged = false
 
     if (paths.includes(this.state.padPath)) {
       const previousSource = this.state.source
       await this.loadSourceFromDisk()
-      shouldReload ||= this.state.source !== previousSource
+      sourceChanged = this.state.source !== previousSource
     }
 
-    if (!shouldReload) return
+    if (!sourceChanged && !nonSourceChanged) return
+
+    if (this.state.kind === "canvas" && sourceChanged && !nonSourceChanged) {
+      const parsed = parseJsonCanvasSource(this.state.source)
+      this.state.broadcast({
+        type: "canvas-updated",
+        kind: "canvas",
+        fileName: this.state.fileName,
+        document: parsed.document,
+        parseError: parsed.error,
+        paths: paths.map((path) => nodePath.basename(path)),
+      })
+      return
+    }
 
     this.state.broadcast({
       type: "reload",

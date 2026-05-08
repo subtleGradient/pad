@@ -1285,6 +1285,97 @@ describe("PadApplication unit runtime", () => {
     expect(sent.map((text) => JSON.parse(text).type)).toEqual(["ready", "saved"])
   })
 
+  test("broadcasts parsed Canvas updates when the watched Canvas file changes on disk", async () => {
+    const harness = await createPadHarness({
+      path: unitCanvasPath,
+      source: unitCanvasSource,
+    })
+    const client = new ClientState("client-1", new Date("2026-04-30T12:00:00Z"))
+    const { socket, sent } = makeSocket(client)
+    const externallyEditedSource = serializeJsonCanvasDocument({
+      app: "kept",
+      nodes: [
+        {
+          id: "n1",
+          type: "text",
+          x: 20,
+          y: 30,
+          width: 250,
+          height: 60,
+          text: "External edit",
+          unknown: true,
+        },
+      ],
+      edges: [],
+    })
+
+    harness.websocket.open(socket)
+    harness.setSource(externallyEditedSource)
+    harness.triggerWatch("unit.canvas")
+    await Bun.sleep(75)
+
+    expect(JSON.parse(sent.at(-1) ?? "{}")).toEqual({
+      type: "canvas-updated",
+      kind: "canvas",
+      fileName: "unit.canvas",
+      document: {
+        app: "kept",
+        nodes: [
+          {
+            id: "n1",
+            type: "text",
+            x: 20,
+            y: 30,
+            width: 250,
+            height: 60,
+            text: "External edit",
+            unknown: true,
+          },
+        ],
+        edges: [],
+      },
+      paths: ["unit.canvas"],
+    })
+    expect(harness.app.state.source).toBe(externallyEditedSource)
+  })
+
+  test("does not rebroadcast Canvas updates for its own Canvas writes", async () => {
+    const harness = await createPadHarness({
+      path: unitCanvasPath,
+      source: unitCanvasSource,
+      dates: [new Date("2026-04-30T12:45:00.000Z")],
+    })
+    const client = new ClientState("client-1", new Date("2026-04-30T12:00:00Z"))
+    const { socket, sent } = makeSocket(client)
+
+    harness.websocket.open(socket)
+    await harness.websocket.message(
+      socket,
+      JSON.stringify({
+        type: "canvas",
+        document: {
+          app: "kept",
+          nodes: [
+            {
+              id: "n1",
+              type: "text",
+              x: 40,
+              y: 50,
+              width: 250,
+              height: 60,
+              text: "Own write",
+            },
+          ],
+          edges: [],
+        },
+      }),
+    )
+    harness.triggerWatch("unit.canvas")
+    await Bun.sleep(75)
+
+    expect(sent.map((text) => JSON.parse(text).type)).toEqual(["ready", "saved"])
+  })
+
   test("broadcasts reload when watched browser assets change", async () => {
     const harness = await createPadHarness()
     const client = new ClientState("client-1", new Date("2026-04-30T12:00:00Z"))

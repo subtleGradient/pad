@@ -87,18 +87,19 @@ function useCanvasSocket({
         return
       }
 
-      if (message.type === "ready" && message.kind === "canvas") {
+      if (
+        (message.type === "ready" || message.type === "canvas-updated") &&
+        message.kind === "canvas"
+      ) {
         const nextDocument = isRecord(message.document)
           ? message.document
           : createEmptyDocument()
+        window.clearTimeout(saveTimerRef.current)
         documentRef.current = nextDocument
         setDocumentModel(nextDocument)
         setFileName(message.fileName ?? "canvas")
-        setStatus(
-          message.parseError
-            ? `Loaded empty canvas: ${message.parseError}`
-            : "Editable. Changes autosave.",
-        )
+        const action = message.type === "canvas-updated" ? "Updated from disk" : "Editable"
+        setStatus(message.parseError ? `${action}: ${message.parseError}` : `${action}. Changes autosave.`)
         if (editorRef.current) hydrateEditor(editorRef.current, nextDocument)
       }
 

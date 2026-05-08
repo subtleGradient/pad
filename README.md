@@ -27,6 +27,7 @@ The browser editor is tldraw-based:
 - JSON Canvas edges are projected into native tldraw arrows with arrow bindings.
 - The small PAD toolbar creates JSON Canvas node types directly.
 - Native tldraw edits autosave back to JSON Canvas.
+- External changes to the on-disk `.canvas` file update the open browser graph in realtime.
 - Unknown root, node, and edge fields are preserved when their records are still represented in the canvas.
 - Unsupported future node records and unresolved future edges remain in the file.
 
