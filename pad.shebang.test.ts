@@ -26,6 +26,7 @@ import {
   projectTldrawToJsonCanvas,
   textFromRichText,
 } from "./canvas.tldraw.adapter.js"
+import { canvasPreviewHtml } from "./canvas.preview.js"
 
 const BRANCH = "v0-dev"
 
@@ -667,6 +668,35 @@ describe("JSON Canvas document support", () => {
   test("generates tldraw browser runtime imports for Canvas pages", () => {
     expect(canvasTldrawRuntimeHtml()).toContain('"react": "https://esm.sh/react@19.2.1"')
     expect(canvasTldrawRuntimeHtml()).toContain('"tldraw": "https://esm.sh/tldraw@4.5.4?external=react,react-dom"')
+  })
+
+  test("generates static Canvas preview HTML for Quick Look", () => {
+    const preview = canvasPreviewHtml("diagram.canvas", {
+      nodes: [
+        { id: "a", type: "text", x: 0, y: 0, width: 250, height: 80, text: "Alpha" },
+        { id: "b", type: "file", x: 320, y: 0, width: 300, height: 180, file: "Note.md" },
+      ],
+      edges: [{ id: "edge-a", fromNode: "a", toNode: "b", label: "Explains" }],
+    })
+
+    expect(preview).toContain("<svg")
+    expect(preview).toContain("diagram.canvas")
+    expect(preview).toContain("Alpha")
+    expect(preview).toContain("Note.md")
+    expect(preview).toContain("Explains")
+    expect(preview).toContain("marker-arrow-end")
+    expect(preview).not.toContain("https://esm.sh")
+    expect(preview).not.toContain("WebSocket")
+  })
+
+  test("renders Canvas preview parse errors without source JSON", () => {
+    const preview = canvasPreviewHtml("broken.canvas", { nodes: [], edges: [] }, {
+      parseError: "Unexpected token",
+    })
+
+    expect(preview).toContain("Parse error: Unexpected token")
+    expect(preview).toContain("Empty JSON Canvas")
+    expect(preview).not.toContain('"nodes"')
   })
 })
 

@@ -2,6 +2,7 @@
 import { watch as watchFileSystem } from "node:fs"
 import nodePath from "node:path"
 import * as nodeUrl from "node:url"
+import { canvasPreviewHtml } from "./canvas.preview.js"
 
 export interface WebSocketData {
   client: ClientState
@@ -823,12 +824,28 @@ export async function run(
   args = process.argv.slice(2),
   dependencies = createDefaultPadDependencies(),
 ) {
+  const wantsCanvasPreviewHtml = args.includes("--canvas-preview-html")
   const padArg = args.find((arg) => !arg.startsWith("-"))
-  if (!padArg) die("Usage: pad ./file.pad.htm | ./file.canvas")
+  if (!padArg) {
+    die("Usage: pad [--canvas-preview-html] ./file.pad.htm | ./file.canvas")
+  }
 
   const padPath = nodePath.resolve(padArg)
-  if (!documentKindForPath(padPath)) {
+  const kind = documentKindForPath(padPath)
+  if (!kind) {
     die("PAD files must end with .pad.htm or .canvas")
+  }
+
+  if (wantsCanvasPreviewHtml) {
+    if (kind !== "canvas") die("--canvas-preview-html requires a .canvas file")
+    const source = await dependencies.files.readText(padPath)
+    const parsed = parseJsonCanvasSource(source)
+    console.log(
+      canvasPreviewHtml(nodePath.basename(padPath), parsed.document, {
+        parseError: parsed.error,
+      }),
+    )
+    return
   }
 
   const app = await PadApplication.create(padPath, dependencies)
