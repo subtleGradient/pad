@@ -100,7 +100,9 @@ function useCanvasSocket({
         setFileName(message.fileName ?? "canvas")
         const action = message.type === "canvas-updated" ? "Updated from disk" : "Editable"
         setStatus(message.parseError ? `${action}: ${message.parseError}` : `${action}. Changes autosave.`)
-        if (editorRef.current) hydrateEditor(editorRef.current, nextDocument)
+        if (editorRef.current) {
+          hydrateEditor(editorRef.current, nextDocument, message.type !== "canvas-updated")
+        }
       }
 
       if (message.type === "saved") {

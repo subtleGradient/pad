@@ -23,6 +23,18 @@ Default to using Bun instead of Node.js.
 
 Use `bun test` to run tests.
 
+For local dev testing, use `bun dev`. It runs the PAD dev server with `PAD_DEV=1`, so Bun automatically loads `.env` and the URL stays stable across restarts.
+
+Use `bun dev-canvas` to test the tldraw-backed JSON Canvas editor against `dev.canvas` with the same stable dev URL behavior.
+
+- Keep `.env` git ignored.
+- Set `PAD_PORT=4321` and `PAD_TOKEN=apptoken` in `.env` for the default stable dev URL.
+- The expected local dev URL is `http://localhost:4321/?t=apptoken`.
+- In `PAD_DEV=1`, the server should keep running after all browser clients disconnect.
+- Do not add dotenv; Bun loads `.env` automatically.
+- Use `PAD_NO_OPEN=1 bun dev` when testing the dev server without opening a browser.
+- Use `PAD_NO_OPEN=1 bun dev-canvas` when testing the canvas dev server without opening a browser.
+
 ```ts#index.test.ts
 import { test, expect } from "bun:test";
 

@@ -93,7 +93,7 @@ function getWebSocketHandlers(options: ServeOptions): WebSocketHandlers {
 }
 
 function makeRequest(path: string) {
-  return new Request(`http://127.0.0.1:1234${path}`)
+  return new Request(`http://localhost:1234${path}`)
 }
 
 function makeSocket(client: ClientState) {
@@ -116,6 +116,7 @@ async function createPadHarness({
   path = unitPadPath,
   readError,
   upgradeResult = true,
+  env,
 }: {
   ids?: string[]
   dates?: Date[]
@@ -123,6 +124,7 @@ async function createPadHarness({
   path?: string
   readError?: unknown
   upgradeResult?: boolean
+  env?: Record<string, string | undefined>
 } = {}) {
   let currentSource = source
   const writes: { path: string; text: string }[] = []
@@ -200,6 +202,7 @@ async function createPadHarness({
         }
       },
     },
+    env: env ?? {},
   }
 
   const app = await PadApplication.create(path, dependencies)
@@ -218,6 +221,7 @@ async function createPadHarness({
     fakeServer,
     fetch: getFetch(serveOptions),
     websocket: getWebSocketHandlers(serveOptions),
+    serveOptions,
     writes,
     logs,
     errors,
@@ -270,7 +274,7 @@ async function waitForServerUrl(
         const { done, value } = await reader.read()
         if (done) break
         output.stdout += decoder.decode(value)
-        const match = /http:\/\/127\.0\.0\.1:\d+\/\?t=[a-f0-9]+/.exec(
+        const match = /http:\/\/localhost:\d+\/\?t=[a-f0-9]+/.exec(
           output.stdout,
         )
         if (match && !resolved) {
@@ -886,6 +890,14 @@ describe("browser runtime", () => {
     expect(source).toContain("inferDarkMode: true")
   })
 
+  test("Canvas realtime updates preserve the user's viewport", async () => {
+    const source = await Bun.file("canvas.browser.js").text()
+
+    expect(source).toContain(
+      "hydrateEditor(editorRef.current, nextDocument, message.type !== \"canvas-updated\")",
+    )
+  })
+
   test("list normalization keeps one trailing blank item", async () => {
     const { normalizeTrailingEmptyItems } = await import("./browser/list.js")
     const items = ["Alpha", "", ""]
@@ -947,11 +959,26 @@ describe("PadApplication unit runtime", () => {
     })
 
     harness.websocket.close(socket)
+    expect(harness.app.state.idleTimer).toBeDefined()
     if (harness.app.state.idleTimer) clearTimeout(harness.app.state.idleTimer)
     client.send({ type: "after-close" })
 
     expect(harness.app.state.clients.has(client)).toBe(false)
     expect(sent).toHaveLength(1)
+  })
+
+  test("keeps the server running after all clients disconnect in dev mode", async () => {
+    const harness = await createPadHarness({ env: { PAD_DEV: "1" } })
+    const client = new ClientState("client-1", new Date("2026-04-30T12:00:00Z"))
+    const { socket } = makeSocket(client)
+
+    harness.websocket.open(socket)
+    harness.websocket.close(socket)
+
+    expect(harness.app.state.clients.size).toBe(0)
+    expect(harness.app.state.idleTimer).toBeUndefined()
+    expect(harness.app.state.stopping).toBe(false)
+    expect(harness.stopCalls).toEqual([])
   })
 
   test("saves body messages through injected files and broadcasts once", async () => {
@@ -1208,6 +1235,73 @@ describe("PadApplication unit runtime", () => {
     expect(harness.writes[0]?.text.startsWith("#!")).toBe(false)
   })
 
+  test("broadcasts canvas document changes to other connected clients", async () => {
+    const savedAt = new Date("2026-04-30T12:45:00.000Z")
+    const harness = await createPadHarness({
+      path: unitCanvasPath,
+      source: unitCanvasSource,
+      dates: [savedAt],
+    })
+    const sender = new ClientState("sender", new Date("2026-04-30T12:00:00Z"))
+    const observer = new ClientState(
+      "observer",
+      new Date("2026-04-30T12:01:00Z"),
+    )
+    const senderSocket = makeSocket(sender)
+    const observerSocket = makeSocket(observer)
+
+    harness.websocket.open(senderSocket.socket)
+    harness.websocket.open(observerSocket.socket)
+    await harness.websocket.message(
+      senderSocket.socket,
+      JSON.stringify({
+        type: "canvas",
+        document: {
+          nodes: [
+            {
+              id: "n1",
+              type: "text",
+              x: 10.6,
+              y: 20.4,
+              width: 250,
+              height: 80,
+              text: "Realtime",
+            },
+          ],
+          edges: [],
+        },
+      }),
+    )
+
+    expect(senderSocket.sent.map((text) => JSON.parse(text).type)).toEqual([
+      "ready",
+      "saved",
+    ])
+    expect(observerSocket.sent.map((text) => JSON.parse(text).type)).toEqual([
+      "ready",
+      "canvas-updated",
+    ])
+    expect(JSON.parse(observerSocket.sent.at(-1) ?? "{}")).toEqual({
+      type: "canvas-updated",
+      kind: "canvas",
+      fileName: "unit.canvas",
+      document: {
+        nodes: [
+          {
+            id: "n1",
+            type: "text",
+            x: 11,
+            y: 20,
+            width: 250,
+            height: 80,
+            text: "Realtime",
+          },
+        ],
+        edges: [],
+      },
+    })
+  })
+
   test("creates a missing Canvas file with an empty JSON Canvas document", async () => {
     const harness = await createPadHarness({
       path: unitCanvasPath,
@@ -1263,13 +1357,32 @@ describe("PadApplication unit runtime", () => {
   test("starts through injected dependencies and publishes the local URL", async () => {
     const harness = await createPadHarness()
 
+    expect(harness.serveOptions.port).toBe(0)
     expect(harness.openedUrls).toEqual([
-      "http://127.0.0.1:4321/?t=apptoken",
+      "http://localhost:4321/?t=apptoken",
     ])
     expect(harness.logs[0]).toBe(
-      "unit.pad.htm: http://127.0.0.1:4321/?t=apptoken",
+      "unit.pad.htm: http://localhost:4321/?t=apptoken",
     )
     expect(harness.stopCalls).toEqual([])
+  })
+
+  test("uses the stable dev URL only in PAD_DEV mode", async () => {
+    const normalHarness = await createPadHarness({
+      env: { PAD_TOKEN: "envtoken", PAD_PORT: "4321" },
+    })
+    const devHarness = await createPadHarness({
+      env: { PAD_DEV: "1", PAD_TOKEN: "envtoken", PAD_PORT: "4321" },
+    })
+
+    expect(normalHarness.serveOptions.port).toBe(0)
+    expect(normalHarness.openedUrls).toEqual([
+      "http://localhost:4321/?t=apptoken",
+    ])
+    expect(devHarness.serveOptions.port).toBe(4321)
+    expect(devHarness.openedUrls).toEqual([
+      "http://localhost:4321/?t=envtoken",
+    ])
   })
 
   test("watches PAD, browser JS, and CSS files for hot reload", async () => {

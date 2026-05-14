@@ -1,0 +1,53 @@
+{
+	"nodes": [
+		{
+			"id": "dev-note",
+			"type": "text",
+			"x": 258,
+			"y": 392,
+			"width": 320,
+			"height": 160,
+			"text": "PAD canvas dev"
+		},
+		{
+			"id": "node-04918e03ed13",
+			"type": "text",
+			"x": 813,
+			"y": 550,
+			"width": 250,
+			"height": 120,
+			"text": "New text"
+		},
+		{
+			"id": "tl-c2hhcGU6Rnl0LTZwSHlVbVRZZXdERzBKRmlM",
+			"type": "text",
+			"x": 729,
+			"y": 238,
+			"width": 154,
+			"height": 87,
+			"text": "lulz"
+		}
+	],
+	"edges": [
+		{
+			"id": "edge-c2hhcGU6bzNSLWJubGlrUEhINEFLem9jQmpH",
+			"fromNode": "dev-note",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "node-04918e03ed13",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-c2hhcGU6eFdyVmd3MlZJSERoVEs1M3J6OFBC",
+			"fromNode": "dev-note",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "tl-c2hhcGU6Rnl0LTZwSHlVbVRZZXdERzBKRmlM",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		}
+	]
+}

@@ -54,6 +54,7 @@ export interface PadDependencies {
   clock: Clock
   server: ServerFactory
   watcher: FileWatcher
+  env: Record<string, string | undefined>
 }
 
 class BunTextFileSystem implements TextFileSystem {
@@ -200,6 +201,13 @@ export class AppState {
     const text = JSON.stringify(message)
     for (const client of this.clients) client.sendText(text)
   }
+
+  broadcastExcept(excludedClient: ClientState, message: unknown) {
+    const text = JSON.stringify(message)
+    for (const client of this.clients) {
+      if (client !== excludedClient) client.sendText(text)
+    }
+  }
 }
 
 export function createDefaultPadDependencies(): PadDependencies {
@@ -211,10 +219,12 @@ export function createDefaultPadDependencies(): PadDependencies {
     clock: new SystemClock(),
     server: new BunServerFactory(),
     watcher: new NodeFileWatcher(),
+    env: process.env,
   }
 }
 
-const HOST = "127.0.0.1"
+const HOST = "localhost"
+const DEFAULT_DEV_PORT = 4321
 const FIRST_CLIENT_TIMEOUT_MS = 60_000
 const IDLE_SHUTDOWN_MS = 250
 const HOT_RELOAD_DELAY_MS = 50
@@ -258,6 +268,32 @@ function webNativeSourceRoot() {
     process.env.PAD_WEB_NATIVE_ROOT ??
       nodePath.resolve(packageRoot(), "../web-native/src"),
   )
+}
+
+function isDevMode(env: Record<string, string | undefined>) {
+  return env.PAD_DEV === "1"
+}
+
+export function tokenForEnvironment(
+  env: Record<string, string | undefined>,
+  ids: IdGenerator,
+) {
+  const envToken = isDevMode(env) ? env.PAD_TOKEN?.trim() : undefined
+  return envToken || ids.nextId().replaceAll("-", "")
+}
+
+export function portForEnvironment(env: Record<string, string | undefined>) {
+  if (!isDevMode(env)) return 0
+
+  const rawPort = env.PAD_PORT?.trim()
+  if (!rawPort) return DEFAULT_DEV_PORT
+
+  const port = Number(rawPort)
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error("PAD_PORT must be an integer from 1 to 65535.")
+  }
+
+  return port
 }
 
 export function contentType(pathname: string) {
@@ -510,14 +546,14 @@ export class PadApplication {
       source = serializeJsonCanvasDocument({ nodes: [], edges: [] })
       await dependencies.files.writeText(padPath, source)
     }
-    const token = dependencies.ids.nextId().replaceAll("-", "")
+    const token = tokenForEnvironment(dependencies.env, dependencies.ids)
     return new PadApplication(new AppState(padPath, source, token), dependencies)
   }
 
   async start() {
     this.state.server = this.dependencies.server.serve({
       hostname: HOST,
-      port: 0,
+      port: portForEnvironment(this.dependencies.env),
       fetch: (request, server) => this.handleFetch(request, server),
       websocket: {
         data: {} as WebSocketData,
@@ -546,7 +582,7 @@ export class PadApplication {
 
   private localUrl() {
     if (!this.state.server) throw new Error("PAD server has not started.")
-    return `http://${HOST}:${this.state.server.port}/?t=${this.state.token}`
+    return `http://${HOST}:${this.state.server.port}/?t=${encodeURIComponent(this.state.token)}`
   }
 
   private async handleFetch(request: Request, server: PadServer) {
@@ -642,7 +678,7 @@ export class PadApplication {
       }
 
       try {
-        await this.saveCanvasDocument(message.document)
+        await this.saveCanvasDocument(client, message.document)
       } catch (error) {
         client.send({
           type: "error",
@@ -694,6 +730,7 @@ export class PadApplication {
 
   private stopWhenIdle() {
     if (
+      isDevMode(this.dependencies.env) ||
       !this.state.hasHadClient ||
       this.state.clients.size > 0 ||
       this.state.stopping
@@ -724,7 +761,7 @@ export class PadApplication {
     })
   }
 
-  private async saveCanvasDocument(document: unknown) {
+  private async saveCanvasDocument(sourceClient: ClientState, document: unknown) {
     this.state.source = serializeJsonCanvasDocument(document)
     await this.dependencies.files.writeText(this.state.padPath, this.state.source)
     this.state.saveCount += 1
@@ -732,10 +769,18 @@ export class PadApplication {
     this.dependencies.logger.info(
       `[save ${this.state.saveCount}] ${this.state.fileName}`,
     )
-    this.state.broadcast({
+    sourceClient.send({
       type: "saved",
       savedAt,
       saveCount: this.state.saveCount,
+    })
+    const parsed = parseJsonCanvasSource(this.state.source)
+    this.state.broadcastExcept(sourceClient, {
+      type: "canvas-updated",
+      kind: "canvas",
+      fileName: this.state.fileName,
+      document: parsed.document,
+      parseError: parsed.error,
     })
   }
 
