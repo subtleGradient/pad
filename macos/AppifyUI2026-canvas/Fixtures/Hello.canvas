@@ -1,0 +1,15 @@
+{
+	"app": "pad-canvas-smoke",
+	"nodes": [
+		{
+			"id": "hello",
+			"type": "text",
+			"x": 0,
+			"y": 0,
+			"width": 280,
+			"height": 120,
+			"text": "Hello Canvas"
+		}
+	],
+	"edges": []
+}
