@@ -774,6 +774,25 @@ describe("JSON Canvas tldraw adapter", () => {
     expect(textFromRichText(projection.shapes[2]?.props.richText)).toBe("Explains")
   })
 
+  test("projects JSON Canvas text nodes with sans font and top-left text alignment", () => {
+    const projection = jsonCanvasToTldraw({
+      nodes: [
+        { id: "text-1", type: "text", x: 0, y: 0, width: 250, height: 80, text: "Alpha" },
+      ],
+      edges: [],
+    })
+
+    const textShape = projection.shapes.find(
+      (shape) => (shape.meta?.jsonCanvas as { nodeId?: string } | undefined)?.nodeId === "text-1",
+    )
+
+    expect(textShape?.props).toMatchObject({
+      font: "sans",
+      align: "start",
+      verticalAlign: "start",
+    })
+  })
+
   test("projects style.canvas preset node colors without index shifts; cyan uses closest tldraw light-blue and burple uses violet", () => {
     const colors = projectedColorByKindAndId(jsonCanvasToTldraw(styleCanvasColorFixture))
 
