@@ -1,0 +1,148 @@
+{
+  "nodes": [
+    {
+      "id": "gap-snapshot-20260518124354",
+      "type": "file",
+      "file": ".tasks/artifacts/gaps-snapshot-20260518124354.md",
+      "x": -520,
+      "y": -80,
+      "width": 420,
+      "height": 120
+    },
+    {
+      "id": "task-macos-native-menu-reconciliation",
+      "type": "file",
+      "file": ".tasks/task-macos-native-menu-reconciliation.md",
+      "x": 0,
+      "y": -80,
+      "width": 420,
+      "height": 120
+    },
+    {
+      "id": "task-macos-menu-test-seam",
+      "type": "file",
+      "file": ".tasks/task-macos-menu-test-seam.md",
+      "x": 520,
+      "y": -260,
+      "width": 420,
+      "height": 120
+    },
+    {
+      "id": "task-macos-menu-red-tests",
+      "type": "file",
+      "file": ".tasks/task-macos-menu-red-tests.md",
+      "x": 1040,
+      "y": -260,
+      "width": 420,
+      "height": 120
+    },
+    {
+      "id": "task-macos-menu-implementation",
+      "type": "file",
+      "file": ".tasks/task-macos-menu-implementation.md",
+      "x": 520,
+      "y": -80,
+      "width": 420,
+      "height": 120
+    },
+    {
+      "id": "task-macos-menu-green-implementation",
+      "type": "file",
+      "file": ".tasks/task-macos-menu-green-implementation.md",
+      "x": 1040,
+      "y": -80,
+      "width": 420,
+      "height": 120
+    },
+    {
+      "id": "task-macos-menu-refactor-verification",
+      "type": "file",
+      "file": ".tasks/task-macos-menu-refactor-verification.md",
+      "x": 520,
+      "y": 100,
+      "width": 420,
+      "height": 120
+    },
+    {
+      "id": "task-macos-menu-refactor-and-smoke",
+      "type": "file",
+      "file": ".tasks/task-macos-menu-refactor-and-smoke.md",
+      "x": 1040,
+      "y": 100,
+      "width": 420,
+      "height": 120
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-gap-to-high",
+      "fromNode": "gap-snapshot-20260518124354",
+      "fromSide": "right",
+      "toNode": "task-macos-native-menu-reconciliation",
+      "toSide": "left",
+      "label": "generated",
+      "fromEnd": "none",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "edge-test-seam-blocked-by-high",
+      "fromNode": "task-macos-menu-test-seam",
+      "fromSide": "left",
+      "toNode": "task-macos-native-menu-reconciliation",
+      "toSide": "right",
+      "label": "blocked_by",
+      "fromEnd": "none",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "edge-red-blocked-by-test-seam",
+      "fromNode": "task-macos-menu-red-tests",
+      "fromSide": "left",
+      "toNode": "task-macos-menu-test-seam",
+      "toSide": "right",
+      "label": "blocked_by",
+      "fromEnd": "none",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "edge-implementation-blocked-by-high",
+      "fromNode": "task-macos-menu-implementation",
+      "fromSide": "left",
+      "toNode": "task-macos-native-menu-reconciliation",
+      "toSide": "right",
+      "label": "blocked_by",
+      "fromEnd": "none",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "edge-green-blocked-by-implementation",
+      "fromNode": "task-macos-menu-green-implementation",
+      "fromSide": "left",
+      "toNode": "task-macos-menu-implementation",
+      "toSide": "right",
+      "label": "blocked_by",
+      "fromEnd": "none",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "edge-refactor-verification-blocked-by-high",
+      "fromNode": "task-macos-menu-refactor-verification",
+      "fromSide": "left",
+      "toNode": "task-macos-native-menu-reconciliation",
+      "toSide": "right",
+      "label": "blocked_by",
+      "fromEnd": "none",
+      "toEnd": "arrow"
+    },
+    {
+      "id": "edge-refactor-smoke-blocked-by-refactor-verification",
+      "fromNode": "task-macos-menu-refactor-and-smoke",
+      "fromSide": "left",
+      "toNode": "task-macos-menu-refactor-verification",
+      "toSide": "right",
+      "label": "blocked_by",
+      "fromEnd": "none",
+      "toEnd": "arrow"
+    }
+  ]
+}
