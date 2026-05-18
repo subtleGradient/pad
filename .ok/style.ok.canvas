@@ -1,0 +1,390 @@
+{
+	"nodes": [
+		{
+			"id": "style",
+			"type": "text",
+			"x": 0,
+			"y": 0,
+			"width": 220,
+			"height": 100,
+			"text": "style"
+		},
+		{
+			"id": "text-nodes",
+			"type": "text",
+			"x": 360,
+			"y": -140,
+			"width": 240,
+			"height": 100,
+			"text": "text nodes"
+		},
+		{
+			"id": "text-nodes-use-sans-font",
+			"type": "text",
+			"x": 760,
+			"y": -240,
+			"width": 280,
+			"height": 100,
+			"text": "sans font"
+		},
+		{
+			"id": "text-nodes-align-left-top",
+			"type": "text",
+			"x": 760,
+			"y": -80,
+			"width": 300,
+			"height": 120,
+			"text": "alignment"
+		},
+		{
+			"id": "text-align-left",
+			"type": "text",
+			"x": 1160,
+			"y": -120,
+			"width": 180,
+			"height": 80,
+			"text": "left"
+		},
+		{
+			"id": "text-align-top",
+			"type": "text",
+			"x": 1160,
+			"y": 0,
+			"width": 180,
+			"height": 80,
+			"text": "top"
+		},
+		{
+			"id": "colors",
+			"type": "text",
+			"x": 360,
+			"y": 180,
+			"width": 240,
+			"height": 100,
+			"text": "colors"
+		},
+		{
+			"id": "colors-match-json-canvas-spec",
+			"type": "text",
+			"x": 760,
+			"y": 120,
+			"width": 420,
+			"height": 120,
+			"text": "must match the JSON Canvas color spec"
+		},
+		{
+			"id": "color-default-neutral",
+			"type": "text",
+			"x": 1320,
+			"y": -120,
+			"width": 360,
+			"height": 100,
+			"text": "default\\n(no color) → neutral/default"
+		},
+		{
+			"id": "color-1-red",
+			"type": "text",
+			"x": 1320,
+			"y": 20,
+			"width": 300,
+			"height": 90,
+			"color": "1",
+			"text": "1 → red"
+		},
+		{
+			"id": "color-2-orange",
+			"type": "text",
+			"x": 1320,
+			"y": 150,
+			"width": 300,
+			"height": 90,
+			"color": "2",
+			"text": "2 → orange"
+		},
+		{
+			"id": "color-3-yellow-brown",
+			"type": "text",
+			"x": 1320,
+			"y": 280,
+			"width": 360,
+			"height": 90,
+			"color": "3",
+			"text": "3 → yellow/brown"
+		},
+		{
+			"id": "color-4-green",
+			"type": "text",
+			"x": 1320,
+			"y": 410,
+			"width": 300,
+			"height": 90,
+			"color": "4",
+			"text": "4 → green"
+		},
+		{
+			"id": "color-5-cyan",
+			"type": "text",
+			"x": 1320,
+			"y": 540,
+			"width": 300,
+			"height": 90,
+			"color": "5",
+			"text": "5 → cyan"
+		},
+		{
+			"id": "color-6-purple-burple",
+			"type": "text",
+			"x": 1320,
+			"y": 670,
+			"width": 360,
+			"height": 90,
+			"color": "6",
+			"text": "6 → purple / burple"
+		},
+		{
+			"id": "hex-colors-preserve-hue",
+			"type": "text",
+			"x": 1320,
+			"y": 820,
+			"width": 440,
+			"height": 110,
+			"color": "#2563EB",
+			"text": "hex colors preserve exact hue\\ne.g. #2563EB stays blue"
+		},
+		{
+			"id": "no-color-index-shift",
+			"type": "text",
+			"x": 760,
+			"y": 320,
+			"width": 440,
+			"height": 130,
+			"text": "import must not shift or remap palette indices into a different tldraw color"
+		},
+		{
+			"id": "node-edge-color-parity",
+			"type": "text",
+			"x": 760,
+			"y": 500,
+			"width": 440,
+			"height": 130,
+			"text": "node borders/fills and connected edges use the same JSON Canvas color source"
+		},
+		{
+			"id": "named-colors-are-not-presets",
+			"type": "text",
+			"x": 760,
+			"y": 680,
+			"width": 440,
+			"height": 150,
+			"text": "only preset strings \"1\" through \"6\" are JSON Canvas presets; other named colors are not coerced into another preset"
+		},
+		{
+			"id": "style-canvas-regression-fixture",
+			"type": "text",
+			"x": 760,
+			"y": 900,
+			"width": 560,
+			"height": 190,
+			"text": "regression fixture: loading /Users/tom/Developer/work/daily/2026/05/style.canvas must render each label with the same color it declares; yellow/brown must not become green, green must not become blue, cyan must not become purple, and purple/burple must not become red"
+		}
+	],
+	"edges": [
+		{
+			"id": "edge-style-text-nodes",
+			"fromNode": "style",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "text-nodes",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-text-nodes-sans-font",
+			"fromNode": "text-nodes",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "text-nodes-use-sans-font",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-text-nodes-alignment",
+			"fromNode": "text-nodes",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "text-nodes-align-left-top",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-alignment-left",
+			"fromNode": "text-nodes-align-left-top",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "text-align-left",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-alignment-top",
+			"fromNode": "text-nodes-align-left-top",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "text-align-top",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-style-colors",
+			"fromNode": "style",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "colors",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-colors-spec",
+			"fromNode": "colors",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "colors-match-json-canvas-spec",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-spec-default",
+			"fromNode": "colors-match-json-canvas-spec",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "color-default-neutral",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-spec-red",
+			"fromNode": "colors-match-json-canvas-spec",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "color-1-red",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"color": "1",
+			"label": ""
+		},
+		{
+			"id": "edge-spec-orange",
+			"fromNode": "colors-match-json-canvas-spec",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "color-2-orange",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"color": "2",
+			"label": ""
+		},
+		{
+			"id": "edge-spec-yellow-brown",
+			"fromNode": "colors-match-json-canvas-spec",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "color-3-yellow-brown",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"color": "3",
+			"label": ""
+		},
+		{
+			"id": "edge-spec-green",
+			"fromNode": "colors-match-json-canvas-spec",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "color-4-green",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"color": "4",
+			"label": ""
+		},
+		{
+			"id": "edge-spec-cyan",
+			"fromNode": "colors-match-json-canvas-spec",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "color-5-cyan",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"color": "5",
+			"label": ""
+		},
+		{
+			"id": "edge-spec-purple-burple",
+			"fromNode": "colors-match-json-canvas-spec",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "color-6-purple-burple",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"color": "6",
+			"label": ""
+		},
+		{
+			"id": "edge-spec-hex-blue",
+			"fromNode": "colors-match-json-canvas-spec",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "hex-colors-preserve-hue",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"color": "#2563EB",
+			"label": ""
+		},
+		{
+			"id": "edge-colors-no-index-shift",
+			"fromNode": "colors",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "no-color-index-shift",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-colors-node-edge-parity",
+			"fromNode": "colors",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "node-edge-color-parity",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-colors-named-colors",
+			"fromNode": "colors",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "named-colors-are-not-presets",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-colors-regression-fixture",
+			"fromNode": "colors",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "style-canvas-regression-fixture",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		}
+	]
+}
