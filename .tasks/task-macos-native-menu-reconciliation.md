@@ -1,11 +1,8 @@
 ---
 id: task-macos-native-menu-reconciliation
 level: high
-status: pending
-blocked_by:
-  - "task-macos-menu-test-seam"
-  - "task-macos-menu-implementation"
-  - "task-macos-menu-refactor-verification"
+status: done
+blocked_by: []
 expires_at: "2026-05-25T00:00:00Z"
 ok_refs:
   - ".ok/macos.ok.canvas#application-menus"
@@ -25,3 +22,7 @@ gap_refs:
 Bring the Canvas macOS app menu bar into alignment with `.ok/macos.ok.canvas` while preserving native platform expectations.
 
 Done when File, Edit, View, Window, and Help are exposed, File contains New Canvas, New Canvas uses Command-N, and standard native shortcuts are protected by executable coverage.
+
+## Completion evidence — 2026-05-18
+
+The red, green, and refactor/smoke low-level tasks are done. Evidence includes passing `swift test --filter MacOSMenuTests`, passing full `swift test`, and passing `./Scripts/smoke-ui.sh` from `macos/AppifyUI2026-canvas`.
