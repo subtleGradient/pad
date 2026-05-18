@@ -705,6 +705,46 @@ describe("JSON Canvas document support", () => {
 })
 
 describe("JSON Canvas tldraw adapter", () => {
+  const styleCanvasColorFixture = {
+    nodes: [
+      { id: "default", x: -651, y: -235, width: 250, height: 60, type: "text", text: "default" },
+      { id: "preset-1", x: -718, y: -149, width: 250, height: 60, color: "1", type: "text", text: "red" },
+      { id: "preset-2", x: -799, y: -55, width: 250, height: 60, color: "2", type: "text", text: "orange" },
+      { id: "preset-3", x: -837, y: 45, width: 250, height: 60, color: "3", type: "text", text: "yellow/brown" },
+      { id: "preset-4", x: -771, y: 160, width: 250, height: 60, color: "4", type: "text", text: "green" },
+      { id: "preset-5", x: -649, y: 258, width: 250, height: 60, color: "5", type: "text", text: "cyan" },
+      { id: "preset-6", x: -559, y: 339, width: 250, height: 60, color: "6", type: "text", text: "burple" },
+      { id: "hex-blue", x: -447, y: 435, width: 250, height: 60, color: "#0000ff", type: "text", text: "blue" },
+      { id: "legend", x: -60, y: 75, width: 250, height: 60, type: "text", text: "edge colors" },
+    ],
+    edges: [
+      { id: "edge-1", fromNode: "preset-1", fromSide: "right", toNode: "legend", toSide: "left", color: "1" },
+      { id: "edge-2", fromNode: "preset-2", fromSide: "right", toNode: "legend", toSide: "left", color: "2" },
+      { id: "edge-3", fromNode: "preset-3", fromSide: "right", toNode: "legend", toSide: "left", color: "3" },
+      { id: "edge-4", fromNode: "preset-4", fromSide: "right", toNode: "legend", toSide: "left", color: "4" },
+      { id: "edge-5", fromNode: "preset-5", fromSide: "right", toNode: "legend", toSide: "left", color: "5" },
+      { id: "edge-6", fromNode: "preset-6", fromSide: "right", toNode: "legend", toSide: "left", color: "6" },
+      { id: "edge-hex-blue", fromNode: "hex-blue", fromSide: "right", toNode: "legend", toSide: "left", color: "#0000ff" },
+      { id: "edge-default", fromNode: "default", fromSide: "right", toNode: "legend", toSide: "left" },
+    ],
+  }
+
+  function projectedColorByKindAndId(projection: ReturnType<typeof jsonCanvasToTldraw>) {
+    const colors = new Map<string, unknown>()
+    for (const shape of projection.shapes) {
+      const jsonCanvas = shape.meta?.jsonCanvas as
+        | { nodeId?: string; edgeId?: string }
+        | undefined
+      const key = jsonCanvas?.nodeId
+        ? `node:${jsonCanvas.nodeId}`
+        : jsonCanvas?.edgeId
+          ? `edge:${jsonCanvas.edgeId}`
+          : undefined
+      if (key) colors.set(key, shape.props.color)
+    }
+    return colors
+  }
+
   test("projects JSON Canvas nodes and edges into tldraw shapes and native arrow bindings", () => {
     const projection = jsonCanvasToTldraw({
       nodes: [
@@ -732,6 +772,37 @@ describe("JSON Canvas tldraw adapter", () => {
     expect(textFromRichText(projection.shapes[0]?.props.richText)).toBe("Alpha")
     expect(textFromRichText(projection.shapes[1]?.props.richText)).toBe("Note.md")
     expect(textFromRichText(projection.shapes[2]?.props.richText)).toBe("Explains")
+  })
+
+  test("projects style.canvas preset node colors without index shifts; cyan uses closest tldraw light-blue and burple uses violet", () => {
+    const colors = projectedColorByKindAndId(jsonCanvasToTldraw(styleCanvasColorFixture))
+
+    expect(Object.fromEntries([...colors].filter(([key]) => key.startsWith("node:")))).toEqual({
+      "node:default": "black",
+      "node:preset-1": "red",
+      "node:preset-2": "orange",
+      "node:preset-3": "yellow",
+      "node:preset-4": "green",
+      "node:preset-5": "light-blue",
+      "node:preset-6": "violet",
+      "node:hex-blue": "blue",
+      "node:legend": "black",
+    })
+  })
+
+  test("projects style.canvas preset edge colors without index shifts; #0000ff uses closest tldraw blue", () => {
+    const colors = projectedColorByKindAndId(jsonCanvasToTldraw(styleCanvasColorFixture))
+
+    expect(Object.fromEntries([...colors].filter(([key]) => key.startsWith("edge:")))).toEqual({
+      "edge:edge-1": "red",
+      "edge:edge-2": "orange",
+      "edge:edge-3": "yellow",
+      "edge:edge-4": "green",
+      "edge:edge-5": "light-blue",
+      "edge:edge-6": "violet",
+      "edge:edge-hex-blue": "blue",
+      "edge:edge-default": "black",
+    })
   })
 
   test("projects edited tldraw shapes back to JSON Canvas while preserving unknown records", () => {

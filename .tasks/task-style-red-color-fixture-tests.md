@@ -1,7 +1,7 @@
 ---
 id: task-style-red-color-fixture-tests
 level: low
-status: in-progress
+status: done
 blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
@@ -28,3 +28,9 @@ The tests should include the external regression fixture semantics from `/Users/
 ## Delegation
 
 - 2026-05-18: delegated to `@gan-red`; owned paths: `pad.shebang.test.ts` and test-only fixtures/helpers if needed.
+
+## RED evidence
+
+- 2026-05-18: Added in-repo `style.canvas` semantics as a fixture object in `pad.shebang.test.ts` and asserted node/edge color projection for default/no-color, presets `"1"` through `"6"`, and `#0000ff`.
+- Command: `bun test pad.shebang.test.ts --filter "style.canvas preset"`
+- Result: assertion-level RED failure as intended: preset `3` projects as `green` instead of expected `yellow`, `4` as `blue` instead of `green`, `5` as `violet` instead of closest tldraw `light-blue`, `6` as `red` instead of `violet`, and `#0000ff` as `black` instead of closest tldraw `blue` for both nodes and edges.
