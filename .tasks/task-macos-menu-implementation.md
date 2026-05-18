@@ -1,9 +1,8 @@
 ---
 id: task-macos-menu-implementation
 level: medium
-status: pending
-blocked_by:
-  - "task-macos-menu-green-implementation"
+status: done
+blocked_by: []
 expires_at: "2026-05-25T00:00:00Z"
 ok_refs:
   - ".ok/macos.ok.canvas#standard-top-level-menus"
@@ -18,3 +17,7 @@ gap_refs:
 # Implement native menu alignment
 
 Update the macOS app menu construction to satisfy the menu OK source with the smallest safe change after red tests exist.
+
+## Completion evidence — 2026-05-18
+
+`task-macos-menu-green-implementation` made `MacOSMenuTests` and the full Swift package test suite pass.
