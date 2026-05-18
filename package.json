@@ -6,6 +6,7 @@
     "pad": "./pad.shebang.tsx"
   },
   "scripts": {
+    "build:macos": "macos/AppifyUI2026-canvas/Scripts/build-app.sh",
     "check": "tsc --noEmit",
     "dev": "PAD_DEV=1 bun ./pad.shebang.tsx ./DEV.pad.htm",
     "dev-canvas": "PAD_DEV=1 bun ./pad.shebang.tsx ./dev.canvas",
