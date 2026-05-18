@@ -62,6 +62,42 @@
 			"width": 492,
 			"height": 120,
 			"text": "preserves native platform expectations"
+		},
+		{
+			"id": "tldraw-webview-interaction",
+			"type": "text",
+			"x": 420,
+			"y": 860,
+			"width": 360,
+			"height": 120,
+			"text": "## tldraw WebView Interaction\n\nThe macOS app lets users interact with tldraw inside the WebView."
+		},
+		{
+			"id": "webview-keyboard-events-supported",
+			"type": "text",
+			"x": 900,
+			"y": 780,
+			"width": 360,
+			"height": 100,
+			"text": "Keyboard interactions supported by tldraw pass through without being treated as invalid macOS input."
+		},
+		{
+			"id": "hold-spacebar-no-error-sounds",
+			"type": "text",
+			"x": 1380,
+			"y": 780,
+			"width": 360,
+			"height": 100,
+			"text": "Holding Spacebar in tldraw does not repeatedly trigger macOS error sounds."
+		},
+		{
+			"id": "keyboard-interactions-without-beeps",
+			"type": "text",
+			"x": 900,
+			"y": 980,
+			"width": 360,
+			"height": 100,
+			"text": "WebView keyboard interactions are quiet when the web app handles them."
 		}
 	],
 	"edges": [
@@ -124,6 +160,56 @@
 			"toSide": "left",
 			"toEnd": "arrow",
 			"label": ""
+		},
+		{
+			"id": "edge-macos-app-ok-tldraw-webview-interaction",
+			"fromNode": "macos-app-ok",
+			"fromSide": "right",
+			"toNode": "tldraw-webview-interaction",
+			"toSide": "left",
+			"label": "contains",
+			"fromEnd": "none",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "edge-tldraw-webview-interaction-webview-keyboard-events-supported",
+			"fromNode": "tldraw-webview-interaction",
+			"fromSide": "right",
+			"toNode": "webview-keyboard-events-supported",
+			"toSide": "left",
+			"label": "expects",
+			"fromEnd": "none",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "edge-webview-keyboard-events-supported-hold-spacebar-no-error-sounds",
+			"fromNode": "webview-keyboard-events-supported",
+			"fromSide": "right",
+			"toNode": "hold-spacebar-no-error-sounds",
+			"toSide": "left",
+			"label": "example",
+			"fromEnd": "none",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "edge-tldraw-webview-interaction-keyboard-interactions-without-beeps",
+			"fromNode": "tldraw-webview-interaction",
+			"fromSide": "right",
+			"toNode": "keyboard-interactions-without-beeps",
+			"toSide": "left",
+			"label": "expects",
+			"fromEnd": "none",
+			"toEnd": "arrow"
+		},
+		{
+			"id": "edge-native-expectations-keyboard-interactions-without-beeps",
+			"fromNode": "tl-c2hhcGU6S05hbnZ3WlBDdGZCQmdNR2RfaEJK",
+			"fromSide": "right",
+			"toNode": "keyboard-interactions-without-beeps",
+			"toSide": "left",
+			"label": "includes",
+			"fromEnd": "none",
+			"toEnd": "arrow"
 		}
 	]
 }
