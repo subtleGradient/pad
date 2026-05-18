@@ -2,7 +2,10 @@
 id: task-macos-native-menu-reconciliation
 level: high
 status: pending
-blocked_by: []
+blocked_by:
+  - "task-macos-menu-test-seam"
+  - "task-macos-menu-implementation"
+  - "task-macos-menu-refactor-verification"
 expires_at: "2026-05-25T00:00:00Z"
 ok_refs:
   - ".ok/macos.ok.canvas#application-menus"
