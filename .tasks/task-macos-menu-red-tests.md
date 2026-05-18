@@ -1,7 +1,7 @@
 ---
 id: task-macos-menu-red-tests
 level: low
-status: pending
+status: in-progress
 blocked_by: []
 expires_at: "2026-05-25T00:00:00Z"
 ok_refs:
