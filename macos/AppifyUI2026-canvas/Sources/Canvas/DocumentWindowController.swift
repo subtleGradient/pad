@@ -14,6 +14,7 @@ final class DocumentWindowController: NSWindowController {
     private var didLoadRunnerURL = false
     private var logHandle: FileHandle?
     private var closeObserver: NSObjectProtocol?
+    private var didHandleClose = false
 
     init(documentURL: URL) {
         self.documentURL = documentURL.standardizedFileURL
@@ -26,6 +27,8 @@ final class DocumentWindowController: NSWindowController {
         )
         window.title = documentURL.deletingPathExtension().lastPathComponent
         window.minSize = NSSize(width: 520, height: 360)
+        window.isReleasedWhenClosed = false
+        window.animationBehavior = .none
 
         super.init(window: window)
         closeObserver = NotificationCenter.default.addObserver(
@@ -33,9 +36,7 @@ final class DocumentWindowController: NSWindowController {
             object: window,
             queue: .main
         ) { [weak self] _ in
-            DispatchQueue.main.async { [weak self] in
-                self?.handleWindowWillClose()
-            }
+            self?.handleWindowWillClose()
         }
     }
 
@@ -51,8 +52,8 @@ final class DocumentWindowController: NSWindowController {
     }
 
     func showAndStart() {
-        showWindow(nil)
         window?.center()
+        showWindow(nil)
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
 
@@ -61,9 +62,20 @@ final class DocumentWindowController: NSWindowController {
     }
 
     private func handleWindowWillClose() {
+        guard !didHandleClose else {
+            return
+        }
+        didHandleClose = true
+
+        teardownWebView()
         stopRunner()
         closeLog()
-        onClose?()
+
+        let closeHandler = onClose
+        onClose = nil
+        DispatchQueue.main.async {
+            closeHandler?()
+        }
     }
 
     private func startRunner() {
@@ -176,6 +188,7 @@ final class DocumentWindowController: NSWindowController {
         }
 
         runnerProcess = nil
+        clearProcessPipes(process)
         process.standardOutput = nil
         process.standardError = nil
 
@@ -207,6 +220,8 @@ final class DocumentWindowController: NSWindowController {
             return
         }
         runnerProcess = nil
+        process.terminationHandler = nil
+        clearProcessPipes(process)
         process.standardOutput = nil
         process.standardError = nil
 
@@ -220,6 +235,15 @@ final class DocumentWindowController: NSWindowController {
             if process.isRunning {
                 kill(pid, SIGKILL)
             }
+        }
+    }
+
+    private func clearProcessPipes(_ process: Process) {
+        if let stdout = process.standardOutput as? Pipe {
+            stdout.fileHandleForReading.readabilityHandler = nil
+        }
+        if let stderr = process.standardError as? Pipe {
+            stderr.fileHandleForReading.readabilityHandler = nil
         }
     }
 
@@ -258,7 +282,7 @@ final class DocumentWindowController: NSWindowController {
     }
 
     private func showMessage(title: String, message: String, accent: NSColor) {
-        webView = nil
+        teardownWebView()
 
         let container = NSView()
         container.translatesAutoresizingMaskIntoConstraints = false
@@ -311,5 +335,17 @@ final class DocumentWindowController: NSWindowController {
         self.webView = webView
         window?.contentView = webView
         webView.load(URLRequest(url: url))
+    }
+
+    private func teardownWebView() {
+        guard let webView else {
+            return
+        }
+
+        webView.stopLoading()
+        webView.navigationDelegate = nil
+        webView.uiDelegate = nil
+        webView.removeFromSuperview()
+        self.webView = nil
     }
 }

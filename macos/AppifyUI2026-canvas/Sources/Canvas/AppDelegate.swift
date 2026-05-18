@@ -5,7 +5,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var documentControllers: [ObjectIdentifier: DocumentWindowController] = [:]
     private var didReceiveDocumentOpenEvent = false
     private var openPanel: NSOpenPanel?
-    private var openPanelWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureMainMenu()
@@ -33,7 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        true
+        false
     }
 
     @objc private func openDocumentFromMenu(_ sender: Any?) {
@@ -48,9 +47,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @MainActor
     private func showOpenPanel() {
-        if let openPanelWindow {
+        if let openPanel {
             activateApplication()
-            openPanelWindow.makeKeyAndOrderFront(nil)
+            openPanel.makeKeyAndOrderFront(nil)
             return
         }
 
@@ -63,39 +62,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let canvasType = UTType(filenameExtension: "canvas") {
             panel.allowedContentTypes = [canvasType]
         }
-
-        let ownerWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 520, height: 180),
-            styleMask: [.titled, .closable, .miniaturizable],
-            backing: .buffered,
-            defer: false
-        )
-        ownerWindow.title = "Open Canvas"
-        ownerWindow.contentView = openPanelContentView()
-        ownerWindow.center()
+        panel.isReleasedWhenClosed = false
+        panel.animationBehavior = .none
 
         openPanel = panel
-        openPanelWindow = ownerWindow
         activateApplication()
-        ownerWindow.makeKeyAndOrderFront(nil)
-        panel.beginSheetModal(for: ownerWindow) { [weak self, weak panel, weak ownerWindow] response in
-            DispatchQueue.main.async { [weak self, weak panel, weak ownerWindow] in
-                guard let self, let panel, let ownerWindow else {
+        panel.begin { [weak self, weak panel] response in
+            DispatchQueue.main.async { [weak self, weak panel] in
+                guard let self, let panel else {
                     return
                 }
+                let urls = panel.urls
                 self.openPanel = nil
-                self.openPanelWindow = nil
 
                 guard response == .OK else {
-                    ownerWindow.close()
+                    self.terminateIfIdle()
                     return
                 }
 
                 self.didReceiveDocumentOpenEvent = true
-                for url in panel.urls {
+                for url in urls {
                     self.openDocument(at: url)
                 }
-                ownerWindow.close()
+                self.terminateIfIdle()
             }
         }
     }
@@ -110,6 +99,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             }
             self?.documentControllers.removeValue(forKey: ObjectIdentifier(controller))
+            self?.terminateIfIdle()
         }
         controller.showAndStart()
     }
@@ -191,32 +181,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @MainActor
-    private func openPanelContentView() -> NSView {
-        let container = NSView()
-        container.translatesAutoresizingMaskIntoConstraints = false
+    private func terminateIfIdle() {
+        guard openPanel == nil, documentControllers.isEmpty else {
+            return
+        }
 
-        let titleLabel = NSTextField(labelWithString: "Open Canvas")
-        titleLabel.font = NSFont.systemFont(ofSize: 24, weight: .semibold)
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let messageLabel = NSTextField(labelWithString: "Choose a .canvas file to edit with PAD.")
-        messageLabel.font = NSFont.systemFont(ofSize: 14)
-        messageLabel.textColor = NSColor.secondaryLabelColor
-        messageLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let stack = NSStackView(views: [titleLabel, messageLabel])
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 8
-        stack.translatesAutoresizingMaskIntoConstraints = false
-
-        container.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 28),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -28),
-            stack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-        ])
-
-        return container
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.openPanel == nil, self.documentControllers.isEmpty else {
+                return
+            }
+            NSApp.terminate(nil)
+        }
     }
 }
