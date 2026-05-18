@@ -42,7 +42,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func newCanvasFromMenu(_ sender: Any?) {
-        // Creation flow is not implemented yet; keep the native menu item wired.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else {
+                return
+            }
+
+            let fileManager = FileManager.default
+            let directoryURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
+                ?? fileManager.homeDirectoryForCurrentUser
+            let canvasFileExtension = ".canvas"
+            let documentURL = self.uniqueNewCanvasURL(in: directoryURL, extensionWithDot: canvasFileExtension)
+            let initialCanvas = Data(#"{"nodes":[],"edges":[]}"#.utf8)
+
+            guard fileManager.createFile(atPath: documentURL.path, contents: initialCanvas) else {
+                self.showCreationError(for: documentURL)
+                return
+            }
+
+            self.didReceiveDocumentOpenEvent = true
+            self.openDocument(at: documentURL)
+        }
+    }
+
+    @objc private func closeCurrentWindowFromMenu(_ sender: Any?) {
+        DispatchQueue.main.async {
+            (NSApp.keyWindow ?? NSApp.mainWindow)?.performClose(sender)
+        }
     }
 
     @MainActor
@@ -135,6 +160,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             action: #selector(openDocumentFromMenu(_:)),
             keyEquivalent: "o"
         )
+        fileMenu.addItem(
+            withTitle: "Close",
+            action: #selector(closeCurrentWindowFromMenu(_:)),
+            keyEquivalent: "w"
+        )
 
         let editMenuItem = NSMenuItem()
         mainMenu.addItem(editMenuItem)
@@ -178,6 +208,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func activateApplication() {
         NSRunningApplication.current.activate(options: [.activateAllWindows])
         NSApp.activate()
+    }
+
+    @MainActor
+    private func uniqueNewCanvasURL(in directoryURL: URL, extensionWithDot: String) -> URL {
+        let baseName = "Untitled Canvas"
+        var candidate = directoryURL.appendingPathComponent("\(baseName)\(extensionWithDot)")
+        var suffix = 2
+
+        while FileManager.default.fileExists(atPath: candidate.path) {
+            candidate = directoryURL
+                .appendingPathComponent("\(baseName) \(suffix)\(extensionWithDot)")
+            suffix += 1
+        }
+
+        return candidate
+    }
+
+    @MainActor
+    private func showCreationError(for documentURL: URL) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Could Not Create Canvas"
+        alert.informativeText = "The app could not create \(documentURL.lastPathComponent)."
+        alert.runModal()
     }
 
     @MainActor

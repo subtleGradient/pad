@@ -15,10 +15,11 @@ const MIN_NODE_SIZE = 50
 const CANVAS_COLOR_TO_TLDRAW = {
   1: "red",
   2: "orange",
-  3: "green",
-  4: "blue",
-  5: "violet",
-  6: "red",
+  3: "yellow",
+  4: "green",
+  5: "light-blue",
+  6: "violet",
+  "#0000ff": "blue",
 }
 
 export function isRecord(value) {
