@@ -21,6 +21,16 @@ const CANVAS_COLOR_TO_TLDRAW = {
   6: "violet",
   "#0000ff": "blue",
 }
+const TEXT_NODE_PRESENTATION_PROPS = {
+  font: "sans",
+  align: "start",
+  verticalAlign: "start",
+}
+const DEFAULT_NODE_PRESENTATION_PROPS = {
+  font: "draw",
+  align: "middle",
+  verticalAlign: "middle",
+}
 
 export function isRecord(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -151,6 +161,10 @@ function tldrawColorForCanvasColor(value) {
   return typeof value === "string" ? (CANVAS_COLOR_TO_TLDRAW[value] ?? "black") : "black"
 }
 
+function presentationPropsForNode(node) {
+  return node.type === "text" ? TEXT_NODE_PRESENTATION_PROPS : DEFAULT_NODE_PRESENTATION_PROPS
+}
+
 function metaJsonCanvas(record) {
   const meta = isRecord(record?.meta) ? record.meta.jsonCanvas : undefined
   return isRecord(meta) ? meta : {}
@@ -158,6 +172,7 @@ function metaJsonCanvas(record) {
 
 function nodeShapeForNode(node) {
   const rect = nodeRect(node)
+  const presentationProps = presentationPropsForNode(node)
   return {
     id: nodeShapeId(node.id),
     type: "geo",
@@ -185,9 +200,7 @@ function nodeShapeForNode(node) {
       labelColor: "black",
       fill: node.type === "group" ? "semi" : "none",
       size: "m",
-      font: node.type === "text" ? "sans" : "draw",
-      align: node.type === "text" ? "start" : "middle",
-      verticalAlign: node.type === "text" ? "start" : "middle",
+      ...presentationProps,
       richText: richTextFromText(labelForNode(node)),
     },
   }
