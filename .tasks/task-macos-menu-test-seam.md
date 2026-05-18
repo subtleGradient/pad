@@ -1,9 +1,8 @@
 ---
 id: task-macos-menu-test-seam
 level: medium
-status: pending
-blocked_by:
-  - "task-macos-menu-red-tests"
+status: done
+blocked_by: []
 expires_at: "2026-05-25T00:00:00Z"
 ok_refs:
   - ".ok/macos.ok.canvas#standard-top-level-menus"
@@ -20,3 +19,7 @@ gap_refs:
 # Add tests-first coverage for menu expectations
 
 Create or expose a menu-building seam that can be asserted in Swift tests or deterministic UI smoke tests without relying on manual inspection.
+
+## Completion evidence — 2026-05-18
+
+`task-macos-menu-red-tests` added executable `MacOSMenuTests` coverage against menu declarations, and the Swift test target builds far enough to fail on the expected missing menu assertions. No additional seam task is needed before green implementation.

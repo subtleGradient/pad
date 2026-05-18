@@ -2,8 +2,7 @@
 id: task-macos-menu-green-implementation
 level: low
 status: pending
-blocked_by:
-  - "task-macos-menu-red-tests"
+blocked_by: []
 expires_at: "2026-05-25T00:00:00Z"
 ok_refs:
   - ".ok/macos.ok.canvas#standard-top-level-menus"
