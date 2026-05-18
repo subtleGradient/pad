@@ -1,9 +1,8 @@
 ---
 id: task-macos-green-new-canvas-and-close-implementation
 level: low
-status: pending
-blocked_by:
-  - task-macos-red-new-canvas-and-close-tests
+status: in-progress
+blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
   - .ok/macos.ok.canvas#file-menu-new-canvas
@@ -18,3 +17,7 @@ gap_refs:
 Assigned RGRTDD role: `@gan-green`.
 
 Make the native new-canvas and close tests pass with the smallest safe AppKit implementation.
+
+## Delegation
+
+- 2026-05-18: delegated to `@gan-green`; owned paths: `macos/AppifyUI2026-canvas/Sources/Canvas/AppDelegate.swift` and this task file.

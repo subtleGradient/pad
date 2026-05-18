@@ -1,9 +1,8 @@
 ---
 id: task-style-green-color-implementation
 level: low
-status: pending
-blocked_by:
-  - task-style-red-color-fixture-tests
+status: in-progress
+blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
   - .ok/style.ok.canvas#colors-match-json-canvas-spec
@@ -17,3 +16,7 @@ gap_refs:
 Assigned RGRTDD role: `@gan-green`.
 
 Make the red color tests pass with the smallest safe adapter change. Preserve JSON Canvas round-trip fields and keep existing Bun tests green.
+
+## Delegation
+
+- 2026-05-18: delegated to `@gan-green`; owned paths: `canvas.tldraw.adapter.js` and this task file.
