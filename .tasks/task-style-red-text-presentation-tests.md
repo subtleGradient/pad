@@ -1,7 +1,7 @@
 ---
 id: task-style-red-text-presentation-tests
 level: low
-status: pending
+status: in-progress
 blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
@@ -17,3 +17,7 @@ gap_refs:
 Assigned RGRTDD role: `@gan-red`.
 
 Add failing Bun tests that imported JSON Canvas text nodes project to sans font, left alignment, and top vertical alignment in tldraw props.
+
+## Delegation
+
+- 2026-05-18: delegated to `@gan-red`; owned paths: `pad.shebang.test.ts` and test-only fixtures/helpers if needed.
