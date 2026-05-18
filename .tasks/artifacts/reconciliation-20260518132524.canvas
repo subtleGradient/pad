@@ -1,0 +1,437 @@
+{
+	"nodes": [
+		{
+			"id": "gap-snapshot-20260518132524",
+			"type": "file",
+			"file": ".tasks/artifacts/gaps-snapshot-20260518132524.md",
+			"x": -560,
+			"y": -40,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-style-canvas-rendering-reconciliation",
+			"type": "file",
+			"file": ".tasks/task-style-canvas-rendering-reconciliation.md",
+			"x": 0,
+			"y": -430,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-style-adapter-color-semantics",
+			"type": "file",
+			"file": ".tasks/task-style-adapter-color-semantics.md",
+			"x": 520,
+			"y": -560,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-style-red-color-fixture-tests",
+			"type": "file",
+			"file": ".tasks/task-style-red-color-fixture-tests.md",
+			"x": 1040,
+			"y": -680,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-style-green-color-implementation",
+			"type": "file",
+			"file": ".tasks/task-style-green-color-implementation.md",
+			"x": 1040,
+			"y": -560,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-style-refactor-color-rendering",
+			"type": "file",
+			"file": ".tasks/task-style-refactor-color-rendering.md",
+			"x": 1040,
+			"y": -440,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-style-adapter-text-presentation",
+			"type": "file",
+			"file": ".tasks/task-style-adapter-text-presentation.md",
+			"x": 520,
+			"y": -260,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-style-red-text-presentation-tests",
+			"type": "file",
+			"file": ".tasks/task-style-red-text-presentation-tests.md",
+			"x": 1040,
+			"y": -320,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-style-green-text-presentation-implementation",
+			"type": "file",
+			"file": ".tasks/task-style-green-text-presentation-implementation.md",
+			"x": 1040,
+			"y": -200,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-style-refactor-text-presentation",
+			"type": "file",
+			"file": ".tasks/task-style-refactor-text-presentation.md",
+			"x": 1040,
+			"y": -80,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-macos-native-behavior-reconciliation",
+			"type": "file",
+			"file": ".tasks/task-macos-native-behavior-reconciliation.md",
+			"x": 0,
+			"y": 350,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-macos-window-and-new-canvas-behavior",
+			"type": "file",
+			"file": ".tasks/task-macos-window-and-new-canvas-behavior.md",
+			"x": 520,
+			"y": 240,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-macos-red-new-canvas-and-close-tests",
+			"type": "file",
+			"file": ".tasks/task-macos-red-new-canvas-and-close-tests.md",
+			"x": 1040,
+			"y": 120,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-macos-green-new-canvas-and-close-implementation",
+			"type": "file",
+			"file": ".tasks/task-macos-green-new-canvas-and-close-implementation.md",
+			"x": 1040,
+			"y": 240,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-macos-refactor-new-canvas-and-close-verification",
+			"type": "file",
+			"file": ".tasks/task-macos-refactor-new-canvas-and-close-verification.md",
+			"x": 1040,
+			"y": 360,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-macos-webview-keyboard-behavior",
+			"type": "file",
+			"file": ".tasks/task-macos-webview-keyboard-behavior.md",
+			"x": 520,
+			"y": 540,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-macos-red-webview-keyboard-tests",
+			"type": "file",
+			"file": ".tasks/task-macos-red-webview-keyboard-tests.md",
+			"x": 1040,
+			"y": 500,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-macos-green-webview-keyboard-implementation",
+			"type": "file",
+			"file": ".tasks/task-macos-green-webview-keyboard-implementation.md",
+			"x": 1040,
+			"y": 620,
+			"width": 420,
+			"height": 120
+		},
+		{
+			"id": "task-macos-refactor-webview-keyboard-verification",
+			"type": "file",
+			"file": ".tasks/task-macos-refactor-webview-keyboard-verification.md",
+			"x": 1040,
+			"y": 740,
+			"width": 420,
+			"height": 120
+		}
+	],
+	"edges": [
+		{
+			"id": "edge-gap-style-high",
+			"fromNode": "gap-snapshot-20260518132524",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "task-style-canvas-rendering-reconciliation",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "generated"
+		},
+		{
+			"id": "edge-gap-macos-high",
+			"fromNode": "gap-snapshot-20260518132524",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "task-macos-native-behavior-reconciliation",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": "generated"
+		},
+		{
+			"id": "edge-style-color-blocked-by-style-high",
+			"fromNode": "task-style-adapter-color-semantics",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-style-canvas-rendering-reconciliation",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-style-text-blocked-by-style-high",
+			"fromNode": "task-style-adapter-text-presentation",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-style-canvas-rendering-reconciliation",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-style-red-color-blocked-by-color-medium",
+			"fromNode": "task-style-red-color-fixture-tests",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-style-adapter-color-semantics",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-style-green-color-blocked-by-color-medium",
+			"fromNode": "task-style-green-color-implementation",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-style-adapter-color-semantics",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-style-green-color-blocked-by-red-color",
+			"fromNode": "task-style-green-color-implementation",
+			"fromSide": "top",
+			"fromEnd": "none",
+			"toNode": "task-style-red-color-fixture-tests",
+			"toSide": "bottom",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-style-refactor-color-blocked-by-color-medium",
+			"fromNode": "task-style-refactor-color-rendering",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-style-adapter-color-semantics",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-style-refactor-color-blocked-by-green-color",
+			"fromNode": "task-style-refactor-color-rendering",
+			"fromSide": "top",
+			"fromEnd": "none",
+			"toNode": "task-style-green-color-implementation",
+			"toSide": "bottom",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-style-red-text-blocked-by-text-medium",
+			"fromNode": "task-style-red-text-presentation-tests",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-style-adapter-text-presentation",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-style-green-text-blocked-by-text-medium",
+			"fromNode": "task-style-green-text-presentation-implementation",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-style-adapter-text-presentation",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-style-green-text-blocked-by-red-text",
+			"fromNode": "task-style-green-text-presentation-implementation",
+			"fromSide": "top",
+			"fromEnd": "none",
+			"toNode": "task-style-red-text-presentation-tests",
+			"toSide": "bottom",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-style-refactor-text-blocked-by-text-medium",
+			"fromNode": "task-style-refactor-text-presentation",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-style-adapter-text-presentation",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-style-refactor-text-blocked-by-green-text",
+			"fromNode": "task-style-refactor-text-presentation",
+			"fromSide": "top",
+			"fromEnd": "none",
+			"toNode": "task-style-green-text-presentation-implementation",
+			"toSide": "bottom",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-macos-window-blocked-by-macos-high",
+			"fromNode": "task-macos-window-and-new-canvas-behavior",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-macos-native-behavior-reconciliation",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-macos-keyboard-blocked-by-macos-high",
+			"fromNode": "task-macos-webview-keyboard-behavior",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-macos-native-behavior-reconciliation",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-macos-red-new-blocked-by-window-medium",
+			"fromNode": "task-macos-red-new-canvas-and-close-tests",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-macos-window-and-new-canvas-behavior",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-macos-green-new-blocked-by-window-medium",
+			"fromNode": "task-macos-green-new-canvas-and-close-implementation",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-macos-window-and-new-canvas-behavior",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-macos-green-new-blocked-by-red-new",
+			"fromNode": "task-macos-green-new-canvas-and-close-implementation",
+			"fromSide": "top",
+			"fromEnd": "none",
+			"toNode": "task-macos-red-new-canvas-and-close-tests",
+			"toSide": "bottom",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-macos-refactor-new-blocked-by-window-medium",
+			"fromNode": "task-macos-refactor-new-canvas-and-close-verification",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-macos-window-and-new-canvas-behavior",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-macos-refactor-new-blocked-by-green-new",
+			"fromNode": "task-macos-refactor-new-canvas-and-close-verification",
+			"fromSide": "top",
+			"fromEnd": "none",
+			"toNode": "task-macos-green-new-canvas-and-close-implementation",
+			"toSide": "bottom",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-macos-red-webview-blocked-by-keyboard-medium",
+			"fromNode": "task-macos-red-webview-keyboard-tests",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-macos-webview-keyboard-behavior",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-macos-green-webview-blocked-by-keyboard-medium",
+			"fromNode": "task-macos-green-webview-keyboard-implementation",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-macos-webview-keyboard-behavior",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-macos-green-webview-blocked-by-red-webview",
+			"fromNode": "task-macos-green-webview-keyboard-implementation",
+			"fromSide": "top",
+			"fromEnd": "none",
+			"toNode": "task-macos-red-webview-keyboard-tests",
+			"toSide": "bottom",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-macos-refactor-webview-blocked-by-keyboard-medium",
+			"fromNode": "task-macos-refactor-webview-keyboard-verification",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "task-macos-webview-keyboard-behavior",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		},
+		{
+			"id": "edge-macos-refactor-webview-blocked-by-green-webview",
+			"fromNode": "task-macos-refactor-webview-keyboard-verification",
+			"fromSide": "top",
+			"fromEnd": "none",
+			"toNode": "task-macos-green-webview-keyboard-implementation",
+			"toSide": "bottom",
+			"toEnd": "arrow",
+			"label": "blocked_by"
+		}
+	]
+}
