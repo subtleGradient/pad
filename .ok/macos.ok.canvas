@@ -1,0 +1,100 @@
+{
+  "nodes": [
+    {
+      "id": "macos-app-ok",
+      "type": "text",
+      "x": 0,
+      "y": 0,
+      "width": 320,
+      "height": 120,
+      "text": "# macOS App OK\n\nThe macOS app preserves native platform expectations."
+    },
+    {
+      "id": "application-menus",
+      "type": "text",
+      "x": 420,
+      "y": 0,
+      "width": 320,
+      "height": 120,
+      "text": "## Application Menus\n\nThe app menu bar exposes native macOS menus and shortcuts."
+    },
+    {
+      "id": "standard-top-level-menus",
+      "type": "text",
+      "x": 840,
+      "y": -240,
+      "width": 360,
+      "height": 120,
+      "text": "The macOS app exposes the standard top-level application menus: File, Edit, View, Window, and Help."
+    },
+    {
+      "id": "file-menu-new-canvas",
+      "type": "text",
+      "x": 840,
+      "y": -80,
+      "width": 360,
+      "height": 100,
+      "text": "The File menu contains a New Canvas menu item."
+    },
+    {
+      "id": "new-canvas-command-n",
+      "type": "text",
+      "x": 840,
+      "y": 60,
+      "width": 360,
+      "height": 100,
+      "text": "The New Canvas menu item is bound to the standard Command-N keyboard shortcut."
+    },
+    {
+      "id": "standard-shortcuts-preserved",
+      "type": "text",
+      "x": 840,
+      "y": 200,
+      "width": 360,
+      "height": 120,
+      "text": "Each standard top-level application menu preserves the expected macOS-native keyboard shortcuts for its standard menu items."
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-macos-app-ok-application-menus",
+      "fromNode": "macos-app-ok",
+      "fromSide": "right",
+      "toNode": "application-menus",
+      "toSide": "left",
+      "label": "contains"
+    },
+    {
+      "id": "edge-application-menus-standard-top-level-menus",
+      "fromNode": "application-menus",
+      "fromSide": "right",
+      "toNode": "standard-top-level-menus",
+      "toSide": "left",
+      "label": "asserts"
+    },
+    {
+      "id": "edge-application-menus-file-menu-new-canvas",
+      "fromNode": "application-menus",
+      "fromSide": "right",
+      "toNode": "file-menu-new-canvas",
+      "toSide": "left",
+      "label": "asserts"
+    },
+    {
+      "id": "edge-file-menu-new-canvas-new-canvas-command-n",
+      "fromNode": "file-menu-new-canvas",
+      "fromSide": "right",
+      "toNode": "new-canvas-command-n",
+      "toSide": "left",
+      "label": "has shortcut"
+    },
+    {
+      "id": "edge-application-menus-standard-shortcuts-preserved",
+      "fromNode": "application-menus",
+      "fromSide": "right",
+      "toNode": "standard-shortcuts-preserved",
+      "toSide": "left",
+      "label": "asserts"
+    }
+  ]
+}
