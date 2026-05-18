@@ -1,7 +1,7 @@
 ---
 id: task-macos-window-and-new-canvas-behavior
 level: medium
-status: in-progress
+status: done
 blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
@@ -19,3 +19,8 @@ gap_refs:
 Implement and test the native menu behaviors that create/open a new `.canvas` file and close the current window with Command-W.
 
 RGRTDD order: red tests, green implementation, refactor verification.
+
+## Completion evidence
+
+- 2026-05-18: `task-macos-red-new-canvas-and-close-tests`, `task-macos-green-new-canvas-and-close-implementation`, and `task-macos-refactor-new-canvas-and-close-verification` are done.
+- Final verification: `swift test` passed from `macos/AppifyUI2026-canvas` with 15 tests and 0 failures.

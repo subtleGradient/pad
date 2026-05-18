@@ -1,7 +1,7 @@
 ---
 id: task-style-adapter-text-presentation
 level: medium
-status: in-progress
+status: done
 blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
@@ -17,3 +17,8 @@ gap_refs:
 Bring imported JSON Canvas text node tldraw props into the OK shape: sans font, left alignment, and top vertical alignment.
 
 RGRTDD order: red tests, green implementation, refactor verification.
+
+## Completion evidence
+
+- 2026-05-18: `task-style-red-text-presentation-tests`, `task-style-green-text-presentation-implementation`, and `task-style-refactor-text-presentation` are done.
+- Final verification: `bun test` passed with 54 tests and 0 failures.
