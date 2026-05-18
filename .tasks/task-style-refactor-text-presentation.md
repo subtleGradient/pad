@@ -3,7 +3,7 @@ id: task-style-refactor-text-presentation
 level: low
 status: pending
 blocked_by:
-  - task-style-green-text-presentation-implementation
+  - task-style-refactor-color-rendering
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
   - .ok/style.ok.canvas#text-nodes
