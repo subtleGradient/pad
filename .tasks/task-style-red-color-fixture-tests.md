@@ -1,7 +1,7 @@
 ---
 id: task-style-red-color-fixture-tests
 level: low
-status: pending
+status: in-progress
 blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
@@ -24,3 +24,7 @@ Assigned RGRTDD role: `@gan-red`.
 Add failing Bun tests proving JSON Canvas preset strings `"1"` through `"6"`, default/no-color, and hex colors project to the expected tldraw node and edge colors without index shifts.
 
 The tests should include the external regression fixture semantics from `/Users/tom/Developer/work/daily/2026/05/style.canvas` without requiring the test suite to depend on mutable external user files.
+
+## Delegation
+
+- 2026-05-18: delegated to `@gan-red`; owned paths: `pad.shebang.test.ts` and test-only fixtures/helpers if needed.

@@ -1,7 +1,7 @@
 ---
 id: task-macos-red-new-canvas-and-close-tests
 level: low
-status: pending
+status: in-progress
 blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
@@ -17,3 +17,7 @@ gap_refs:
 Assigned RGRTDD role: `@gan-red`.
 
 Add failing Swift tests proving Command-N has an implementation path that creates and opens a new `.canvas` file, and Command-W has a native close menu/action path for the current window.
+
+## Delegation
+
+- 2026-05-18: delegated to `@gan-red`; owned paths: `macos/AppifyUI2026-canvas/Tests/CanvasCoreTests/MacOSMenuTests.swift` and test-only Swift seams if needed.
