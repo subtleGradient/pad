@@ -42,6 +42,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    @objc private func newCanvasFromMenu(_ sender: Any?) {
+        // Creation flow is not implemented yet; keep the native menu item wired.
+    }
+
     @MainActor
     private func showOpenPanel() {
         if let openPanelWindow {
@@ -132,10 +136,52 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let fileMenu = NSMenu(title: "File")
         fileMenuItem.submenu = fileMenu
         fileMenu.addItem(
+            withTitle: "New Canvas",
+            action: #selector(newCanvasFromMenu(_:)),
+            keyEquivalent: "n"
+        )
+        fileMenu.addItem(
             withTitle: "Open...",
             action: #selector(openDocumentFromMenu(_:)),
             keyEquivalent: "o"
         )
+
+        let editMenuItem = NSMenuItem()
+        mainMenu.addItem(editMenuItem)
+
+        let editMenu = NSMenu(title: "Edit")
+        editMenuItem.submenu = editMenu
+        editMenu.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+        editMenu.addItem(NSMenuItem.separator())
+        editMenu.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+
+        let viewMenuItem = NSMenuItem()
+        mainMenu.addItem(viewMenuItem)
+
+        let viewMenu = NSMenu(title: "View")
+        viewMenuItem.submenu = viewMenu
+
+        let windowMenuItem = NSMenuItem()
+        mainMenu.addItem(windowMenuItem)
+
+        let windowMenu = NSMenu(title: "Window")
+        windowMenuItem.submenu = windowMenu
+        windowMenu.addItem(
+            withTitle: "Minimize",
+            action: #selector(NSWindow.miniaturize(_:)),
+            keyEquivalent: "m"
+        )
+        NSApp.windowsMenu = windowMenu
+
+        let helpMenuItem = NSMenuItem()
+        mainMenu.addItem(helpMenuItem)
+
+        let helpMenu = NSMenu(title: "Help")
+        helpMenuItem.submenu = helpMenu
+        NSApp.helpMenu = helpMenu
     }
 
     @MainActor
