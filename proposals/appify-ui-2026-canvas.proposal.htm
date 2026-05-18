@@ -1,0 +1,57 @@
+#!/usr/bin/env -S bunx --bun -p https://github.com/subtleGradient/pad/archive/refs/heads/main.tar.gz pad
+<!-- PAD: executable proposal HTM. Run only if you trust this file as local Bun code. -->
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Appify UI 2026 Canvas Proposal</title>
+<script type="importmap">
+{
+  "imports": {
+    "web-native/": "/web-native/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/web-native/shadcn/themes/neutral.css">
+<link rel="stylesheet" href="/web-native/shadcn/styles/base-nova.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/subtleGradient/pad@refs/heads/main/pad.css">
+<script type="module">
+  import "web-native/shadcn/define.js"
+</script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/subtleGradient/pad@refs/heads/main/pad.browser.js"></script>
+
+<pad-document>
+  <pad-text kind="title">Appify UI 2026 Canvas Proposal</pad-text>
+
+  <pad-text kind="heading">Summary</pad-text>
+  <pad-text>Create a fresh SwiftPM macOS document launcher for JSON Canvas files by cloning the proven AppifyUI2026 launcher shape into /Users/tom/Developer/pad/macos/AppifyUI2026-canvas/. The app is named Canvas, owns plain .canvas files, and opens them through the existing PAD Bun runner in a native WKWebView.</pad-text>
+
+  <pad-text kind="heading">Document Type</pad-text>
+  <pad-text>Canvas.app uses bundle identifier com.subtlegradient.Canvas and declares .canvas as com.subtlegradient.pad.canvas. The type conforms to public.json. It is a normal file document, not a package, so the app bundle must not set LSTypeIsPackage.</pad-text>
+
+  <pad-text kind="heading">Runner Contract</pad-text>
+  <pad-text>The native app never invokes a shell, never reads a manifest, and never executes code from the .canvas file. It resolves system Bun the same way AppifyUI2026 does, starts a Process with explicit argv, and sets PAD_NO_OPEN=1 so AppKit owns the window and WebView.</pad-text>
+  <pad-text>When Canvas.app lives inside a PAD git checkout containing package.json and pad.shebang.tsx in the expected place, it runs the local source as bun /absolute/path/to/pad.shebang.tsx /absolute/document.canvas. This keeps development builds pointed at the working tree.</pad-text>
+  <pad-text>When Canvas.app is copied or installed outside that source checkout, it falls back to a pinned remote PAD package: bun x --bun --package https://github.com/subtleGradient/pad/archive/03823418e3d8059a640b125717e738ed6e81e705.tar.gz pad /absolute/document.canvas.</pad-text>
+
+  <pad-text kind="heading">Open URL Contract</pad-text>
+  <pad-text>PAD already prints a compatible stdout line such as file.canvas: http://127.0.0.1:54119/?t=token. Canvas.app should extract the first URL from runner stdout, accept only loopback HTTP(S), and load it in a WKWebView. The app should show native error states for missing Bun, invalid document extension, runner timeout, unsafe URL, and early process exit.</pad-text>
+
+  <pad-text kind="heading">Native App Behavior</pad-text>
+  <pad-text>Use AppKit plus WKWebView with one window/controller per opened .canvas file. Finder and open -a launches flow through application(_:open:). Direct app launch shows an open panel restricted to .canvas files. Runner stdout and stderr stream to ~/Library/Logs/Canvas/ and the child process terminates when its document window closes.</pad-text>
+
+  <pad-text kind="heading">Deferred Scope</pad-text>
+  <pad-text>V1 only declares the document type and launches the editor. It does not set Canvas.app as the default .canvas handler, does not include Quick Look preview or thumbnail extensions, does not bundle Bun, and does not implement a separate installer command.</pad-text>
+
+  <pad-text kind="heading">RGRTDD Sequence</pad-text>
+  <pad-text>Red commit: copy or scaffold macos/AppifyUI2026-canvas and add failing tests for .canvas document type metadata, local-vs-remote runner command construction, PAD_NO_OPEN environment, loopback URL extraction, and smoke expectations.</pad-text>
+  <pad-text>Green commit: implement the Canvas app behavior, deterministic bundle build, fixture .canvas document, log/crash tracking, and JXA smoke test.</pad-text>
+  <pad-text>Refactor commit: remove stale .webapp naming, tighten user-facing errors and README notes, run SourceKit/Xcode checks, and stage only macos/AppifyUI2026-canvas/**.</pad-text>
+
+  <pad-text kind="heading">Verification</pad-text>
+  <pad-text>Unit tests cover Bun resolution, .canvas extension validation, local PAD repo discovery, fallback pinned remote argv, PAD_NO_OPEN, and loopback URL validation. The source check script runs swift test plus command-line xcodebuild for the SwiftPM scheme.</pad-text>
+  <pad-text>The smoke script builds and ad-hoc signs Canvas.app, launches the direct app open panel with JXA, opens Fixtures/Hello.canvas, verifies bundle identifier, menu bar, and document window, prints fresh ~/Library/Logs/Canvas/ logs, and fails on new Canvas-*.ips crash reports.</pad-text>
+
+  <pad-text kind="heading">Manual Checks</pad-text>
+  <pad-text>Run open -a dist/Canvas.app Fixtures/Hello.canvas, verify Finder double-click after Launch Services registration, confirm the webview loads the PAD editor, and close the window to verify the child Bun process exits.</pad-text>
+</pad-document>
