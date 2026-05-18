@@ -5,12 +5,16 @@ import WebKit
 
 final class CanvasKeyboardQuietingWebView: WKWebView {
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
-        guard event.type == .keyDown, !event.modifierFlags.contains(.command) else {
+        guard shouldRouteKeyEquivalentToWebContent(event) else {
             return super.performKeyEquivalent(with: event)
         }
 
         keyDown(with: event)
         return true
+    }
+
+    private func shouldRouteKeyEquivalentToWebContent(_ event: NSEvent) -> Bool {
+        event.type == .keyDown && !event.modifierFlags.contains(.command)
     }
 }
 
