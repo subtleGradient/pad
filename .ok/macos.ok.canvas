@@ -3,8 +3,8 @@
 		{
 			"id": "macos-app-ok",
 			"type": "text",
-			"x": -302,
-			"y": -48,
+			"x": -546,
+			"y": 225,
 			"width": 320,
 			"height": 120,
 			"text": "# macOS App OK"
@@ -12,8 +12,8 @@
 		{
 			"id": "application-menus",
 			"type": "text",
-			"x": 420,
-			"y": 0,
+			"x": 350,
+			"y": -124,
 			"width": 320,
 			"height": 120,
 			"text": "## Application Menus\n\nThe app menu bar exposes native macOS menus and shortcuts."
@@ -21,8 +21,8 @@
 		{
 			"id": "standard-top-level-menus",
 			"type": "text",
-			"x": 833,
-			"y": -403,
+			"x": 680,
+			"y": -492,
 			"width": 440,
 			"height": 148,
 			"text": "exposes the standard top-level application menus: File, Edit, View, Window, and Help."
@@ -30,8 +30,8 @@
 		{
 			"id": "file-menu-new-canvas",
 			"type": "text",
-			"x": 972,
-			"y": -108,
+			"x": 961,
+			"y": -184,
 			"width": 360,
 			"height": 100,
 			"text": "The File menu contains a New Canvas menu item."
@@ -48,8 +48,8 @@
 		{
 			"id": "standard-shortcuts-preserved",
 			"type": "text",
-			"x": 739,
-			"y": 603,
+			"x": 1343,
+			"y": 271,
 			"width": 360,
 			"height": 120,
 			"text": "Each standard top-level application menu preserves the expected macOS-native keyboard shortcuts for its standard menu items."
@@ -57,8 +57,8 @@
 		{
 			"id": "tl-c2hhcGU6S05hbnZ3WlBDdGZCQmdNR2RfaEJK",
 			"type": "text",
-			"x": 102,
-			"y": 437,
+			"x": 507,
+			"y": 324,
 			"width": 492,
 			"height": 120,
 			"text": "preserves native platform expectations"
@@ -66,8 +66,8 @@
 		{
 			"id": "tldraw-webview-interaction",
 			"type": "text",
-			"x": 420,
-			"y": 860,
+			"x": 389,
+			"y": 896,
 			"width": 360,
 			"height": 120,
 			"text": "## tldraw WebView Interaction\n\nThe macOS app lets users interact with tldraw inside the WebView."
@@ -75,29 +75,74 @@
 		{
 			"id": "webview-keyboard-events-supported",
 			"type": "text",
-			"x": 900,
-			"y": 780,
-			"width": 360,
-			"height": 100,
+			"x": 930,
+			"y": 1192,
+			"width": 486,
+			"height": 148,
 			"text": "Keyboard interactions supported by tldraw pass through without being treated as invalid macOS input."
 		},
 		{
 			"id": "hold-spacebar-no-error-sounds",
 			"type": "text",
-			"x": 1380,
-			"y": 780,
-			"width": 360,
-			"height": 100,
+			"x": 1639,
+			"y": 1208,
+			"width": 486,
+			"height": 119,
 			"text": "Holding Spacebar in tldraw does not repeatedly trigger macOS error sounds."
 		},
 		{
 			"id": "keyboard-interactions-without-beeps",
 			"type": "text",
-			"x": 900,
-			"y": 980,
+			"x": 948,
+			"y": 661,
 			"width": 360,
 			"height": 100,
 			"text": "WebView keyboard interactions are quiet when the web app handles them."
+		},
+		{
+			"id": "tl-c2hhcGU6T1U4S1VBbFNfRnhqTkI4QnhNdUct",
+			"type": "text",
+			"x": 1354,
+			"y": -437,
+			"width": 491,
+			"height": 120,
+			"text": "command-W closes the current window"
+		},
+		{
+			"id": "tl-c2hhcGU6Q3dfX1lURW8za1ExcU95M2JTak1N",
+			"type": "text",
+			"x": 1514,
+			"y": -7,
+			"width": 491,
+			"height": 120,
+			"text": "creates a new .canvas file and opens it"
+		},
+		{
+			"id": "tl-c2hhcGU6TmFoXzVkZmFzcXJyMHRDdzZ4YnNX",
+			"type": "text",
+			"x": -371,
+			"y": -255,
+			"width": 191,
+			"height": 120,
+			"text": "windows"
+		},
+		{
+			"id": "tl-c2hhcGU6ZlhxcVJTejJCTmQ4MjllQTJEcXlE",
+			"type": "text",
+			"x": 139,
+			"y": -679,
+			"width": 369,
+			"height": 120,
+			"text": "standard macOS red X button"
+		},
+		{
+			"id": "tl-c2hhcGU6RGRhN2pFa3FyRmJBRHpFalBqbkpl",
+			"type": "text",
+			"x": 571,
+			"y": -875,
+			"width": 232,
+			"height": 120,
+			"text": "closes the window\nimmediately"
 		}
 	],
 	"edges": [
@@ -117,7 +162,7 @@
 			"fromSide": "right",
 			"toNode": "standard-top-level-menus",
 			"toSide": "left",
-			"label": "asserts",
+			"label": "",
 			"fromEnd": "none",
 			"toEnd": "arrow"
 		},
@@ -127,7 +172,7 @@
 			"fromSide": "right",
 			"toNode": "file-menu-new-canvas",
 			"toSide": "left",
-			"label": "asserts",
+			"label": "",
 			"fromEnd": "none",
 			"toEnd": "arrow"
 		},
@@ -210,6 +255,66 @@
 			"label": "includes",
 			"fromEnd": "none",
 			"toEnd": "arrow"
+		},
+		{
+			"id": "edge-c2hhcGU6dkVRaW9rbDBCMzN6NEpkRXpHOUM4",
+			"fromNode": "standard-top-level-menus",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "tl-c2hhcGU6T1U4S1VBbFNfRnhqTkI4QnhNdUct",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-c2hhcGU6a0RpcUFfRnpkejdTZzJrUnRKcTJD",
+			"fromNode": "file-menu-new-canvas",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "tl-c2hhcGU6Q3dfX1lURW8za1ExcU95M2JTak1N",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-c2hhcGU6RW10SHhobDVHS1JmNkw3QzV2bkJW",
+			"fromNode": "macos-app-ok",
+			"fromSide": "top",
+			"fromEnd": "none",
+			"toNode": "tl-c2hhcGU6TmFoXzVkZmFzcXJyMHRDdzZ4YnNX",
+			"toSide": "bottom",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-c2hhcGU6MUg0elJjelNDOGhZQno4UDYzdUNm",
+			"fromNode": "tl-c2hhcGU6TmFoXzVkZmFzcXJyMHRDdzZ4YnNX",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "tl-c2hhcGU6ZlhxcVJTejJCTmQ4MjllQTJEcXlE",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-c2hhcGU6QVBYbG11ZkNvSk93amRmdUlOMVpr",
+			"fromNode": "tl-c2hhcGU6T1U4S1VBbFNfRnhqTkI4QnhNdUct",
+			"fromSide": "left",
+			"fromEnd": "none",
+			"toNode": "tl-c2hhcGU6RGRhN2pFa3FyRmJBRHpFalBqbkpl",
+			"toSide": "right",
+			"toEnd": "arrow",
+			"label": ""
+		},
+		{
+			"id": "edge-c2hhcGU6WlJweEtCNUkzUnZsMmlLUENXQkRj",
+			"fromNode": "tl-c2hhcGU6ZlhxcVJTejJCTmQ4MjllQTJEcXlE",
+			"fromSide": "right",
+			"fromEnd": "none",
+			"toNode": "tl-c2hhcGU6RGRhN2pFa3FyRmJBRHpFalBqbkpl",
+			"toSide": "left",
+			"toEnd": "arrow",
+			"label": ""
 		}
 	]
 }
