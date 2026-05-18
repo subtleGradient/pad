@@ -3,6 +3,17 @@ import CanvasCore
 import Darwin
 import WebKit
 
+final class CanvasKeyboardQuietingWebView: WKWebView {
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        guard event.type == .keyDown, !event.modifierFlags.contains(.command) else {
+            return super.performKeyEquivalent(with: event)
+        }
+
+        keyDown(with: event)
+        return true
+    }
+}
+
 final class DocumentWindowController: NSWindowController {
     var onClose: (() -> Void)?
 
@@ -330,7 +341,7 @@ final class DocumentWindowController: NSWindowController {
     }
 
     private func loadWebView(url: URL) {
-        let webView = WKWebView(frame: window?.contentView?.bounds ?? .zero)
+        let webView = CanvasKeyboardQuietingWebView(frame: window?.contentView?.bounds ?? .zero)
         webView.autoresizingMask = [.width, .height]
         self.webView = webView
         window?.contentView = webView

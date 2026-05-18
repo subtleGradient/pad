@@ -185,9 +185,9 @@ function nodeShapeForNode(node) {
       labelColor: "black",
       fill: node.type === "group" ? "semi" : "none",
       size: "m",
-      font: "draw",
-      align: "middle",
-      verticalAlign: "middle",
+      font: node.type === "text" ? "sans" : "draw",
+      align: node.type === "text" ? "start" : "middle",
+      verticalAlign: node.type === "text" ? "start" : "middle",
       richText: richTextFromText(labelForNode(node)),
     },
   }
