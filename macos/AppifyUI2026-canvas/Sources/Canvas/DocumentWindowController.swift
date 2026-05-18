@@ -204,8 +204,6 @@ final class DocumentWindowController: NSWindowController {
 
         runnerProcess = nil
         clearProcessPipes(process)
-        process.standardOutput = nil
-        process.standardError = nil
 
         if !didLoadRunnerURL {
             showError(
@@ -237,8 +235,6 @@ final class DocumentWindowController: NSWindowController {
         runnerProcess = nil
         process.terminationHandler = nil
         clearProcessPipes(process)
-        process.standardOutput = nil
-        process.standardError = nil
 
         guard process.isRunning else {
             return
