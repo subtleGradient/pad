@@ -1,9 +1,8 @@
 ---
 id: task-macos-window-and-new-canvas-behavior
 level: medium
-status: pending
-blocked_by:
-  - task-macos-native-behavior-reconciliation
+status: in-progress
+blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
   - .ok/macos.ok.canvas#file-menu-new-canvas

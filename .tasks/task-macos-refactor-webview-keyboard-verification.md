@@ -3,7 +3,6 @@ id: task-macos-refactor-webview-keyboard-verification
 level: low
 status: pending
 blocked_by:
-  - task-macos-webview-keyboard-behavior
   - task-macos-green-webview-keyboard-implementation
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:

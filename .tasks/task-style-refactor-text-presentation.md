@@ -3,7 +3,6 @@ id: task-style-refactor-text-presentation
 level: low
 status: pending
 blocked_by:
-  - task-style-adapter-text-presentation
   - task-style-green-text-presentation-implementation
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:

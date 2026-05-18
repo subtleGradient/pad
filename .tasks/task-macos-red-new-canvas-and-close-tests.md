@@ -2,8 +2,7 @@
 id: task-macos-red-new-canvas-and-close-tests
 level: low
 status: pending
-blocked_by:
-  - task-macos-window-and-new-canvas-behavior
+blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
   - .ok/macos.ok.canvas#tl-c2hhcGU6Q3dfX1lURW8za1ExcU95M2JTak1N

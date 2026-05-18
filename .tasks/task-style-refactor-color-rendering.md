@@ -3,7 +3,6 @@ id: task-style-refactor-color-rendering
 level: low
 status: pending
 blocked_by:
-  - task-style-adapter-color-semantics
   - task-style-green-color-implementation
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:

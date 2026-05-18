@@ -2,8 +2,7 @@
 id: task-style-red-text-presentation-tests
 level: low
 status: pending
-blocked_by:
-  - task-style-adapter-text-presentation
+blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
   - .ok/style.ok.canvas#text-nodes-use-sans-font

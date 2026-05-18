@@ -1,7 +1,7 @@
 ---
 id: task-style-canvas-rendering-reconciliation
 level: high
-status: pending
+status: in-progress
 blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:

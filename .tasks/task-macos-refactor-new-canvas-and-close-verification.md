@@ -3,7 +3,6 @@ id: task-macos-refactor-new-canvas-and-close-verification
 level: low
 status: pending
 blocked_by:
-  - task-macos-window-and-new-canvas-behavior
   - task-macos-green-new-canvas-and-close-implementation
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:

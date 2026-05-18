@@ -1,9 +1,8 @@
 ---
 id: task-style-adapter-text-presentation
 level: medium
-status: pending
-blocked_by:
-  - task-style-canvas-rendering-reconciliation
+status: in-progress
+blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
   - .ok/style.ok.canvas#text-nodes-use-sans-font

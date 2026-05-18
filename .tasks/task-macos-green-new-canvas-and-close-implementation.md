@@ -3,7 +3,6 @@ id: task-macos-green-new-canvas-and-close-implementation
 level: low
 status: pending
 blocked_by:
-  - task-macos-window-and-new-canvas-behavior
   - task-macos-red-new-canvas-and-close-tests
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:

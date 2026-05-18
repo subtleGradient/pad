@@ -2,8 +2,7 @@
 id: task-macos-red-webview-keyboard-tests
 level: low
 status: pending
-blocked_by:
-  - task-macos-webview-keyboard-behavior
+blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
   - .ok/macos.ok.canvas#webview-keyboard-events-supported

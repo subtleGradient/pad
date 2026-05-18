@@ -2,8 +2,7 @@
 id: task-style-red-color-fixture-tests
 level: low
 status: pending
-blocked_by:
-  - task-style-adapter-color-semantics
+blocked_by: []
 expires_at: 2026-05-25T13:25:24-04:00
 ok_refs:
   - .ok/style.ok.canvas#color-1-red
